@@ -1,17 +1,17 @@
 """
-wpspec.py
+interface.py
 A python package for modeling light-matter interactions!
 
 Handles the primary functions
 """
 
 import numpy as np
-class wpspec:
+class interface:
     
 
     def __init__(self, args):
         """
-        Initilializer for the wpspec class
+        Initilializer for the interface class
 
         Will decide what structure we are dealing with and what we want to compute!
 
@@ -53,9 +53,10 @@ class wpspec:
         
         print("Number of wavelengths", self.number_of_wavelengths)
         print("number of layers",self.number_of_layers)
+        
 
 #if __name__ == "__main__":
 #    # Do something if this file is invoked on its own
 
-test_ml = wpspec([])
+test_ml = interface([])
 print(test_ml.canvas())

@@ -6,6 +6,8 @@ A python package for modeling light-matter interactions!
 # Add imports here
 from .wpspec import *
 
+from .tmm import transfer_matrix
+
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()
