@@ -10,7 +10,7 @@ A python package for modeling light-matter interactions!  Lots of possibilities!
 
 Copyright (c) 2021, Foley Lab
 
-Python package for William Paterson University's wpspec software package.
+A python package for William Paterson University's wpspec software package.
 
 #### Acknowledgements
  
