@@ -5,8 +5,7 @@ wpspec
 [![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspec/branch/master/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspec/branch/master)
 
 
-A python package for modeling light-matter interactions!
-
+A python package for modeling light-matter interactions!  Lots of possibilities!
 ### Copyright
 
 Copyright (c) 2021, Foley Lab
