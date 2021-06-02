@@ -8,6 +8,9 @@ wpspec
 A python package for modeling light-matter interactions!  Lots of possibilities!
 ### Copyright
 
+Python package for wpspec
+
+
 Copyright (c) 2021, Foley Lab
 
 
