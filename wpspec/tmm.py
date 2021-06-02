@@ -1,16 +1,26 @@
 import numpy as np
+import wpspec
 
-def tmm():
-    """
-    tmm - a function for solving the transfer matrix equations
+class tmm:
     
-    Parameters
-    ----------
-    None
 
-    Returns 
-    -------
+    def __init__(self, args):
+        """
+        Initilializer for the tmm class which inherits from wpspec
 
-    Returns 1
-    """
-    return 1
+        Will solve transfer matrix equations for the structure defined
+
+        Parameters
+        ----------
+        args : dictionary containing keywords and values that determine what structure we are modeling
+               and what we want to calculate
+
+        Returns
+        -------
+        None.
+
+        """
+        
+    def transfer_matrix(self):
+        return np.pi
+
