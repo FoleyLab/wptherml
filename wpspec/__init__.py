@@ -4,9 +4,9 @@ A python package for modeling light-matter interactions!
 """
 
 # Add imports here
-from .wpspec import *
+from .interface import *
 
-from .tmm import transfer_matrix
+from .tmm import *
 
 # Handle versioneer
 from ._version import get_versions

@@ -6,6 +6,8 @@ Handles the primary functions
 """
 
 import numpy as np
+from .tmm import *
+
 class interface:
     
 
@@ -36,7 +38,8 @@ class interface:
         self.number_of_layers = 3
         self.refractive_index_array = np.array([1.0+0j, 1.5+0j, 1.0+0j])
         self.thickness_array = np.array([0, 100e-9, 0])
-    
+   
+         
 
     def canvas(self):
         """
@@ -58,5 +61,8 @@ class interface:
 #if __name__ == "__main__":
 #    # Do something if this file is invoked on its own
 
+out = tmm.transfer_matrix([])
+print("internal printing")
+print(out)
 test_ml = interface([])
 print(test_ml.canvas())
