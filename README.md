@@ -13,6 +13,7 @@ Python package for wpspec
 
 Copyright (c) 2021, Foley Lab
 
+A python package for William Paterson University's wpspec software package.
 
 #### Acknowledgements
  
