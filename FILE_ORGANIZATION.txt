@@ -1,0 +1,7 @@
+wpspec/
+	__init__.py
+		from .interface import *
+                from .em import tmm, mie
+	
+	interface.py (user interface class)
+	em.py       (tmm class, mie class
