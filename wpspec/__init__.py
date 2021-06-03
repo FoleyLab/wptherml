@@ -4,9 +4,8 @@ A python package for modeling light-matter interactions!
 """
 
 # Add imports here
-from .interface import *
-
-from .tmm import *
+from .interface import Interface
+from .em import Tmm
 
 # Handle versioneer
 from ._version import get_versions

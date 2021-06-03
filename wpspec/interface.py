@@ -6,9 +6,8 @@ Handles the primary functions
 """
 
 import numpy as np
-from .tmm import *
 
-class interface:
+class Interface:
     
 
     def __init__(self, args):
@@ -33,7 +32,7 @@ class interface:
         self.refractive_index_array[:] : np.array([1+0j, 1.5 + 0j, 1+0j]) (air, glass, air)
         self.thickness_array[:] : np.array([0, 100e-9, 0]) (infinite, 100 nm, infinite)
         """
-        self.number_of_wavelengths = 400
+        self.number_of_wavelengths = 4
         self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
         self.number_of_layers = 3
         self.refractive_index_array = np.array([1.0+0j, 1.5+0j, 1.0+0j])
@@ -61,8 +60,8 @@ class interface:
 #if __name__ == "__main__":
 #    # Do something if this file is invoked on its own
 
-out = tmm.transfer_matrix([])
-print("internal printing")
-print(out)
-test_ml = interface([])
-print(test_ml.canvas())
+#out = tmm.transfer_matrix([])
+#print("internal printing")
+#print(out)
+#test_ml = interface([])
+#print(test_ml.canvas())
