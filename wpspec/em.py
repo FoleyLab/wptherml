@@ -1,10 +1,12 @@
+from .interface import Interface
 import numpy as np
 
-class tmm:
+class Tmm(Interface):
     
     def __init__(self, args):
+        super().__init__(args)
         """
-        Initilializer for the tmm class which inherits from wpspec
+        Initilializer for the Tmm class which inherits from Interface
 
         Will solve transfer matrix equations for the structure defined
 
@@ -20,5 +22,7 @@ class tmm:
         """
         
     def transfer_matrix(self):
-        return np.pi
+        self.reflectivity_array = np.zeros_like(self.wavelength_array)
+        print(self.reflectivity_array)
+        return 1
 
