@@ -1,6 +1,6 @@
 import wpspec
 
-out = wpspec.tmm([])
+out = wpspec.Tmm([])
 
 
 
