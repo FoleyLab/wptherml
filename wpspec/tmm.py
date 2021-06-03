@@ -1,9 +1,7 @@
 import numpy as np
-import wpspec
 
 class tmm:
     
-
     def __init__(self, args):
         """
         Initilializer for the tmm class which inherits from wpspec
