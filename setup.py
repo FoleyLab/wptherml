@@ -1,5 +1,5 @@
 """
-wpspec
+wpspecdev
 A python package for modeling light-matter interactions!
 """
 import sys
@@ -21,7 +21,7 @@ except:
 
 setup(
     # Self-descriptive entries which should always be present
-    name='wpspec',
+    name='wpspecdev',
     author='Foley Lab',
     author_email='foleyj10@wpunj.edu',
     description=short_description[0],

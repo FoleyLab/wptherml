@@ -1,19 +1,19 @@
-wpspec
+wpspecdev
 ==============================
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/wpspec/workflows/CI/badge.svg)](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/wpspec/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspec/branch/master/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspec/branch/master)
+[![GitHub Actions Build Status](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/workflows/CI/badge.svg)](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/branch/master/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/branch/master)
 
 
 A python package for modeling light-matter interactions!  Lots of possibilities!
 ### Copyright
 
-Python package for wpspec
+Python package for wpspecdev
 
 
 Copyright (c) 2021, Foley Lab
 
-A python package for William Paterson University's wpspec software package.
+A python package for William Paterson University's wpspecdev software package.
 
 #### Acknowledgements
  
