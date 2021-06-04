@@ -1,7 +1,7 @@
 import wpspecdev
 
-out = wpspecdev.Tmm([])
+mdf = wpspecdev.SpectrumFactory()
+md = mdf.spectrum_factory('Mie', 100e-9)
+print(md.compute_spectrum())
 
 
-
-print(out.transfer_matrix())
