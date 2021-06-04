@@ -1,6 +1,6 @@
-import wpspec
+import wpspecdev
 
-out = wpspec.Tmm([])
+out = wpspecdev.Tmm([])
 
 
 

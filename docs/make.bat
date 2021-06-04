@@ -9,7 +9,7 @@ if "%SPHINXBUILD%" == "" (
 )
 set SOURCEDIR=.
 set BUILDDIR=_build
-set SPHINXPROJ=wpspec
+set SPHINXPROJ=wpspecdev
 
 if "%1" == "" goto help
 
