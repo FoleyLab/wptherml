@@ -1,4 +1,4 @@
-wpspec/
+wpspecdev/
 	__init__.py
 		from .interface import *
                 from .em import tmm, mie
