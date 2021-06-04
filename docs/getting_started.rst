@@ -1,4 +1,4 @@
 Getting Started
 ===============
 
-This page details how to get started with wpspec. 
+This page details how to get started with wpspecdev. 
