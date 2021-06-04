@@ -4,9 +4,10 @@ A python package for modeling light-matter interactions!
 """
 
 # Add imports here
-from .interface import Interface
-from .em import Tmm
-
+from .spectrum_driver import SpectrumDriver
+from .em import TmmDriver
+from .mie import MieDriver
+from .factory import SpectrumFactory
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()
