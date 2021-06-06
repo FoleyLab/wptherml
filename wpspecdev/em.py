@@ -20,32 +20,53 @@ class TmmDriver(SpectrumDriver):
             material_array : 1 x number_of_layers numpy array of str
                 the materia of each layer
                 
-             wavelength_array : numpy array of floats
-                 the array of wavelengths in meters over which you will compute the spectra
+            wavelength_array : numpy array of floats
+                the array of wavelengths in meters over which you will compute the spectra
+                
+            incident_angle : float
+                the incident angle of light relative to the normal to the multilayer (0 = normal incidence!)
+                
+            polarization : str
+                indicates if incident light is 's' or 'p' polarized
 
-             reflectivity_array : 1 x number_of_wavelengths numpy array of floats
-                  the reflection spectrum 
+            reflectivity_array : 1 x number_of_wavelengths numpy array of floats
+                the reflection spectrum 
 
-             transmissivity_array : 1 x number_of_wavelengths numpy array of floats
-                  the transmission spectrum
+            transmissivity_array : 1 x number_of_wavelengths numpy array of floats
+                the transmission spectrum
 
-             emissivity_array : 1 x number_of_wavelengths numpy array of floats
-                  the absorptivity / emissivity spectrum
+            emissivity_array : 1 x number_of_wavelengths numpy array of floats
+                the absorptivity / emissivity spectrum
+                
+            _refraction_angle_array : 1 x number_of_layers numpy array of complex floats
+                the incident and refraction angles for each layer, including incoming layer
+                
+            _cos_of_refraction_angle_array : 1 x number_of_layers numpy array of complex floats
                   
-              _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
-                 the array of refractive index values corresponding to wavelength_array
+            _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
+                the array of refractive index values corresponding to wavelength_array
                  
-              _tm : 2 x 2 x number_of_wavelengths numpy array of complex floats
-                 the transfer matrix for each wavelength
+            _tm : 2 x 2 x number_of_wavelengths numpy array of complex floats
+                the transfer matrix for each wavelength
                  
-              _pm : 2 x 2 x (number_of_layers-2) x number_of_wavelengths numpy array of complex floats
-                 the P matrix for each of the finite-thickness layers for each wavelength
+            _kz_array : 1 x number_lf_layers x number_of_wavelengths numpy array of complex floats
+                the z-component of the wavevector in each layer of the multilayer for each wavelength 
+              
+            _k0 : 1 x number_of_wavelengths numpy array of floats
+                the wavevector magnitude in the incident layer for each wavelength
+                  
+            _kx : 1 x number_of_wavelengths numpy array of floats
+                the x-component of the wavevector for each wavelength (conserved throughout layers)
+                              
                  
-              _dm : 2 x 2 x number_of_layers x number_of_wavelengths numpy array of complex floats
-                 the D matrix for each of the layers for each wavelength
+            _pm : 2 x 2 x (number_of_layers-2) x number_of_wavelengths numpy array of complex floats
+                the P matrix for each of the finite-thickness layers for each wavelength
                  
-              _dim : 2 x 2 x number_of_layers x number_of_wavelengts numpy array of complex floats
-                 the inverse of the D matrix for each of the layers for each wavelength
+            _dm : 2 x 2 x number_of_layers x number_of_wavelengths numpy array of complex floats
+                the D matrix for each of the layers for each wavelength
+                 
+            _dim : 2 x 2 x number_of_layers x number_of_wavelengts numpy array of complex floats
+                the inverse of the D matrix for each of the layers for each wavelength
 
         Returns
         -------
@@ -69,7 +90,7 @@ class TmmDriver(SpectrumDriver):
         self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
         self.thickness_array = np.array([0, thickness, 0])
         self.polarization = 's'
-        self.theta_array = np.array([0, 0, 0])
+        self.incident_angle = 0.
         
         # pretty pythonic way to create the _refractive_index_array
         # that will result in self._refractive_index_array[1, 3] -> RI of layer index 1 (2nd layer) 
@@ -113,11 +134,78 @@ class TmmDriver(SpectrumDriver):
         
     
     def _compute_tm(self):
-        return 1
+        """ compute the transfer matrix for each wavelength
+        
+            Attributes
+            ----------
+                thickness_array
+                
+                _k0
+                
+                _kx
+                
+                _kz_array
+                
+                _refraction_angle_array
+                
+                _cos_of_refraction_angle_array
+                
+                _dm
+                
+                _pm
+                
+                _dim
+                
+                _tm
+                
+            Returns
+            -------
+            None
+                
+        """
+        pass
     
     def _compute_pm(self):
-        return 1
+        """ compute the P matrices for each intermediate-layer layer and wavelength
+        
+            Attributes
+            ----------
+                thickness_array
+                
+                _kz_array
+                
+                _pm
+                
+
+                
+            Returns
+            -------
+            None
+        """
+             
+        pass
     
     def _compute_dm(self):
-        return 1
+        
+        """ compute the D and D_inv matrices for each layer and wavelength
+        
+            Attributes
+            ----------
+                refractive_index_array
+                
+                polarization
+                
+                _cos_of_refraction_angle_array
+                
+                _dm
+                
+                _dim
+                
+
+                
+            Returns
+            -------
+            None
+        """
+        pass
 
