@@ -52,10 +52,10 @@ class TmmDriver(SpectrumDriver):
             _kz_array : 1 x number_lf_layers x number_of_wavelengths numpy array of complex floats
                 the z-component of the wavevector in each layer of the multilayer for each wavelength 
               
-            _k0 : 1 x number_of_wavelengths numpy array of floats
+            _k0_array : 1 x number_of_wavelengths numpy array of floats
                 the wavevector magnitude in the incident layer for each wavelength
                   
-            _kx : 1 x number_of_wavelengths numpy array of floats
+            _kx_array : 1 x number_of_wavelengths numpy array of floats
                 the x-component of the wavevector for each wavelength (conserved throughout layers)
                               
                  
@@ -85,7 +85,7 @@ class TmmDriver(SpectrumDriver):
         
         ''' hard-coded a lot of this for now, we will obviously generalize soon! '''
         self.thickness = thickness
-        self.number_of_wavelengths = 100
+        self.number_of_wavelengths = 10
         self.number_of_layers = 3
         self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
         self.thickness_array = np.array([0, thickness, 0])
@@ -127,10 +127,27 @@ class TmmDriver(SpectrumDriver):
                 - evaluating t amplitudes from _tm
                 
                 - evaluating T from tt* n_L cos(\theta_L) / n_1 cos(\theta_L)
+        
+        """
+        # compute k0_array
+        self._k0_array = np.pi * 2 / self.wavelength_array
+        
+        # compute kx_array
+        self._kx_array = self._refractive_index_array[:, 0] * np.sin( self.incident_angle ) * self._k0_array 
+        
+        """ continute to compute remaining intermediate attributes needed by _compute_tm(), including
+        
+            - self._refraction_angle_array
             
+            - self._cos_of_refraction_angle_array
         
+            - self._kz_array
+            
+        """
         
-        """      
+        # with all of these formed, you can now call _compute_tm()
+        self._tm = self._compute_tm()
+        
         
     
     def _compute_tm(self):
@@ -156,14 +173,15 @@ class TmmDriver(SpectrumDriver):
                 
                 _dim
                 
-                _tm
+            
                 
             Returns
             -------
-            None
+            _tm
                 
         """
-        pass
+        print("can _compute_tm() see the _k0_array?", self._k0_array)
+        
     
     def _compute_pm(self):
         """ compute the P matrices for each intermediate-layer layer and wavelength
