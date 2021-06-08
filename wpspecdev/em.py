@@ -188,10 +188,23 @@ class TmmDriver(SpectrumDriver):
             _tm
                 
         """
+        M = np.ones((2,2))
+        for x in range(len(self.wavenumber_array)):
+            if x == 0 or x == len(self.wavenumber_array):
+                D = self._compute_dm(x)
+                M = np.matmul(M,D)
+                continue
+            else:
+                D = self._compute_dm(x)
+                P = self._compute_pm(x)
+                M = np.matmul(M,D)
+                M = np.matmul(M,P)
+                
+
         print("can _compute_tm() see the _k0_array?", self._k0_array)
         
     
-    def _compute_pm(self):
+    def _compute_pm(self, idx):
         """ compute the P matrices for each intermediate-layer layer and wavelength
         
             Attributes
@@ -212,8 +225,8 @@ class TmmDriver(SpectrumDriver):
         P = np.zeros((2,2),dtype=complex)
         ci = 0+1j
 
-        a = -1*ci*self._kxz_array * self.thickness_array
-        b = ci*self._kxz_array * self.thickness_array
+        a = -1*ci*self._kxz_array[idx] * self.thickness_array[idx]
+        b = ci*self._kxz_array[idx] * self.thickness_array[idx]
 
         P[0][1] = 0+0j
         P[1][0] = 0+0j
@@ -224,7 +237,7 @@ class TmmDriver(SpectrumDriver):
              
         pass
     
-    def _compute_dm(self):
+    def _compute_dm(self,idx):
         
         """ compute the D and D_inv matrices for each layer and wavelength
         
@@ -246,26 +259,32 @@ class TmmDriver(SpectrumDriver):
             -------
             None
         """
+        D = np.zeros((2,2),dtype=complex)
         if (self.polarization == "s"):
             D[0][0] = 1.+0j
             D[0][1] = 1.+0j
-            D[1][0] = self.incident_angle*self._refractive_index_array
-            D[1][1] = -1*self.incident_angle*self._refractive_index_array
+            D[1][0] = self.incident_angle*self._refractive_index_array[idx]
+            D[1][1] = -1*self.incident_angle*self._refractive_index_array[idx]
 
 
         elif (self.polarization == "p"):
             D[0][0] = self.incident_angle+0j
             D[0][1] = self.incident_angle+0j
-            D[1][0] = self.refractive_index_array
-            D[1][1] = -1*self.refractive_index_array
+            D[1][0] = self.refractive_index_array[idx]
+            D[1][1] = -1*self.refractive_index_array[idx]
 
         else:
             
             print("needs polarization s or p")
 
         print(D)
-
-        return D
+        if idx == 0:
+            return np.linalg.inv(D)
+        elif idx == len(self.wavenumber_array):
+            return D
+        else:
+            D = np.matmul(D,np.linalg.inv(D))
+            return D
 
 
 
