@@ -137,7 +137,10 @@ class TmmDriver(SpectrumDriver):
         self._kx_array = self._refractive_index_array[:, 0] * np.sin( self.incident_angle ) * self._k0_array 
         
         self._kxz_array = np.sqrt((self._refractive_index_array*self.wavenumber_array)**2 -(self._refractive_index_array*np.sin(self.incident_angle)*self.wavenumber_array)**2)
-
+        ref_times_wn = [self.wavenumber_array[x]*self._refractive_index_array[x] for x in range(len(self.wavenumber_array))]
+        
+        self._kxz_array = np.sqrt((ref_times_wn)**2-(ref_times_wn*np.sin(self.incident_angle)**2))
+        
         """ continute to compute remaining intermediate attributes needed by _compute_tm(), including
         
             - self._refraction_angle_array
