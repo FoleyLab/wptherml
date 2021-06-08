@@ -1,0 +1,37 @@
+import wpspecdev
+import numpy as np
+import wpspecdev.em
+
+import wpspecdev.spectrum_driver
+
+from wpspecdev.spectrum_driver import SpectrumDriver
+
+
+test = wpspecdev.em.TmmDriver
+
+test.thickness = 10
+
+
+print(test.thickness)
+
+print(test._compute_pm)
+
+print(test._compute_dm)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
