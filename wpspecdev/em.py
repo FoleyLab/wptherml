@@ -88,6 +88,7 @@ class TmmDriver(SpectrumDriver):
         self.number_of_wavelengths = 10
         self.number_of_layers = 3
         self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
+        self.wavenumber_array = 1/ self.wavelength_array
         self.thickness_array = np.array([0, thickness, 0])
         self.polarization = 's'
         self.incident_angle = 0.
@@ -134,6 +135,8 @@ class TmmDriver(SpectrumDriver):
         
         # compute kx_array
         self._kx_array = self._refractive_index_array[:, 0] * np.sin( self.incident_angle ) * self._k0_array 
+
+        self._kxz_array = np.sqrt((self._refractive_index_array* self.wavenumber_array)**2 - self._refractive_index_array*np.sin(self.incident_angle)*self.wavenumber_array**2)
         
         """ continute to compute remaining intermediate attributes needed by _compute_tm(), including
         
@@ -200,6 +203,19 @@ class TmmDriver(SpectrumDriver):
             -------
             None
         """
+
+        P = np.zeros((2,2),dtype=complex)
+        ci = 0+1j
+
+        a = -1*ci*self._kxz_array * self.thickness_array
+        b = ci*self._kxz_array * self.thickness_array
+
+        P[0][1] = 0+0j
+        P[1][0] = 0+0j
+        P[0][0] = np.exp(a)
+        P[1][1] = np.exp(b)
+        print(P)
+        return P
              
         pass
     
@@ -225,5 +241,29 @@ class TmmDriver(SpectrumDriver):
             -------
             None
         """
+        if (self.polarization == "s"):
+            D[0][0] = 1.+0j
+            D[0][1] = 1.+0j
+            D[1][0] = self.incident_angle*self._refractive_index_array
+            D[1][1] = -1*self.incident_angle*self._refractive_index_array
+
+
+        elif (self.polarization == "p"):
+            D[0][0] = self.incident_angle+0j
+            D[0][1] = self.incident_angle+0j
+            D[1][0] = self.refractive_index_array
+            D[1][1] = -1*self.refractive_index_array
+
+        else:
+            
+            print("needs polarization s or p")
+
+        print(D)
+
+        return D
+
+
+
+
         pass
 
