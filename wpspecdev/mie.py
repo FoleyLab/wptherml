@@ -1,5 +1,10 @@
-from .spectrum_driver import SpectrumDriver
 import numpy as np
+from scipy.special import spherical_jn
+from scipy.special import spherical_yn
+from scipy.special import jv
+from scipy.special import yv
+from .spectrum_driver import SpectrumDriver
+
 
 class MieDriver(SpectrumDriver):
     """ Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
@@ -73,6 +78,15 @@ class MieDriver(SpectrumDriver):
     def __init__(self, radius):
         self.radius = radius
         print('Radius of the sphere is ', self.radius)
+        self.number_of_wavelengths = 10
+        self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
+        self.ci = 0+1j
+        
+        # pretty pythonic way to create the _refractive_index_array
+        # that will result in self._refractive_index_array[1, 3] -> RI of layer index 1 (2nd layer) 
+        # at wavelength index 3 (4th wavelength in wavelength_array)
+        #self._refractive_index_array = np.reshape(np.tile(np.array([1+0j, 1.5+0j, 1+0j]), self.number_of_wavelengths),
+        #                                          (self.number_of_wavelengths, self.number_of_layers))
 
     def compute_spectrum(self):
         """ Will prepare the attributes forcomputing q_ext, q_abs, q_scat, c_abs, c_ext, c_scat
@@ -97,8 +111,8 @@ class MieDriver(SpectrumDriver):
             
             Arguments
             ---------
-            n : int
-                order of the bessel function
+            n : 1 x _max_coefficient numpy array of ints
+                orders of the bessel function
                 
             z : float
                 size parameter of the sphere
@@ -109,6 +123,9 @@ class MieDriver(SpectrumDriver):
             _s_jn
             
         """
+        ns = n+0.5
+        return np.sqrt(np.pi / (2 * z)) * jv(ns, z)
+        
         
     def _compute_s_yn(self, n, z):
         """ Compute the spherical bessel function from the Bessel function
@@ -116,8 +133,8 @@ class MieDriver(SpectrumDriver):
             
             Arguments
             ---------
-            n : int
-                order of the bessel function
+            n : 1 x _max_coefficient numpy array of ints
+                orders of the bessel function
                 
             z : float
                 variable passed to the bessel function
@@ -128,13 +145,16 @@ class MieDriver(SpectrumDriver):
             _s_jn
             
         """
+        ns = n+0.5
+        return np.sqrt(np.pi / (2 * z)) * yv(ns, z)
+        
     def _compute_s_hn(self, n, z):
         """ Compute the spherical bessel function h_n^{(1)}
             
             Arguments
             ---------
-            n : int
-                order of the bessel function
+            n : 1 x _max_coefficient array of int
+                orders of the bessel function
                 
             z : float
                 variable passed to the bessel function
@@ -144,14 +164,16 @@ class MieDriver(SpectrumDriver):
             -------
             _s_hn
         """
+        return spherical_jn(n, z) + self.ci * spherical_yn(n, z)
+        
 
     def _compute_z_jn_prime(self, n, z):
         """ Compute derivative of z*j_n(z) using recurrence relations
         
             Arguments
             ---------
-            n : int
-                order of the bessel functions
+            n : 1 x _max_coefficient array of int
+                orders of the bessel functions
             z : float
                 variable passed to the bessel function
                 
@@ -159,14 +181,16 @@ class MieDriver(SpectrumDriver):
             -------
             _z_jn_prime
             
-        """ 
+        """
+        return z * spherical_jn( n - 1, z) - n * spherical_jn(n , z)
+        
     def _compute_z_hn_prime(self, n, z):
         """ Compute derivative of z*h_n^{(1)}(z) using recurrence relations
            
             Arguments
             ---------
-            n : int
-                order of the bessel functions
+            n : 1 x _max_coefficient array of int
+                orders of the bessel functions
             z : float
                 variable passed to the bessel function
                 
@@ -175,14 +199,15 @@ class MieDriver(SpectrumDriver):
             _z_hn_prime
         
         """
+        return self._compute_s_hn( n - 1, z) - n * self._compute_s_hn( n , z)
         
-    def _compute_mie_coeffients(self, n, m, mu, x):
+    def _compute_mie_coeffients(self, m, mu, x):
         """ computes the Mie coefficients given relative refractive index, 
            
             Arguments
             ---------
-            n : int
-                order of the bessel functions
+            n : 1 x _max_coefficient array of ints
+                order of the mie coefficients functions
             m : complex float
                 relative refractive index of the sphere to the medium
             mu : complex float
@@ -201,6 +226,42 @@ class MieDriver(SpectrumDriver):
             _dn
 
         """
+        # self._n_array will be an array from 1 to n_max
+        _n_max = int(x + 4*x**(1/3.)+2)
+        self._n_array = np.copy( np.linspace(1, _n_max, _n_max, dtype=int) )
+        print(self._n_array)
+        
+        # pre-compute terms that will be used numerous times in computing coefficients
+        _jnx = spherical_jn(self._n_array , x)
+        _jnmx = spherical_jn(self._n_array , m * x)
+        _hnx = self._compute_s_hn(self._n_array, x)
+        _xjnxp = self._compute_z_jn_prime(self._n_array, x)
+        _mxjnmxp = self._compute_z_jn_prime(self._n_array, m*x)
+        _xhnxp = self._compute_z_hn_prime(self._n_array, x)
+        
+        # a_n coefficients
+        _a_numerator   = m ** 2 * _jnmx * _xjnxp - mu * _jnx * _mxjnmxp
+        _a_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
+        
+        self._an = _a_numerator / _a_denominator
+        
+        # b_n coefficients
+        _b_numerator   = mu * _jnmx * _xjnxp - _jnx * _mxjnmxp
+        _b_denominator = mu * _jnmx * _xhnxp - _hnx * _mxjnmxp
+        
+        self._bn = _b_numerator / _b_denominator
+        
+        # c_n coefficients
+        _c_numerator   = mu * _jnx * _xhnxp - mu * _hnx * _xjnxp
+        _c_denominator = mu * _jnmx * _xhnxp - _hnx * _mxjnmxp
+        
+        self._cn = _c_numerator / _c_denominator
+        
+        # d_n coefficients
+        _d_numerator   = mu * m * _jnx * _xhnxp - mu * m * _hnx * _xjnxp
+        _d_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
+        
+        self._dn = _d_numerator / _d_denominator
         
     def compute_q_scattering(self):
         """ computes the scattering efficiency from the mie coefficients
