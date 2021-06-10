@@ -20,10 +20,10 @@ class MieDriver(SpectrumDriver):
         wavelength_array : 1 x number_of_wavelengths numpy array of floats
             the array of wavelengths in meters over which you will compute the spectra
                 
-        _z_array : 1 x number_of_wavelengths numpy array of complex floats
+        _size_factor_array : 1 x number_of_wavelengths numpy array of floats
             size factor of the sphere
            
-        _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+        _relative_refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
             the array of refractive index values corresponding to wavelength_array
                 
         _medium_refractive_index : float
@@ -75,19 +75,32 @@ class MieDriver(SpectrumDriver):
         >>> fill_in_with_actual_example!
     """
 
-    def __init__(self, radius):
-        self.radius = radius
+    def __init__(self, args):
+        self.parse_input(args)
         print('Radius of the sphere is ', self.radius)
-        self.number_of_wavelengths = 10
-        self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
         self.ci = 0+1j
         
-        # pretty pythonic way to create the _refractive_index_array
-        # that will result in self._refractive_index_array[1, 3] -> RI of layer index 1 (2nd layer) 
-        # at wavelength index 3 (4th wavelength in wavelength_array)
-        #self._refractive_index_array = np.reshape(np.tile(np.array([1+0j, 1.5+0j, 1+0j]), self.number_of_wavelengths),
-        #                                          (self.number_of_wavelengths, self.number_of_layers))
-
+    def parse_input(self, args):
+        if 'radius' in args:
+            self.radius = args['radius']
+        else:
+            self.radius = 100e-9
+        if 'wavelength_list' in args:
+            lamlist = args['wavelength_list']
+            self.wavelength_array = np.linspace(lamlist[0],lamlist[1],int(lamlist[2]))
+            self.number_of_wavelengths = int(lamlist[2])
+        else:
+            self.wavelength_array = np.linspace(400e-9,800e-9,10)
+            self.number_of_wavelengths = 10
+        
+        # hard-code the RI data
+        self.sphere_refractive_index_array = (1.5+0j) * np.ones(self.number_of_wavelengths)
+        self._medium_refractive_index = 1.0+0j
+        self._relative_refractive_index_array = self.sphere_refractive_index_array / self._medium_refractive_index
+        self._relative_permeability = 1.0+0j
+        self._size_factor_array = np.pi * 2 * self.radius / self.wavelength_array
+        
+        
     def compute_spectrum(self):
         """ Will prepare the attributes forcomputing q_ext, q_abs, q_scat, c_abs, c_ext, c_scat
             via computing the mie coefficients
@@ -226,9 +239,8 @@ class MieDriver(SpectrumDriver):
             _dn
 
         """
+        self._compute_n_array(x)
         # self._n_array will be an array from 1 to n_max
-        _n_max = int(x + 4*x**(1/3.)+2)
-        self._n_array = np.copy( np.linspace(1, _n_max, _n_max, dtype=int) )
         print(self._n_array)
         
         # pre-compute terms that will be used numerous times in computing coefficients
@@ -288,5 +300,8 @@ class MieDriver(SpectrumDriver):
             None
 
         """
+    def _compute_n_array(self, x):
+        _n_max = int(x + 4*x**(1/3.)+2)
+        self._n_array = np.copy( np.linspace(1, _n_max, _n_max, dtype=int) )
         
     
