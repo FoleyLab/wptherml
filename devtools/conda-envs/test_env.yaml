@@ -8,16 +8,18 @@ dependencies:
     # Base depends
   - python
   - pip
-  - numpy
-  - scipy
-  - sys
 
     # Testing
   - pytest
   - pytest-cov
   - codecov
 
+
+    # Package-dependencies
+  - numpy 
+  - matplotlib
+  - scipy
+
     # Pip-only installs
   #- pip:
   #  - codecov
-
