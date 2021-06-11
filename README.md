@@ -6,16 +6,11 @@ wpspecdev
 
 
 A python package for modeling light-matter interactions!  Lots of possibilities!
+
 ### Copyright
-
-Python package for wpspecdev
-
-
 Copyright (c) 2021, Foley Lab
 
-A python package for William Paterson University's wpspecdev software package.
 
 #### Acknowledgements
- 
 Project based on the 
 [Computational Molecular Science Python Cookiecutter](https://github.com/molssi/cookiecutter-cms) version 1.5.
