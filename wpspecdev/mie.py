@@ -1,5 +1,10 @@
-from .spectrum_driver import SpectrumDriver
 import numpy as np
+from scipy.special import spherical_jn
+from scipy.special import spherical_yn
+from scipy.special import jv
+from scipy.special import yv
+from .spectrum_driver import SpectrumDriver
+
 
 class MieDriver(SpectrumDriver):
     """ Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
@@ -15,10 +20,10 @@ class MieDriver(SpectrumDriver):
         wavelength_array : 1 x number_of_wavelengths numpy array of floats
             the array of wavelengths in meters over which you will compute the spectra
                 
-        _z_array : 1 x number_of_wavelengths numpy array of complex floats
+        _size_factor_array : 1 x number_of_wavelengths numpy array of floats
             size factor of the sphere
            
-        _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+        _relative_refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
             the array of refractive index values corresponding to wavelength_array
                 
         _medium_refractive_index : float
@@ -70,10 +75,32 @@ class MieDriver(SpectrumDriver):
         >>> fill_in_with_actual_example!
     """
 
-    def __init__(self, radius):
-        self.radius = radius
+    def __init__(self, args):
+        self.parse_input(args)
         print('Radius of the sphere is ', self.radius)
-
+        self.ci = 0+1j
+        
+    def parse_input(self, args):
+        if 'radius' in args:
+            self.radius = args['radius']
+        else:
+            self.radius = 100e-9
+        if 'wavelength_list' in args:
+            lamlist = args['wavelength_list']
+            self.wavelength_array = np.linspace(lamlist[0],lamlist[1],int(lamlist[2]))
+            self.number_of_wavelengths = int(lamlist[2])
+        else:
+            self.wavelength_array = np.linspace(400e-9,800e-9,10)
+            self.number_of_wavelengths = 10
+        
+        # hard-code the RI data
+        self.sphere_refractive_index_array = (1.5+0j) * np.ones(self.number_of_wavelengths)
+        self._medium_refractive_index = 1.0+0j
+        self._relative_refractive_index_array = self.sphere_refractive_index_array / self._medium_refractive_index
+        self._relative_permeability = 1.0+0j
+        self._size_factor_array = np.pi * 2 * self.radius / self.wavelength_array
+        
+        
     def compute_spectrum(self):
         """ Will prepare the attributes forcomputing q_ext, q_abs, q_scat, c_abs, c_ext, c_scat
             via computing the mie coefficients
@@ -97,8 +124,8 @@ class MieDriver(SpectrumDriver):
             
             Arguments
             ---------
-            n : int
-                order of the bessel function
+            n : 1 x _max_coefficient numpy array of ints
+                orders of the bessel function
                 
             z : float
                 size parameter of the sphere
@@ -109,6 +136,9 @@ class MieDriver(SpectrumDriver):
             _s_jn
             
         """
+        ns = n+0.5
+        return np.sqrt(np.pi / (2 * z)) * jv(ns, z)
+        
         
     def _compute_s_yn(self, n, z):
         """ Compute the spherical bessel function from the Bessel function
@@ -116,8 +146,8 @@ class MieDriver(SpectrumDriver):
             
             Arguments
             ---------
-            n : int
-                order of the bessel function
+            n : 1 x _max_coefficient numpy array of ints
+                orders of the bessel function
                 
             z : float
                 variable passed to the bessel function
@@ -128,13 +158,16 @@ class MieDriver(SpectrumDriver):
             _s_jn
             
         """
+        ns = n+0.5
+        return np.sqrt(np.pi / (2 * z)) * yv(ns, z)
+        
     def _compute_s_hn(self, n, z):
         """ Compute the spherical bessel function h_n^{(1)}
             
             Arguments
             ---------
-            n : int
-                order of the bessel function
+            n : 1 x _max_coefficient array of int
+                orders of the bessel function
                 
             z : float
                 variable passed to the bessel function
@@ -144,14 +177,16 @@ class MieDriver(SpectrumDriver):
             -------
             _s_hn
         """
+        return spherical_jn(n, z) + self.ci * spherical_yn(n, z)
+        
 
     def _compute_z_jn_prime(self, n, z):
         """ Compute derivative of z*j_n(z) using recurrence relations
         
             Arguments
             ---------
-            n : int
-                order of the bessel functions
+            n : 1 x _max_coefficient array of int
+                orders of the bessel functions
             z : float
                 variable passed to the bessel function
                 
@@ -159,14 +194,16 @@ class MieDriver(SpectrumDriver):
             -------
             _z_jn_prime
             
-        """ 
+        """
+        return z * spherical_jn( n - 1, z) - n * spherical_jn(n , z)
+        
     def _compute_z_hn_prime(self, n, z):
         """ Compute derivative of z*h_n^{(1)}(z) using recurrence relations
            
             Arguments
             ---------
-            n : int
-                order of the bessel functions
+            n : 1 x _max_coefficient array of int
+                orders of the bessel functions
             z : float
                 variable passed to the bessel function
                 
@@ -175,14 +212,15 @@ class MieDriver(SpectrumDriver):
             _z_hn_prime
         
         """
+        return self._compute_s_hn( n - 1, z) - n * self._compute_s_hn( n , z)
         
-    def _compute_mie_coeffients(self, n, m, mu, x):
+    def _compute_mie_coeffients(self, m, mu, x):
         """ computes the Mie coefficients given relative refractive index, 
            
             Arguments
             ---------
-            n : int
-                order of the bessel functions
+            n : 1 x _max_coefficient array of ints
+                order of the mie coefficients functions
             m : complex float
                 relative refractive index of the sphere to the medium
             mu : complex float
@@ -201,6 +239,41 @@ class MieDriver(SpectrumDriver):
             _dn
 
         """
+        self._compute_n_array(x)
+        # self._n_array will be an array from 1 to n_max
+        print(self._n_array)
+        
+        # pre-compute terms that will be used numerous times in computing coefficients
+        _jnx = spherical_jn(self._n_array , x)
+        _jnmx = spherical_jn(self._n_array , m * x)
+        _hnx = self._compute_s_hn(self._n_array, x)
+        _xjnxp = self._compute_z_jn_prime(self._n_array, x)
+        _mxjnmxp = self._compute_z_jn_prime(self._n_array, m*x)
+        _xhnxp = self._compute_z_hn_prime(self._n_array, x)
+        
+        # a_n coefficients
+        _a_numerator   = m ** 2 * _jnmx * _xjnxp - mu * _jnx * _mxjnmxp
+        _a_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
+        
+        self._an = _a_numerator / _a_denominator
+        
+        # b_n coefficients
+        _b_numerator   = mu * _jnmx * _xjnxp - _jnx * _mxjnmxp
+        _b_denominator = mu * _jnmx * _xhnxp - _hnx * _mxjnmxp
+        
+        self._bn = _b_numerator / _b_denominator
+        
+        # c_n coefficients
+        _c_numerator   = mu * _jnx * _xhnxp - mu * _hnx * _xjnxp
+        _c_denominator = mu * _jnmx * _xhnxp - _hnx * _mxjnmxp
+        
+        self._cn = _c_numerator / _c_denominator
+        
+        # d_n coefficients
+        _d_numerator   = mu * m * _jnx * _xhnxp - mu * m * _hnx * _xjnxp
+        _d_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
+        
+        self._dn = _d_numerator / _d_denominator
         
     def compute_q_scattering(self):
         """ computes the scattering efficiency from the mie coefficients
@@ -227,5 +300,8 @@ class MieDriver(SpectrumDriver):
             None
 
         """
+    def _compute_n_array(self, x):
+        _n_max = int(x + 4*x**(1/3.)+2)
+        self._n_array = np.copy( np.linspace(1, _n_max, _n_max, dtype=int) )
         
     
