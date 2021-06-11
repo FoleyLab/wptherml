@@ -212,7 +212,10 @@ class MieDriver(SpectrumDriver):
             _z_hn_prime
         
         """
-        return self._compute_s_hn( n - 1, z) - n * self._compute_s_hn( n , z)
+
+                
+
+        return z *  self._compute_s_hn( n - 1, z) - n * self._compute_s_hn( n , z)
         
     def _compute_mie_coeffients(self, m, mu, x):
         """ computes the Mie coefficients given relative refractive index, 
