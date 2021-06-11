@@ -69,3 +69,15 @@ def test_compute_s_hn():
     
     assert np.allclose(result, expected_result, 1e-5)
     
+
+
+
+def test_compute_z_jn_prime():
+    """ test private method in MieDriver _compute_z_jn_prime(n,z)"""
+
+    expected_result = np.array([5.94700852e-01, 2.59990229e-01, 6.61123694e-02, 1.19188333e-02,
+ 1.66699586e-03, 1.90561452e-04, 1.84239201e-05])
+
+    result = mietest._compute_z_jn_prime(mietest._n_array, mietest._size_factor_array[0])
+
+    assert np.allclose(result, expected_result, 1e-5)

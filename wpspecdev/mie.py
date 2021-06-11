@@ -134,6 +134,10 @@ class MieDriver(SpectrumDriver):
             Returns
             -------
             _s_jn
+
+            Test Implemented
+            ----------------
+            Yes
             
         """
         ns = n+0.5
@@ -156,6 +160,10 @@ class MieDriver(SpectrumDriver):
             Returns
             -------
             _s_jn
+
+            Test Implemented
+            ----------------
+            Yes
             
         """
         ns = n+0.5
@@ -176,6 +184,10 @@ class MieDriver(SpectrumDriver):
             Returns
             -------
             _s_hn
+
+            Test Implemented
+            ----------------
+            Yes
         """
         return spherical_jn(n, z) + self.ci * spherical_yn(n, z)
         
@@ -193,6 +205,10 @@ class MieDriver(SpectrumDriver):
             Returns
             -------
             _z_jn_prime
+            
+            Test Implemented
+            ----------------
+            Yes
             
         """
         return z * spherical_jn( n - 1, z) - n * spherical_jn(n , z)
