@@ -136,12 +136,12 @@ class TmmDriver(SpectrumDriver):
         # compute kx_array
         self._kx_array = self._refractive_index_array[:, 0] * np.sin( self.incident_angle ) * self._k0_array 
 
-        #self._kxz_array = np.sqrt((self._refractive_index_array* self.wavenumber_array)**2 - self._refractive_index_array*np.sin(self.incident_angle)*self.wavenumber_array**2)
+        
         
 
         ref_times_wn = np.array([self.wavenumber_array[x]*self._refractive_index_array[x] for x in range(len(self.wavenumber_array))])
         
-        self._kxz_array = np.sqrt((ref_times_wn)**2-(ref_times_wn*np.sin(self.incident_angle)**2))
+        self._kzl_array = np.sqrt((ref_times_wn)**2-(ref_times_wn*np.sin(self.incident_angle)**2))
         
         """ continute to compute remaining intermediate attributes needed by _compute_tm(), including
         
@@ -188,56 +188,22 @@ class TmmDriver(SpectrumDriver):
             _tm
                 
         """
-        M = np.ones((2,2))
+        M = np.linalg.eye((2,2),dtype=complex)
         for x in range(len(self.wavenumber_array)):
-            if x == 0 or x == len(self.wavenumber_array):
-                D = self._compute_dm(x)
-                M = np.matmul(M,D)
-                continue
-            else:
-                D = self._compute_dm(x)
-                P = self._compute_pm(x)
-                M = np.matmul(M,D)
-                M = np.matmul(M,P)
+            for y in range(len(self.number_of_layers)):
+                if x == 0 or x == len(self.wavenumber_array):
+                    D = self._compute_dm(x,y)
+                    M = np.matmul(M,D)
+                    
+                    
                 
 
         print("can _compute_tm() see the _k0_array?", self._k0_array)
         
     
-    def _compute_pm(self, idx):
-        """ compute the P matrices for each intermediate-layer layer and wavelength
-        
-            Attributes
-            ----------
-                thickness_array
-                
-                _kz_array
-                
-                _pm
-                
 
-                
-            Returns
-            -------
-            None
-        """
-
-        P = np.zeros((2,2),dtype=complex)
-        ci = 0+1j
-
-        a = -1*ci*self._kxz_array[idx] * self.thickness_array[idx]
-        b = ci*self._kxz_array[idx] * self.thickness_array[idx]
-
-        P[0][1] = 0+0j
-        P[1][0] = 0+0j
-        P[0][0] = np.exp(a)
-        P[1][1] = np.exp(b)
-        print(P)
-        return P
-             
-        pass
     
-    def _compute_dm(self,idx):
+    def _compute_dm(self,idx, num_layers):
         
         """ compute the D and D_inv matrices for each layer and wavelength
         
@@ -259,35 +225,82 @@ class TmmDriver(SpectrumDriver):
             -------
             None
         """
-        D = np.zeros((2,2),dtype=complex)
-        if (self.polarization == "s"):
-            D[0][0] = 1.+0j
-            D[0][1] = 1.+0j
-            D[1][0] = self.incident_angle*self._refractive_index_array[idx]
-            D[1][1] = -1*self.incident_angle*self._refractive_index_array[idx]
+        M = np.linalg.eye((2,2),dtype=complex)
+        for i in range(len(num_layers)):
 
 
-        elif (self.polarization == "p"):
-            D[0][0] = self.incident_angle+0j
-            D[0][1] = self.incident_angle+0j
-            D[1][0] = self.refractive_index_array[idx]
-            D[1][1] = -1*self.refractive_index_array[idx]
+            D = np.zeros((2,2),dtype=complex)
+            if (self.polarization == "s"):
+                D[0][0] = 1.+0j
+                D[0][1] = 1.+0j
+                D[1][0] = np.cos(self.incident_angle)*self._refractive_index_array[idx][i]
+                D[1][1] = -1*np.cos(self.incident_angle)*self._refractive_index_array[idx][i]
 
-        else:
-            
-            print("needs polarization s or p")
 
-        print(D)
-        if idx == 0:
-            return np.linalg.inv(D)
+            elif (self.polarization == "p"):
+                D[0][0] = np.cos(self.incident_angle+0j)
+                D[0][1] = np.cos(self.incident_angle+0j)
+                D[1][0] = self.refractive_index_array[idx][i]
+                D[1][1] = -1*self.refractive_index_array[idx][i]
+
+            else:
+                
+                print("needs polarization s or p")
+            D_inv = 1/((D[0][0]*D[1][1])-(D[0][1]*D[1][0]))
+            print(D)
+        '''if idx == 0:
+            det = D_inv
+            #return np.linalg.inv(D)
+            # Test manual inverse
         elif idx == len(self.wavenumber_array):
             return D
         else:
-            D = np.matmul(D,np.linalg.inv(D))
+            #D = np.matmul(D,np.linalg.inv(D))
+            D = np.matmul(D,det)
             return D
+        '''
+        P = _compute_pm(idx, i)
+        
+        if idx == 0:
+            return D_inv
+
+        elif idx == len(self.wavenumber_array):
+            return D
+        else:
+            inner = np.dot(D_inv,np.dot(D, P))
+            return inner
+        
 
 
 
+    def _compute_pm(self, idx, i):
+        """ compute the P matrices for each intermediate-layer layer and wavelength
+        
+            Attributes
+            ----------
+                thickness_array
+                
+                _kz_array
+                
+                _pm
+                
 
-        pass
+                
+            Returns
+            -------
+            None
+        """
 
+        P = np.zeros((2,2),dtype=complex)
+        ci = 0+1j
+
+        a = -1*ci*self._kxz_array[idx] * self.thickness_array[idx][i]
+        b = ci*self._kxz_array[idx] * self.thickness_array[idx][i]
+
+        P[0][1] = 0+0j
+        P[1][0] = 0+0j
+        P[0][0] = np.exp(a)
+        P[1][1] = np.exp(b)
+        print(P)
+        return P
+             
