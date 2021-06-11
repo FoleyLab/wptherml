@@ -290,6 +290,7 @@ class MieDriver(SpectrumDriver):
         _d_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
         
         self._dn = _d_numerator / _d_denominator
+        return [self._an,self._bn,self._cn,self._dn]
         
     def compute_q_scattering(self):
         """ computes the scattering efficiency from the mie coefficients
