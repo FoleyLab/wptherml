@@ -1,8 +1,8 @@
 wpspecdev
 ==============================
 [//]: # (Badges)
-[![GitHub Actions Build Status](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/workflows/CI/badge.svg)](https://github.com/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/branch/master/graph/badge.svg)](https://codecov.io/gh/REPLACE_WITH_OWNER_ACCOUNT/wpspecdev/branch/master)
+[![GitHub Actions Build Status](https://github.com/FoleyLab/wpspecdev/workflows/CI/badge.svg)](https://github.com/FoleyLab/wpspecdev/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/FoleyLab/wpspecdev/branch/master/graph/badge.svg)](https://codecov.io/gh/FoleyLab/wpspecdev/branch/master)
 
 
 A python package for modeling light-matter interactions!  Lots of possibilities!

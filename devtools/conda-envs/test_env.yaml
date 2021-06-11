@@ -14,7 +14,12 @@ dependencies:
   - pytest-cov
   - codecov
 
+
+    # Package-dependencies
+  - numpy 
+  - matplotlib
+  - scipy
+
     # Pip-only installs
   #- pip:
   #  - codecov
-

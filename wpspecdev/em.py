@@ -99,6 +99,7 @@ class TmmDriver(SpectrumDriver):
         self._refractive_index_array = np.reshape(np.tile(np.array([1+0j, 1.5+0j, 1+0j]), self.number_of_wavelengths), 
                                                   (self.number_of_wavelengths, self.number_of_layers)) 
         
+        
 
 
     def compute_spectrum(self):
@@ -156,7 +157,10 @@ class TmmDriver(SpectrumDriver):
         # with all of these formed, you can now call _compute_tm()
         self._tm = self._compute_tm()
         
+    
+    def _compute_kz(self):
         
+        self._kz_array = np.sqrt((ml._refractive_index_array * ml._k0_array[:, np.newaxis])**2 - ml._kx_array[:,np.newaxis]**2)
     
     def _compute_tm(self):
         """ compute the transfer matrix for each wavelength
@@ -199,6 +203,7 @@ class TmmDriver(SpectrumDriver):
                 
 
         print("can _compute_tm() see the _k0_array?", self._k0_array)
+        print("can _compute_tm() see the _kz_array?", self._kz_array)
         
     
 
