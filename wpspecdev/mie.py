@@ -295,8 +295,20 @@ class MieDriver(SpectrumDriver):
         self._dn = _d_numerator / _d_denominator
         return [self._an,self._bn,self._cn,self._dn]
         
-    def compute_q_scattering(self):
+    def _compute_q_scattering(self, m, mu, x):
         """ computes the scattering efficiency from the mie coefficients
+ 
+            Parameters
+            ----------
+            m : complex float
+                relative refractive index of the sphere
+
+            mu : float
+                relative permeability of the sphere
+     
+            x : float
+                size parameter of the sphere, defined as 2 * pi * r / lambda
+                where r is the radius of the sphere and lambda is the wavelength of illumination
            
             Attributes
             -------
@@ -304,12 +316,26 @@ class MieDriver(SpectrumDriver):
             
             Returns
             -------
-            None
+            q_scat
 
         """
+        return 'replace_w_q_scat'
         
-    def compute_q_extinction(self):
+    def _compute_q_extinction(self, m, mu, x):
         """ computes the extinction efficiency from the mie coefficients
+           
+            Parameters
+            ----------
+
+            m : complex float
+                relative refractive index of the sphere
+
+            mu : float
+                relative permeability of the sphere
+     
+            x : float
+                size parameter of the sphere, defined as 2 * pi * r / lambda
+                where r is the radius of the sphere and lambda is the wavelength of illumination
            
             Attributes
             -------
@@ -317,9 +343,11 @@ class MieDriver(SpectrumDriver):
             
             Returns
             -------
-            None
+            q_ext
 
         """
+        return 'replace_with_q_ext'
+
     def _compute_n_array(self, x):
         _n_max = int(x + 4*x**(1/3.)+2)
         self._n_array = np.copy( np.linspace(1, _n_max, _n_max, dtype=int) )
