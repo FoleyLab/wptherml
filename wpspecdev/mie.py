@@ -319,7 +319,23 @@ class MieDriver(SpectrumDriver):
             q_scat
 
         """
-        return 'replace_w_q_scat'
+        c = self._compute_mie_coeffients(m, mu, x)
+        an = c[0]
+        bn = c[1]
+
+        for n in range(1, self._n_array):
+            ### mie_coeff function returns an array of 
+            ### mie coefficients for a given order n, relative refractive index m,
+            ### relative permeability mu, and size parameter x
+            c = mie_coeff(m, mu, x)
+            ### a_n is the 0th element of c
+            an = c[0]
+            ### b)n is the 1st element of c
+            bn = c[1]
+
+            q_sca = q_sca + 2/x**2 * (2*n + 1) * (np.abs(an)**2 + np.abs(bn)**2)
+    
+        return q_sca
         
     def _compute_q_extinction(self, m, mu, x):
         """ computes the extinction efficiency from the mie coefficients
@@ -346,7 +362,19 @@ class MieDriver(SpectrumDriver):
             q_ext
 
         """
-        return 'replace_with_q_ext'
+
+        c = self._compute_mie_coeffients(m, mu, x)
+        an = c[0]
+        bn = c[1]
+
+        for n in range(1, self._n_array):
+            c = mie_coeff(m, mu, x)
+            an = c[0]
+            bn = c[1]
+        
+            q_ext = q_ext + 2/x**2 * (2*n+1) * np.real(an + bn)
+
+        return q_ext
 
     def _compute_n_array(self, x):
         _n_max = int(x + 4*x**(1/3.)+2)
