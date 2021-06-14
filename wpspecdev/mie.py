@@ -323,19 +323,14 @@ class MieDriver(SpectrumDriver):
         an = c[0]
         bn = c[1]
 
-        for n in range(1, self._n_array):
-            ### mie_coeff function returns an array of 
-            ### mie coefficients for a given order n, relative refractive index m,
-            ### relative permeability mu, and size parameter x
-            c = mie_coeff(m, mu, x)
-            ### a_n is the 0th element of c
-            an = c[0]
-            ### b)n is the 1st element of c
-            bn = c[1]
-
-            q_sca = q_sca + 2/x**2 * (2*n + 1) * (np.abs(an)**2 + np.abs(bn)**2)
+        q_scat = 0.
+        for i in range(0, len(an)):
+            # n is i + 1 
+            # because i indexes the arrays, n is the multipole order
+            n = i + 1
+            q_scat = q_scat + 2/x**2 * (2*n + 1) * (np.abs(an[i])**2 + np.abs(bn[i])**2)
     
-        return q_sca
+        return q_scat
         
     def _compute_q_extinction(self, m, mu, x):
         """ computes the extinction efficiency from the mie coefficients
@@ -367,12 +362,12 @@ class MieDriver(SpectrumDriver):
         an = c[0]
         bn = c[1]
 
-        for n in range(1, self._n_array):
-            c = mie_coeff(m, mu, x)
-            an = c[0]
-            bn = c[1]
-        
-            q_ext = q_ext + 2/x**2 * (2*n+1) * np.real(an + bn)
+        q_ext = 0
+        for i in range(0, len(an)):
+            # n is i + 1 
+            # because i indexes the arrays, n is the multipole order
+            n = i + 1        
+            q_ext = q_ext + 2/x**2 * (2*n+1) * np.real(an[i] + bn[i])
 
         return q_ext
 
