@@ -1,9 +1,10 @@
 from .spectrum_driver import SpectrumDriver
+from .materials import Materials
 import numpy as np
 
 
 
-class TmmDriver(SpectrumDriver):
+class TmmDriver(SpectrumDriver, Materials):
     """ Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
     
         Attributes
