@@ -4,9 +4,9 @@ from scipy.special import spherical_yn
 from scipy.special import jv
 from scipy.special import yv
 from .spectrum_driver import SpectrumDriver
+from .materials import Materials
 
-
-class MieDriver(SpectrumDriver):
+class MieDriver(SpectrumDriver, Materials):
     """ Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
 
         Attributes
