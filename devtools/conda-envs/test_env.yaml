@@ -19,7 +19,6 @@ dependencies:
   - numpy 
   - matplotlib
   - scipy
-  - os
   
     # Pip-only installs
   #- pip:
