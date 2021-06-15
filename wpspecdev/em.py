@@ -100,7 +100,33 @@ class TmmDriver(SpectrumDriver, Materials):
         self._refractive_index_array = np.reshape(np.tile(np.array([1+0j, 1.5+0j, 1+0j]), self.number_of_wavelengths), 
                                                   (self.number_of_wavelengths, self.number_of_layers)) 
         
-        
+    def parse_input(self, args):
+        if 'wavelength_list' in args:
+            lamlist = args['wavelength_list']
+            self.wavelength_array = np.linspace(lamlist[0],lamlist[1],int(lamlist[2]))
+            self.number_of_wavelengths = int(lamlist[2])
+        else:
+            self.wavelength_array = np.linspace(400e-9,800e-9,10)
+            self.number_of_wavelengths = 10
+
+        if 'thickness_list' in args:
+            self.thickness_array = args['thickness_list']
+        ### default structure
+        else:
+            print("  Thickness array not specified!")
+            print("  Proceeding with default structure - optically thick W! ")
+            self.thickness_array = [0, 900e-9, 0]
+            self.material_array = ['Air', 'SiO2', 'Air']
+
+        if 'material_list' in args:
+            self.material_array = args['material_list']
+        else:
+            print("  Material array not specified!")
+            print("  Proceeding with default structure - optically thick W! ")
+            self.thickness_array = [0, 900e-9, 0]
+            self.material_array = ['Air', 'SiO2', 'Air']
+
+
 
 
     def compute_spectrum(self):
