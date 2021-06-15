@@ -1,11 +1,9 @@
 import wpspecdev
+import numpy as np
 
-mdf = wpspecdev.SpectrumFactory()
-md = mdf.spectrum_factory('Tmm', 100e-9)
-print(md.thickness)
-print(md.number_of_wavelengths)
-print(md._refractive_index_array[1,3])
-print(md.compute_spectrum())
+thickness = 100e-9
 
-
-
+sf = wpspecdev.SpectrumFactory()
+mt = sf.spectrum_factory('Tmm', thickness)
+mt.material_sio2(1)
+print(mt._refractive_index_array[:,1])
