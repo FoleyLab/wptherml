@@ -82,6 +82,11 @@ class Materials():
 
             self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)   
 
+    def material_static_refractive_index(self, layer_number, refractive_index):
+        if layer_number>0 and layer_number<(self.number_of_layers-1):
+            self._refractive_index_array[:,layer_number] = np.ones(len(self.wavelength_array), dtype=complex) * refractive_index
+
+
     def material_Al(self, layer_number):
         if layer_number>0 and layer_number<(self.number_of_layers-1):
             # get path to the Al data file
