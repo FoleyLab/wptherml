@@ -82,13 +82,13 @@ def test_material_tin():
 
 
 def test_material_ag():
-    """ tests material_Ag method using tabulated n and k at lambda=300 nm 
+    """ tests material_Ag method using tabulated n and k at lambda=709 nm 
         7.099e-07 0.0670800 4.7460000"""
 
     expected_n = 0.0670800
     expected_k = 4.7460000
   
-    # create test multilayer that has 3 layers and wavelength array centered at 636 nm 
+    # create test multilayer that has 3 layers and wavelength array centered at 709 nm 
     material_test._create_test_multilayer(central_wavelength=7.099e-07)
     # define central layer as Ag
     material_test.material_Ag(1)
@@ -106,10 +106,29 @@ def test_material_au():
     expected_n = 1.5261699418534376 
     expected_k = 1.8879286775238424
   
-    # create test multilayer that has 3 layers and wavelength array centered at 636 nm 
+    # create test multilayer that has 3 layers and wavelength array centered at 300 nm 
     material_test._create_test_multilayer(central_wavelength=3.00128e-07)
     # define central layer as Au
     material_test.material_Au(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1]) 
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+
+
+def test_material_Polystyrene():
+    """ tests material_Polystyrene method using tabulated n and k at lambda=606 nm 
+        6.06E-06	1.58	0.002"""
+
+    expected_n = 1.58
+    expected_k = 0.002
+  
+    # create test multilayer that has 3 layers and wavelength array centered at 606 nm 
+    material_test._create_test_multilayer(central_wavelength=6.06E-06)
+    # define central layer as Au
+    material_test.material_Polystyrene(1)
 
     result_n = np.real(material_test._refractive_index_array[1,1])
     result_k = np.imag(material_test._refractive_index_array[1,1]) 
