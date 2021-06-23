@@ -122,6 +122,12 @@ class Materials():
             # get path to the Platinum data file
             file_path = path + 'data/Pt.txt'
             # now read Platinum data into a numpy array
+            file_data = np.loadtxt(file_path)
+            n_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,1], k=1)
+            k_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,2], k=1)
+
+
+            self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)     
 
     def material_AlN(self, layer_number):
         if layer_number>0 and layer_number<(self.number_of_layers-1):
@@ -145,6 +151,8 @@ class Materials():
             # get path to the Lead data file
             file_path = path + 'data/Pb.txt'
             # now read Lead data into a numpy array
+            n_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,1], k=1)
+            k_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,2], k=1)   
 
             self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)   
 
@@ -177,7 +185,5 @@ class Materials():
             n_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,1], k=1)
             k_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,2], k=1)
 
-            self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)      
-
-            self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)   
+            self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)        
 
