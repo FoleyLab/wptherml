@@ -151,6 +151,7 @@ class Materials():
             # get path to the Lead data file
             file_path = path + 'data/Pb.txt'
             # now read Lead data into a numpy array
+            file_data = np.loadtxt(file_path)
             n_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,1], k=1)
             k_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,2], k=1)   
 
