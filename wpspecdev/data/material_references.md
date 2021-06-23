@@ -11,4 +11,6 @@
 |Tungsten/W|	W.txt|	M. A. Ordal, R. J. Bell, R. W. Alexander, L. A. Newquist, M. R. Querry. Optical properties of Al, Fe, Ti, Ta, W, and Mo at submillimeter wavelengths, Appl. Opt. 27, 1203-1209 (1988)|0.667-200 Micrometer|
 |Aluminium nitride/AlN	|AlN.txt|-J. Kischkat, S. Peters, B. Gruska, M. Semtsiv, M. Chashnikova, M. Klinkmüller, O. Fedosenko, S. Machulik, A. Aleksandrova, G. Monastyrskyi, Y. Flores, and W. T. Masselink. Mid-infrared optical properties of thin films of aluminum oxide, titanium dioxide, silicon dioxide, aluminum nitride, and silicon nitride, Appl. Opt. 51, 6789-6798 (2012) (Numerical data kindly provided by Jan Kischkat)|1.54-14.29 Micrometer|
 |Hafnium dioxide/HfO2|HfO2.txt||M. F. Al-Kuhaili. Optical properties of hafnium oxide thin films and their application in energy-efficient windows. Opt. Mat. 27, 383-387 (2004)|0.2-2 micrometers|
-
+|Platinum/Pt | Pt_txt | A. D. Rakić, A. B. Djurišic, J. M. Elazar, and M. L. Majewski. Optical properties of metallic films for vertical-cavity optoelectronic devices, Appl. Opt. 37, 5271-5283 (1998)
+|Lead/Pb | Pb_txt | W. S. M. Werner, K. Glantschnig, C. Ambrosch-Draxl. Optical constants and inelastic electron-scattering data for 17 elemental metals, J. Phys Chem Ref. Data 38, 1013-1092 (2009)
+|Rhenium/Re| Re_txt | E. D. Palik, "Handbook of optical constants of solids" (Academic Press, 1998) |
