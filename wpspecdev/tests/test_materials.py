@@ -210,3 +210,55 @@ def test_material_Re():
 
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
+
+def test_material_Rh():
+    """ tests material_Rh method using tabulated n and k at lambda=564 nm 
+       5.636E-07	2	5.11			 """
+
+    expected_n = 2
+    expected_k = 5.11
+    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
+    material_test._create_test_multilayer(central_wavelength= 5.636E-07)
+    # define central layer as Rh
+    material_test.material_Rh(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1])
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+
+def test_material_Ru():
+    """ tests material_Ru method using tabulated n and k at lambda=539 nm 
+       5.391E-08	0.782	0.73		 """
+
+    expected_n = 0.782
+    expected_k = 0.73
+    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
+    material_test._create_test_multilayer(central_wavelength= 5.391E-08)
+    # define central layer as Ru
+    material_test.material_Ru(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1])
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+
+def test_material_Si():
+    """ tests material_Si method using tabulated n and k at lambda=85 nm 
+       0.00000085	3.636	3.46E-03			 """
+
+    expected_n = 3.636
+    expected_k = 3.46E-03
+    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
+    material_test._create_test_multilayer(central_wavelength= 0.00000085)
+    # define central layer as Si
+    material_test.material_Si(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1])
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+
