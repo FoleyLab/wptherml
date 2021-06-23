@@ -80,18 +80,6 @@ def test_material_tin():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
-
-def test_material_Pt():
-    """ tests material_Pt method using tabulated n and k at lambda=610 nm 
-        6.1096e-06 5.4685e+00 2.4477e+01 """
-
-    expected_n = 5.4685e+00
-    expected_k = 2.4477e+01 
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
-    material_test._create_test_multilayer(central_wavelength= 6.1096e-06)
-    # define central layer as Pt
-    material_test.material_Pt(1)
-
 def test_material_Al():
     """ tests material_Al method using tabulated n and k at lambda=206.64 nm 
         2.06640E-07	1.26770E-01	2.35630E+00 """
@@ -125,24 +113,11 @@ def test_material_W():
     # define central layer as W
     material_test.material_W(1)
 
-
     result_n = np.real(material_test._refractive_index_array[1,1])
     result_k = np.imag(material_test._refractive_index_array[1,1])
 
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
-
-
-def test_material_Pb():
-    """ tests material_Pb method using tabulated n and k at lambda=605nm 
-       0.0000605	0.7928	0.6622		 """
-
-    expected_n = 0.7928
-    expected_k = 0.6622	
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
-    material_test._create_test_multilayer(central_wavelength= 0.0000605)
-    # define central layer as Pb
-    material_test.material_Pb(1)
 
 
 def test_material_AlN():
@@ -159,24 +134,11 @@ def test_material_AlN():
     # define central layer as AlN
     material_test.material_AlN(1)
 
-
     result_n = np.real(material_test._refractive_index_array[1,1])
     result_k = np.imag(material_test._refractive_index_array[1,1])
 
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
-
-
-def test_material_Re():
-    """ tests material_Re method using tabulated n and k at lambda=1106 nm 
-       0.00066	3.525691261	2.530539094			 """
-
-    expected_n = 3.525691261
-    expected_k = 2.530539094
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
-    material_test._create_test_multilayer(central_wavelength= 0.00066)
-    # define central layer as Re
-    material_test.material_Re(1)
 
 
 def test_material_HfO2():
@@ -192,6 +154,22 @@ def test_material_HfO2():
     # define central layer as HfO2
     material_test.material_HfO2(1)
 
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1])
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+
+def test_material_Pt():
+    """ tests material_Pt method using tabulated n and k at lambda=610 nm 
+        6.1096e-06 5.4685e+00 2.4477e+01 """
+
+    expected_n = 5.4685e+00
+    expected_k = 2.4477e+01 
+    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
+    material_test._create_test_multilayer(central_wavelength= 6.1096e-06)
+    # define central layer as Pt
+    material_test.material_Pt(1)
 
     result_n = np.real(material_test._refractive_index_array[1,1])
     result_k = np.imag(material_test._refractive_index_array[1,1])
@@ -199,3 +177,36 @@ def test_material_HfO2():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
+def test_material_Pb():
+    """ tests material_Pb method using tabulated n and k at lambda=605nm 
+       0.0000605	0.7928	0.6622		 """
+
+    expected_n = 0.7928
+    expected_k = 0.6622	
+    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
+    material_test._create_test_multilayer(central_wavelength= 0.0000605)
+    # define central layer as Pb
+    material_test.material_Pb(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1])
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+
+def test_material_Re():
+    """ tests material_Re method using tabulated n and k at lambda=1106 nm 
+       0.00066	3.525691261	2.530539094			 """
+
+    expected_n = 3.525691261
+    expected_k = 2.530539094
+    # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
+    material_test._create_test_multilayer(central_wavelength= 0.00066)
+    # define central layer as Re
+    material_test.material_Re(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1])
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
