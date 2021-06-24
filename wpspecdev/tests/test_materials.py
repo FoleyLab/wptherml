@@ -80,6 +80,25 @@ def test_material_tin():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
+
+def test_material_ag():
+    """ tests material_Ag method using tabulated n and k at lambda=300 nm 
+        3.00128e-07	1.3443610273525322	0.9839804733145654"""
+
+    expected_n = 1.3443610273525322
+    expected_k = 0.9839804733145654
+  
+    # create test multilayer that has 3 layers and wavelength array centered at 709 nm 
+    material_test._create_test_multilayer(central_wavelength=3.00128e-07)
+    # define central layer as Ag
+    material_test.material_Ag(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1]) 
+    
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+    
 def test_material_Al():
     """ tests material_Al method using tabulated n and k at lambda=206.64 nm 
         2.06640E-07	1.26770E-01	2.35630E+00 """
@@ -160,6 +179,25 @@ def test_material_HfO2():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
+
+def test_material_au():
+    """ tests material_Au method using tabulated n and k at lambda=300 nm 
+        3.00128e-07 1.5261699418534376 1.8879286775238424"""
+
+    expected_n = 1.5261699418534376 
+    expected_k = 1.8879286775238424
+  
+    # create test multilayer that has 3 layers and wavelength array centered at 300 nm 
+    material_test._create_test_multilayer(central_wavelength=3.00128e-07)
+    # define central layer as Au
+    material_test.material_Au(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1]) 
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+    
 def test_material_Pt():
     """ tests material_Pt method using tabulated n and k at lambda=610 nm 
         6.1096e-06 5.4685e+00 2.4477e+01 """
@@ -174,9 +212,27 @@ def test_material_Pt():
     result_n = np.real(material_test._refractive_index_array[1,1])
     result_k = np.imag(material_test._refractive_index_array[1,1])
 
+
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
+def test_material_al203():
+    """ tests material_Au method using tabulated n and k at lambda=500 nm 
+        5.00E-07	1.74007	0"""
+
+    expected_n = 1.74007
+    expected_k = 0
+  
+    # create test multilayer that has 3 layers and wavelength array centered at 500 nm 
+    material_test._create_test_multilayer(central_wavelength=5.00E-07)
+    # define central layer as Au
+    material_test.material_Al2O3(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1])
+    
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
 def test_material_Pb():
     """ tests material_Pb method using tabulated n and k at lambda=605nm 
        0.0000605	0.7928	0.6622		 """
@@ -208,9 +264,31 @@ def test_material_Re():
     result_n = np.real(material_test._refractive_index_array[1,1])
     result_k = np.imag(material_test._refractive_index_array[1,1])
 
+
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
+
+
+def test_material_Polystyrene():
+    """ tests material_Polystyrene method using tabulated n and k at lambda=500 nm 
+        0.0000005	1.60021	6.11E-07"""
+
+    expected_n = 1.60021
+    expected_k = 6.11E-07
+  
+    # create test multilayer that has 3 layers and wavelength array centered at 500 nm 
+    material_test._create_test_multilayer(central_wavelength=0.0000005)
+    # define central layer as Au
+    material_test.material_Polystyrene(1)
+
+    result_n = np.real(material_test._refractive_index_array[1,1])
+    result_k = np.imag(material_test._refractive_index_array[1,1]) 
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+    
+    
 def test_material_Rh():
     """ tests material_Rh method using tabulated n and k at lambda=564 nm 
        5.636E-07	2	5.11			 """
