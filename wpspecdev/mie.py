@@ -92,13 +92,24 @@ class MieDriver(SpectrumDriver, Materials):
         else:
             self.wavelength_array = np.linspace(400e-9,800e-9,10)
             self.number_of_wavelengths = 10
-        
-        # hard-code the RI data
-        self.sphere_refractive_index_array = (1.5+0j) * np.ones(self.number_of_wavelengths)
-        self._medium_refractive_index = 1.0+0j
-        self._relative_refractive_index_array = self.sphere_refractive_index_array / self._medium_refractive_index
+
+        if 'sphere_refractive_index' in args:
+            self._sphere_refractive_index_array = args['sphere_refractive_index'] * np.ones(self.number_of_wavelengths)
+        else:
+            self._sphere_refractive_index_array = (1.5+0j) * np.ones(self.number_of_wavelengths)
+        if 'medium_refractive_index' in args:
+            self._medium_refractive_index = args['medium_refractive_index']
+        else:
+            self._medium_refractive_index = 1.0+0j
+
+        self._relative_refractive_index_array = self._sphere_refractive_index_array / self._medium_refractive_index
         self._relative_permeability = 1.0+0j
         self._size_factor_array = np.pi * 2 * self.radius / self.wavelength_array
+
+        self.q_ext = np.zeros_like(self.wavelength_array)
+        self.q_scat = np.zeros_like(self.wavelength_array)
+        self.q_abs = np.zeros_like(self.wavelength_array)
+
         
         
     def compute_spectrum(self):
@@ -115,8 +126,17 @@ class MieDriver(SpectrumDriver, Materials):
             TBD
             
         """
+        for i in range(0, len(self.wavelength_array)):
+            # get Mie coefficients... stored in attriubutes
+            m_val = self._relative_refractive_index_array[i]
+            mu_val = self._relative_permeability
+            x_val = self._size_factor_array[i]
+            self._compute_mie_coeffients(m_val, mu_val, x_val)
 
-        pass
+            # compute q_scat
+            self.q_scat[i] = self._compute_q_scattering(x_val)
+            self.q_ext[i] = self._compute_q_extinction(x_val)
+        
     
     def _compute_s_jn(self, n, z):
         """ Compute the spherical bessel function from the Bessel function
@@ -293,9 +313,9 @@ class MieDriver(SpectrumDriver, Materials):
         _d_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
         
         self._dn = _d_numerator / _d_denominator
-        return [self._an,self._bn,self._cn,self._dn]
+        #return [self._an,self._bn,self._cn,self._dn]
         
-    def _compute_q_scattering(self, m, mu, x):
+    def _compute_q_scattering(self, x):
         """ computes the scattering efficiency from the mie coefficients
  
             Parameters
@@ -319,9 +339,9 @@ class MieDriver(SpectrumDriver, Materials):
             q_scat
 
         """
-        c = self._compute_mie_coeffients(m, mu, x)
-        an = c[0]
-        bn = c[1]
+        #c = self._compute_mie_coeffients(m, mu, x)
+        an = self._an
+        bn = self._bn
 
         q_scat = 0.
         for i in range(0, len(an)):
@@ -332,7 +352,7 @@ class MieDriver(SpectrumDriver, Materials):
     
         return q_scat
         
-    def _compute_q_extinction(self, m, mu, x):
+    def _compute_q_extinction(self, x):
         """ computes the extinction efficiency from the mie coefficients
            
             Parameters
@@ -358,9 +378,9 @@ class MieDriver(SpectrumDriver, Materials):
 
         """
 
-        c = self._compute_mie_coeffients(m, mu, x)
-        an = c[0]
-        bn = c[1]
+        #c = self._compute_mie_coeffients(m, mu, x)
+        an = self._an 
+        bn = self._bn
 
         q_ext = 0
         for i in range(0, len(an)):
