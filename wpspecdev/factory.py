@@ -1,20 +1,21 @@
 from .spectrum_driver import SpectrumDriver
+
 # child classes
 from .mie import MieDriver
 from .em import TmmDriver
 
+
 class SpectrumFactory:
     def spectrum_factory(self, spectrum_toolkit, size):
-        if spectrum_toolkit == 'Mie':
+        if spectrum_toolkit == "Mie":
             return MieDriver(size)
-        elif spectrum_toolkit == 'Tmm':
+        elif spectrum_toolkit == "Tmm":
             return TmmDriver(size)
         else:
-            raise TypeError('Toolkit not found')
+            raise TypeError("Toolkit not found")
 
 
-
-'''class SpectrumFactory:
+"""class SpectrumFactory:
     _toolkits = {}
 
     def spectrum_factory(self, spectrum_toolkit, size):
@@ -27,4 +28,4 @@ class SpectrumFactory:
         if not issubclass(toolkit_class, SpectrumAdapter):
             raise TypeError(f'{toolkit_class} is not a SpectrumAdapter')
         self._toolkits[toolkit_name] = toolkit_class
-'''
+"""
