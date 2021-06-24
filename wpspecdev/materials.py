@@ -202,7 +202,7 @@ class Materials():
             k_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,2], k=1)
 
             self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)     
-    """
+    
     def material_Ru(self, layer_number):
         if layer_number>0 and layer_number<(self.number_of_layers-1):
             self._refractive_index_array[:,layer_number] = np.ones(len(self.wavelength_array), dtype=complex) * 2.4
@@ -217,7 +217,7 @@ class Materials():
             k_spline = InterpolatedUnivariateSpline(file_data[:,0], file_data[:,2], k=1)
 
             self._refractive_index_array[:,layer_number] = n_spline(self.wavelength_array) + 1j * k_spline(self.wavelength_array)
-    """
+    
 
     def material_Si(self, layer_number):
         if layer_number>0 and layer_number<(self.number_of_layers-1):
