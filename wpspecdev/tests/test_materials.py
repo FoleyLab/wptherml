@@ -229,14 +229,14 @@ def test_material_Rh():
     assert np.isclose(result_k, expected_k, 1e-3)
     
 
-#def test_material_Ru():
-    """ tests material_Ru method using tabulated n and k at lambda=539 nm 
-       5.391E-08	0.782	0.73	
+def test_material_Ru():
+    """ tests material_Ru method using tabulated n and k at lambda=750 nm 
+       0.0000007508  5.1101514677  4.1107371518 """	
 
-    expected_n = 0.782
-    expected_k = 0.73
+    expected_n = 5.1101514677
+    expected_k = 4.1107371518
     # create test multilayer that has 3 layers and wavelength array centered at 664 nm 
-    material_test._create_test_multilayer(central_wavelength= 5.391E-08)
+    material_test._create_test_multilayer(central_wavelength= 0.0000007508)
     # define central layer as Ru
     material_test.material_Ru(1)
 
@@ -245,7 +245,7 @@ def test_material_Rh():
 
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
-    """
+ 
 
 def test_material_Si():
     """ tests material_Si method using tabulated n and k at lambda=85 nm 
