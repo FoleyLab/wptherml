@@ -89,7 +89,7 @@ class Materials():
         if layer_number>0 and layer_number<(self.number_of_layers-1):
             self._refractive_index_array[:,layer_number] = np.ones(len(self.wavelength_array), dtype=complex) * 2.4
             # get path to the Ag data file
-            file_path = path + 'data/Ag_Yang.txt'
+            file_path = path + 'data/Ag_ri.txt'
             # now read Ag data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -105,7 +105,7 @@ class Materials():
         if layer_number>0 and layer_number<(self.number_of_layers-1):
             self._refractive_index_array[:,layer_number] = np.ones(len(self.wavelength_array), dtype=complex) * 2.4
             # get path to the AU data file
-            file_path = path + 'data/Au_JC_RI_f.txt'
+            file_path = path + 'data/Au_ri.txt'
             # now read Au data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters

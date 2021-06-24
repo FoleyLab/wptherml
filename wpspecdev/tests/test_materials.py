@@ -82,14 +82,14 @@ def test_material_tin():
 
 
 def test_material_ag():
-    """ tests material_Ag method using tabulated n and k at lambda=709 nm 
-        7.099e-07 0.0670800 4.7460000"""
+    """ tests material_Ag method using tabulated n and k at lambda=300 nm 
+        3.00128e-07	1.3443610273525322	0.9839804733145654"""
 
-    expected_n = 0.0670800
-    expected_k = 4.7460000
+    expected_n = 1.3443610273525322
+    expected_k = 0.9839804733145654
   
     # create test multilayer that has 3 layers and wavelength array centered at 709 nm 
-    material_test._create_test_multilayer(central_wavelength=7.099e-07)
+    material_test._create_test_multilayer(central_wavelength=3.00128e-07)
     # define central layer as Ag
     material_test.material_Ag(1)
 
