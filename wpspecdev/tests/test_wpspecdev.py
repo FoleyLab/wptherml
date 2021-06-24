@@ -51,12 +51,15 @@ def test_compute_mie_coefficients():
  0.05915672+2.56557430e-12j] )
     check_lst = [expected_an, expected_bn, expected_cn, expected_dn]
     #for i in check_lst:
-    result = mietest._compute_mie_coeffients(mietest._relative_refractive_index_array, mietest._relative_permeability, mietest._size_factor_array)
-    print(result[0],'\n'*3)
-    assert np.allclose(result[0], expected_an, 1e-5)
-    assert np.allclose(result[1], expected_bn, 1e-5)
-    assert np.allclose(result[2], expected_cn, 1e-5)
-    assert np.allclose(result[3], expected_dn, 1e-5)
+    m_val = mietest._relative_refractive_index_array[0]
+    mu_val = mietest._relative_permeability
+    x_val = mietest._size_factor_array[0]
+
+    mietest._compute_mie_coeffients(m_val, mu_val, x_val)
+    assert np.allclose(mietest._an, expected_an, 1e-5)
+    assert np.allclose(mietest._bn, expected_bn, 1e-5)
+    assert np.allclose(mietest._cn, expected_cn, 1e-5)
+    assert np.allclose(mietest._dn, expected_dn, 1e-5)
         
     
 def test_compute_s_jn():
@@ -111,7 +114,7 @@ def test_compute_q_scattering():
 
     expected_result = 0.4541540910257134
 
-    result = mietest._compute_q_scattering(1.5, 1.0,  mietest._size_factor_array[0])
+    result = mietest._compute_q_scattering(mietest._size_factor_array[0])
     assert np.isclose(result, expected_result, 1e-5)
 
 
@@ -120,5 +123,5 @@ def test_compute_q_extinction():
 
     expected_result = 0.4541540910257134
     
-    result = mietest._compute_q_extinction(1.5, 1.0,  mietest._size_factor_array[0])
+    result = mietest._compute_q_extinction(mietest._size_factor_array[0])
     assert np.isclose(result, expected_result, 1e-5)

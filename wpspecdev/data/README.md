@@ -10,6 +10,8 @@ as the `git` structure is unable to correctly take updates to these files and wi
 in your `git` history which can quickly add up. As a note most `git` hosting services like GitHub have a 1 GB per repository
 cap.
 
+:)
+
 ## Including package data
 
 Modify your package's `setup.py` file and the `setup()` command. Include the 
