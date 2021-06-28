@@ -48,12 +48,12 @@ def test_material_tio2():
 
 def test_material_ta2o5():
     """tests material_Ta2O5 method using tabulated n and k at lambda=667 nm:
-    6.6782e-07 2.1137e+00 1.0506e-03"""
-    expected_n = 2.1137e00
-    expected_k = 1.0506e-03
+    6.7862E-07      2.0865E+00      6.1200E-03"""
+    expected_n = 2.0865E+00
+    expected_k = 6.1200E-03
 
     # create test multilayer that has 3 layers and wavelength array centered at 647 nm
-    material_test._create_test_multilayer(central_wavelength=6.6782e-07)
+    material_test._create_test_multilayer(central_wavelength=6.7862E-07)
     # define central layer as Ta2O5
     material_test.material_Ta2O5(1)
 
@@ -219,7 +219,7 @@ def test_material_pt():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
-def test_material_al203():
+def test_material_al2o3():
     """tests material_Au method using tabulated n and k at lambda=500 nm
     5.00E-07	1.74007	0"""
 
