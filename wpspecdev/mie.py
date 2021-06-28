@@ -80,6 +80,13 @@ class MieDriver(SpectrumDriver, Materials):
         self.parse_input(args)
         print("Radius of the sphere is ", self.radius)
         self.ci = 0 + 1j
+        # this is hard-coded for Mie theory
+        # and we will use layer 1 and layer 3 as the medium
+        # and layer 1 for the medium
+        self.number_of_layers = 3
+
+        # start out with _refractive_index_array corresponding to air
+        self._refractive_index_array = np.ones((self.number_of_wavelengths, self.number_of_layers),dtype=complex)
 
     def parse_input(self, args):
         if "radius" in args:
