@@ -47,21 +47,56 @@ def test_material_tio2():
 
 
 def test_material_ta2o5():
-    """tests material_Ta2O5 method using tabulated n and k at lambda=667 nm:
-    6.7862E-07      2.0865E+00      6.1200E-03"""
-    expected_n = 2.0865E+00
-    expected_k = 6.1200E-03
+    """ Dictionaries from material_Ta2O5 """
+    data1 = {
+        "file": "data/Ta2O5_Rodriguez.txt",
+        "lower_wavelength": 2.9494E-08,
+        "upper_wavelength": 1.5143E-06,
+        "test_wavelength": 3.6899E-08,
+        "test_n":      8.6165E-01,
+        "test_k":      2.9300E-01
+    }
+    data2 = {
+        "file": "data/Ta2O5_Bright.txt",
+        "lower_wavelength": 5.0000e-07,
+        "upper_wavelength": 1.0000e-03,
+        "test_wavelength": 2.5907e-06,
+        "test_n": 2.0246e+00,
+        "test_k": 7.5989e-03
 
-    # create test multilayer that has 3 layers and wavelength array centered at 647 nm
-    material_test._create_test_multilayer(central_wavelength=6.7862E-07)
-    # define central layer as Ta2O5
+    }
+    
+    
+    
+    expected_n_1 = data1["test_n"]
+    expected_k_1 = data1["test_k"]
+    wavelength_1 = data1["test_wavelength"]
+
+    expected_n_2 = data2["test_n"]
+    expected_k_2 = data2["test_k"]
+    wavelength_2 = data2["test_wavelength"]
+
+    # create test multilayer for data1
+    material_test._create_test_multilayer(central_wavelength=wavelength_1)
+    # define central layer as Ta2O5 using data1
     material_test.material_Ta2O5(1)
 
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
+    result_n_1 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_1 = np.imag(material_test._refractive_index_array[1, 1])
 
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
+    # update test multilayer for data2
+    material_test._create_test_multilayer(central_wavelength=wavelength_2)
+    # define central layer as Ta2O5 using data2
+    material_test.material_Ta2O5(1)
+
+    result_n_2 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
+
+
+    assert np.isclose(result_n_1, expected_n_1, 1e-3)
+    assert np.isclose(result_k_1, expected_k_1, 1e-3)
+    assert np.isclose(result_n_2, expected_n_2, 1e-3)
+    assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
 
 def test_material_tin():
