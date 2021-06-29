@@ -5,7 +5,7 @@ from matplotlib import pyplot as plt
 thickness = 100e-9
 userargs = {
     'radius': 170e-9,
-    'wavelength_list': [500e-9, 9000e-9, 500]
+    'wavelength_list': [400e-9, 9000e-9, 500]
 }
 sf = wpspecdev.SpectrumFactory()
 mt = sf.spectrum_factory('Mie', userargs)
