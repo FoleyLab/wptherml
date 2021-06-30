@@ -217,7 +217,7 @@ def test_material_hfo2():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
-def test_material_Au():
+def test_material_au():
     """ Dictionaries from material_Au """
     data1 = {
         "file": "data/Au_JC_RI_f.txt",
