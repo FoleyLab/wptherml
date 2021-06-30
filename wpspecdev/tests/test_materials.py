@@ -217,24 +217,58 @@ def test_material_hfo2():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
-def test_material_au():
-    """tests material_Au method using tabulated n and k at lambda=300 nm
-    3.00128e-07 1.5261699418534376 1.8879286775238424"""
+def test_material_Au():
+    """ Dictionaries from material_Au """
+    data1 = {
+        "file": "data/Au_JC_RI_f.txt",
+        "lower_wavelength": 2e-07,
+        "upper_wavelength":1.00025e-06,
+        "test_wavelength": 5.00188e-07,
+        "test_n":      0.962208410850276,
+        "test_k":      1.8695066263351445
+    }
+    data2 = {
+        "file": "data/Au_IR.txt",
+        "lower_wavelength": 3.000000E-07,
+        "upper_wavelength": 2.493000E-05,
+        "test_wavelength": 5.024000E-06,
+        "test_n": 3.031000E+00,
+        "test_k": 3.447000E+01
 
-    expected_n = 1.5261699418534376
-    expected_k = 1.8879286775238424
+    }
+   
+ 
 
-    # create test multilayer that has 3 layers and wavelength array centered at 300 nm
-    material_test._create_test_multilayer(central_wavelength=3.00128e-07)
-    # define central layer as Au
+    
+    expected_n_1 = data1["test_n"]
+    expected_k_1 = data1["test_k"]
+    wavelength_1 = data1["test_wavelength"]
+
+    expected_n_2 = data2["test_n"]
+    expected_k_2 = data2["test_k"]
+    wavelength_2 = data2["test_wavelength"]
+
+    # create test multilayer for data1
+    material_test._create_test_multilayer(central_wavelength=wavelength_1)
+    # define central layer as Ta2O5 using data1
     material_test.material_Au(1)
 
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
+    result_n_1 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_1 = np.imag(material_test._refractive_index_array[1, 1])
 
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
+    # update test multilayer for data2
+    material_test._create_test_multilayer(central_wavelength=wavelength_2)
+    # define central layer as Ta2O5 using data2
+    material_test.material_Au(1)
 
+    result_n_2 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
+
+
+    assert np.isclose(result_n_1, expected_n_1, 1e-3)
+    assert np.isclose(result_k_1, expected_k_1, 1e-3)
+    assert np.isclose(result_n_2, expected_n_2, 1e-3)
+    assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
 def test_material_pt():
     """tests material_Pt method using tabulated n and k at lambda=610 nm
