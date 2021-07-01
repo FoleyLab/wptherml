@@ -538,3 +538,166 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
+
+
+    def material_AlN(self, layer_number, wavelength_range="visible", override="true"):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """ defines the refractive index of layer layer_number to be AlN
+            
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as AlN
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+            
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+            
+            Examples
+            --------
+            >>> material_AlN(1, wavelength_range="visible") -> layer 1 will be AlN from the Pastrnak data set good from visible to 1.5 microns
+            >>> material_AlN(2, wavelength_range="ir") -> layer 2 will be AlN from the Kischkat data set good until 1000 microns
+            """
+
+            # dictionary specific to AlN with wavelength range information corresponding to different
+            # data sets
+            data1 = {
+                "file": "data/AlN_Pastrnak.txt",
+                "lower_wavelength": 0.22E-6,
+                "upper_wavelength": 5.00E-6
+            }
+            data2 = {
+                "file": "data/AlN_Kischkat.txt",
+                "lower_wavelength": 1.53846E-06,
+                "upper_wavelength": 14.2857E-06
+            }
+
+            shortest_wavelength = self.wavelength_array[0]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths-1]
+
+            
+
+            if shortest_wavelength >= data1["lower_wavelength"] and longest_wavelength <= data1["upper_wavelength"]:
+                file_path = path + data1["file"]
+                print("1")
+            elif shortest_wavelength >= data2["lower_wavelength"] and longest_wavelength <= data2["upper_wavelength"]:
+                file_path = path + data2["file"]
+                print("2")
+            else:
+                file_path = path + data1["file"]
+             
+
+            if override=='false':
+                # make sure the wavelength_range string is all  lowercase
+                wavelength_range = wavelength_range.lower()
+                if wavelength_range=="visible" or wavelength_range=="short" or wavelength_range=="vis":
+                    file_path = path + "data/AlN_Pastrnak.txt"
+                    
+                elif wavelength_range=="ir" or wavelength_range=="long":
+                    file_path = path + "data/AlN_Kischkat.txt"
+            
+
+            print("read from ",file_path)
+            # now read AlN data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+
+    def material_W(self, layer_number, wavelength_range="visible", override="true"):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """ defines the refractive index of layer layer_number to be W
+            
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as AlN
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+            
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+            
+            Examples
+            --------
+            >>> material_W(1, wavelength_range="visible") -> layer 1 will be W from the Pastrnak data set good from visible to 1.5 microns
+            >>> material_W(2, wavelength_range="ir") -> layer 2 will be W from the Kischkat data set good until 1000 microns
+            """
+
+            # dictionary specific to W with wavelength range information corresponding to different
+            # data sets
+            data1 = {
+                "file": "data/W_Rakic.txt",
+                "lower_wavelength": 2.4797E-07,
+                "upper_wavelength": 1.2398E-05
+            }
+            data2 = {
+                "file": "data/W_Ordal.txt",
+                "lower_wavelength": 6.67000E-07,
+                "upper_wavelength": 2.00000E-04
+            }
+
+            shortest_wavelength = self.wavelength_array[0]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths-1]
+
+            
+
+            if shortest_wavelength >= data1["lower_wavelength"] and longest_wavelength <= data1["upper_wavelength"]:
+                file_path = path + data1["file"]
+            
+            elif shortest_wavelength >= data2["lower_wavelength"] and longest_wavelength <= data2["upper_wavelength"]:
+                file_path = path + data2["file"]
+            
+            else:
+                file_path = path + data1["file"]
+             
+
+            if override=='false':
+                # make sure the wavelength_range string is all  lowercase
+                wavelength_range = wavelength_range.lower()
+                if wavelength_range=="visible" or wavelength_range=="short" or wavelength_range=="vis":
+                    file_path = path + "data/W_Rakic.txt"
+                    
+                elif wavelength_range=="ir" or wavelength_range=="long":
+                    file_path = path + "data/W_Ordal.txt"
+
+            print("read from ",file_path)
+            # now read AlN data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
