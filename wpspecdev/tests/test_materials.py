@@ -157,45 +157,6 @@ def test_material_al():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
-def test_material_w():
-    """tests material_W method using tabulated n and k at lambda=3640.00 nm
-    3.64000E-06	1.8774806 15.8871860"""
-
-    expected_n = 1.8774806
-    expected_k = 15.8871860
-
-    # create test multilayer that has 3 layers and wavelength array centered at 3640 nm
-    material_test._create_test_multilayer(central_wavelength=3.64000e-06)
-
-    # define central layer as W
-    material_test.material_W(1)
-
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
-
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
-
-
-def test_material_aln():
-    """tests material_AlN method using tabulated n and k at lambda=2774.69 nm
-    2.77469E-06	2.01126	0.00015"""
-
-    expected_n = 2.01126
-    expected_k = 0.00015
-
-    # create test multilayer that has 3 layers and wavelength array centered at 2774.69 nm
-    material_test._create_test_multilayer(central_wavelength=2.77469e-06)
-
-    # define central layer as AlN
-    material_test.material_ALN(1)
-
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
-
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
-
 
 def test_material_hfo2():
     """tests material_HfO2 method using tabulated n and k at lambda=1082.00 nm
@@ -237,8 +198,6 @@ def test_material_au():
 
     }
    
- 
-
     
     expected_n_1 = data1["test_n"]
     expected_k_1 = data1["test_k"]
@@ -415,7 +374,7 @@ def test_material_si():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
-def test_material_AlN():
+def test_material_aln():
     """ Dictionaries from material_AlN """
     data1 = {
         "file": "data/AlN_Pastrnak.txt",
@@ -468,7 +427,7 @@ def test_material_AlN():
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
 
-def test_material_W():
+def test_material_w():
     """ Dictionaries from material_W """
     data1 = {
         "file": "data/W_Rakic.txt",
