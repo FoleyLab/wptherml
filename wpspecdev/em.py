@@ -74,7 +74,7 @@ class TmmDriver(SpectrumDriver, Materials):
 
     """
 
-    def __init__(self, thickness):
+    def __init__(self, args):
         """constructor for the TmmDriver class
 
         Assign values for attributes thickness_array, material_array then call
@@ -84,12 +84,11 @@ class TmmDriver(SpectrumDriver, Materials):
         """
 
         """ hard-coded a lot of this for now, we will obviously generalize soon! """
-        self.thickness = thickness
         self.number_of_wavelengths = 10
         self.number_of_layers = 3
         self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
         self.wavenumber_array = 1 / self.wavelength_array
-        self.thickness_array = np.array([0, thickness, 0])
+        self.thickness_array = np.array([0, 900e-9, 0])
         self.polarization = "s"
         self.incident_angle = 0.0
 
@@ -168,7 +167,23 @@ class TmmDriver(SpectrumDriver, Materials):
         """
 
         # with all of these formed, you can now call _compute_tm()
-        self._tm = self._compute_tm()
+        self._compute_k0()
+        self._compute_kx()
+        self._compute_kz()
+
+        k0_test = self._k0_array[3]
+        kx_test = self._kx_array[3]
+        ri_test = self._refractive_index_array[3,:]
+        kz_test = self._kz_array[3,:]
+
+        print("k0_test",k0_test)
+        print("kx test",kx_test)
+        print("kz_test")
+        print(kz_test)
+        print("ri test")
+        print(ri_test)
+        tm = self._compute_tm(ri_test, k0_test, kz_test, kx_test, self.thickness_array)
+        print(tm)
 
 
 
@@ -191,8 +206,8 @@ class TmmDriver(SpectrumDriver, Materials):
         
         """
         self._kz_array = np.sqrt(
-            (ml._refractive_index_array * ml._k0_array[:, np.newaxis]) ** 2
-            - ml._kx_array[:, np.newaxis] ** 2
+            (self._refractive_index_array * self._k0_array[:, np.newaxis]) ** 2
+            - self._kx_array[:, np.newaxis] ** 2
         )
 
     def _compute_k0(self):
@@ -233,137 +248,42 @@ class TmmDriver(SpectrumDriver, Materials):
             * self._k0_array
         )
 
-    def _compute_tm(self):
+    def _compute_tm(self, _refractive_index, _k0, _kz, _kx, _d):
         """compute the transfer matrix for each wavelength
-
-        Attributes
-        ----------
-            thickness_array
-
-            _k0
-
-            _kx
-
-            _kz_array
-
-            _refraction_angle_array
-
-            _cos_of_refraction_angle_array
-
-            _dm
-
-            _pm
-
-            _dim
-
-
 
         Returns
         -------
         _tm
 
         """
+        _DM = np.zeros((2,2,self.number_of_layers),dtype=complex)
+        _DIM = np.zeros((2,2,self.number_of_layers),dtype=complex)
+        _PM = np.zeros((2,2,self.number_of_layers),dtype=complex)
+        _CTHETA = np.zeros(self.number_of_layers,dtype=complex)
+        _THETA = np.zeros(self.number_of_layers,dtype=complex)
 
-def tmm(k0, theta0, pol, nA, tA):
-    t1 = np.zeros((2,2),dtype=complex)
-    t2 = np.zeros((2,2),dtype=complex)
-    D1 = np.zeros((2,2),dtype=complex)
-    Dl = np.zeros((2,2),dtype=complex)
-    Dli = np.zeros((2,2),dtype=complex)
-    Pl = np.zeros((2,2),dtype=complex)
-    M  = np.zeros((2,2),dtype=complex)
-    L = len(nA)
-    kz = np.zeros(L,dtype=complex)
-    phil = np.zeros(L,dtype=complex)
-    ctheta = np.zeros(L,dtype=complex)
-    theta = np.zeros(L,dtype=complex)
-    ctheta[0] = np.cos(theta0)
-    
-    D1 = BuildD(nA[0], ctheta[0], pol)
-    ### Note it is actually faster to invert the 2x2 matrix
-    ### "By Hand" than it is to use linalg.inv
-    ### and this inv step seems to be the bottleneck for the TMM function
-    tmp = D1[0,0]*D1[1,1]-D1[0,1]*D1[1,0]
-    det = 1/tmp
-    M[0,0] = det*D1[1,1]
-    M[0,1] = -det*D1[0,1]
-    M[1,0] = -det*D1[1,0]
-    M[1,1] = det*D1[0,0]
-    #D1i = inv(D1)
-   #print("D1i is ")
-   #print(D1i)
-    
-    
-    ### This is the number of layers in the structure
+        _PHIL = _kz * _d
+        _THETA[0] = self.incident_angle
+        _CTHETA[0] = np.cos(self.incident_angle)
 
-    
-    ### since kx is conserved through all layers, just compute it
-    ### in the upper layer (layer 1), for which you already known
-    ### the angle of incidence
-    kx = nA[0]*k0*np.sin(theta0)
-    kz[0] = np.sqrt((nA[0]*k0)**2 - kx**2)
-    kz[L-1] = np.sqrt((nA[L-1]*k0)**2 - kx**2)
-    
-    ### keeping consistent with K-R excitation
-    if np.real(kz[0])<0:
-        kz[0] = -1*kz[0]
-    if np.imag(kz[L-1])<0:
-        kz[L-1] = -1*kz[L-1]
-    ### loop through all layers 2 through L-1 and compute kz and cos(theta)...
-    ### note that when i = 1, we are dealing with layer 2... when 
-    ### i = L-2, we are dealing with layer L-1... this loop only goes through
-    ### intermediate layers!
-    for i in range(1,(L-1)):
-        kz[i] = np.sqrt((nA[i]*k0)**2 - kx**2)
-        if np.imag(kz[i])<0:
-            kz[i] = -1*kz[i]
-        
-        ctheta[i] = kz[i]/(nA[i]*k0)
-        theta[i] = np.arccos(ctheta[i])
+        _CTHETA[1:self.number_of_layers] = _kz[1:self.number_of_layers] / (_refractive_index[1:self.number_of_layers] * _k0)
+        _THETA[1:self.number_of_layers] = np.arccos(_CTHETA[1:self.number_of_layers])
 
-        phil[i] = kz[i]*tA[i]
+        _DM[:,:,0], _tm = self._compute_dm(_refractive_index[0], _CTHETA[0])
 
-        Dl = BuildD(nA[i],ctheta[i], pol)
-        ## Invert Dl
-        tmp = Dl[0,0]*Dl[1,1]-Dl[0,1]*Dl[1,0]
-        det = 1/tmp
-        Dli[0,0] = det*Dl[1,1]
-        Dli[0,1] = -det*Dl[0,1]
-        Dli[1,0] = -det*Dl[1,0]
-        Dli[1,1] = det*Dl[0,0]
-        #Dli = inv(Dl)
-        ## form Pl
-        Pl = BuildP(phil[i])
+        for i in range(1, self.number_of_layers-1):
+            _DM[:,:,i], _DIM[:,:,i] = self._compute_dm( _refractive_index[0], _CTHETA[0])
+            _PM[:,:,i] = self._compute_pm(_PHIL[i])
+            _tm = np.matmul(_tm, _DM[:,:,i])
+            _tm = np.matmul(_tm, _PM[:,:,i])
+            _tm = np.matmul(_tm, _DIM[:,:,i])
 
-        t1 = np.matmul(M,Dl)
-        t2 = np.matmul(t1,Pl)
-        M  = np.matmul(t2,Dli)
-        
-    ### M is now the product of D_1^-1 .... D_l-1^-1... just need to 
-    ### compute D_L and multiply M*D_L
-    kz[L-1] = np.sqrt((nA[L-1]*k0)**2 - kx**2)
-    ctheta[L-1]= kz[L-1]/(nA[L-1]*k0)
-    DL = BuildD(nA[L-1], ctheta[L-1], pol)
-    t1 = np.matmul(M,DL)
-    ### going to create a dictionary called M which will 
-    ### contain the matrix elements of M as well as 
-    ### other important quantities like incoming and outgoing angles
-    theta[0] = theta0
-    theta[L-1] = np.arccos(ctheta[L-1])
-    ctheta[0] = np.cos(theta0)
-    M = {"M11": t1[0,0], 
-         "M12": t1[0,1], 
-         "M21": t1[1,0], 
-         "M22": t1[1,1],
-         "theta_i": theta0,
-         "theta_L": np.real(np.arccos(ctheta[L-1])),
-         "kz": kz,
-         "phil": phil,
-         "ctheta": ctheta,
-         "theta": theta
-         }
+        _DM[:,:,self.number_of_layers-1], _DIM[:,:,self.number_of_layers-1] = self._compute_dm(
+            _refractive_index[self.number_of_layers-1], _CTHETA[self.number_of_layers-1])
 
-    return M
+        _tm = np.matmul(_tm, _DM[:,:,self.number_of_layers-1])
+
+        return _tm
 
     def _compute_dm(self, refractive_index, cosine_theta):
 
