@@ -142,7 +142,6 @@ class TmmDriver(SpectrumDriver, Materials):
         -------
             None
 
-
         Will compute attributes by
 
             - calling _compute_tm method
@@ -156,26 +155,7 @@ class TmmDriver(SpectrumDriver, Materials):
             - evaluating T from tt* n_L cos(\theta_L) / n_1 cos(\theta_L)
 
         """
-        # compute k0_array
-        self._k0_array = np.pi * 2 / self.wavelength_array
 
-        # compute kx_array
-        self._kx_array = (
-            self._refractive_index_array[:, 0]
-            * np.sin(self.incident_angle)
-            * self._k0_array
-        )
-
-        ref_times_wn = np.array(
-            [
-                self.wavenumber_array[x] * self._refractive_index_array[x]
-                for x in range(len(self.wavenumber_array))
-            ]
-        )
-
-        self._kzl_array = np.sqrt(
-            (ref_times_wn) ** 2 - (ref_times_wn * np.sin(self.incident_angle) ** 2)
-        )
 
         """ continute to compute remaining intermediate attributes needed by _compute_tm(), including
         
@@ -190,11 +170,67 @@ class TmmDriver(SpectrumDriver, Materials):
         # with all of these formed, you can now call _compute_tm()
         self._tm = self._compute_tm()
 
-    def _compute_kz(self):
 
+
+    def _compute_kz(self):
+        """ computes the z-component of the wavevector in each layer of the stack
+        
+        Attributes
+        ----------
+            _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
+                the array of refractive index values corresponding to wavelength_array
+
+            _kz_array : number_of_layers x number_of_wavelengths numpy array of complex floats
+                the z-component of the wavevector in each layer of the multilayer for each wavelength
+
+            _kx_array : 1 x number_of_wavelengths numpy array of complex floats
+                the x-component of the wavevector in each layer for each wavelength
+
+            _k0_array : 1 x number_of_wavelengths numpy array of floats
+                the wavevector magnitude in the incident layer for each wavelength
+        
+        """
         self._kz_array = np.sqrt(
             (ml._refractive_index_array * ml._k0_array[:, np.newaxis]) ** 2
             - ml._kx_array[:, np.newaxis] ** 2
+        )
+
+    def _compute_k0(self):
+        """ computes the _k0_array
+        
+        Attributes
+        ----------
+            wavelength_array : 1 x number of wavelengths float
+                the wavelengths that will illuminate the structure in SI units
+            
+            _k0_array : 1 x number of wavelengths float
+                the wavenumbers that will illuminate the structure in SI units
+        
+        """
+        self._k0_array = np.pi * 2 / self.wavelength_array
+
+    def _compute_kx(self):
+        """ computes the _kx_array
+        
+        Attributes
+        ----------
+            _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
+                the array of refractive index values corresponding to wavelength_array
+
+            incident_angle : float
+                the angle of incidence of light illuminating the structure
+
+            _kx_array : 1 x number_of_wavelengths numpy array of complex floats
+                the x-component of the wavevector in each layer for each wavelength
+
+            _k0_array : 1 x number_of_wavelengths numpy array of floats
+                the wavevector magnitude in the incident layer for each wavelengthhe wavenumbers that will illuminate the structure in SI units   
+        """
+        # compute kx_array
+        self._kx_array = (
+            self._refractive_index_array[:, 0]
+            * np.sin(self.incident_angle)
+            * self._k0_array
         )
 
     def _compute_tm(self):
@@ -227,114 +263,180 @@ class TmmDriver(SpectrumDriver, Materials):
         _tm
 
         """
-        M = np.linalg.eye((2, 2), dtype=complex)
-        for x in range(len(self.wavenumber_array)):
-            for y in range(len(self.number_of_layers)):
-                if x == 0 or x == len(self.wavenumber_array):
-                    D = self._compute_dm(x, y)
-                    M = np.matmul(M, D)
 
-        print("can _compute_tm() see the _k0_array?", self._k0_array)
-        print("can _compute_tm() see the _kz_array?", self._kz_array)
+def tmm(k0, theta0, pol, nA, tA):
+    t1 = np.zeros((2,2),dtype=complex)
+    t2 = np.zeros((2,2),dtype=complex)
+    D1 = np.zeros((2,2),dtype=complex)
+    Dl = np.zeros((2,2),dtype=complex)
+    Dli = np.zeros((2,2),dtype=complex)
+    Pl = np.zeros((2,2),dtype=complex)
+    M  = np.zeros((2,2),dtype=complex)
+    L = len(nA)
+    kz = np.zeros(L,dtype=complex)
+    phil = np.zeros(L,dtype=complex)
+    ctheta = np.zeros(L,dtype=complex)
+    theta = np.zeros(L,dtype=complex)
+    ctheta[0] = np.cos(theta0)
+    
+    D1 = BuildD(nA[0], ctheta[0], pol)
+    ### Note it is actually faster to invert the 2x2 matrix
+    ### "By Hand" than it is to use linalg.inv
+    ### and this inv step seems to be the bottleneck for the TMM function
+    tmp = D1[0,0]*D1[1,1]-D1[0,1]*D1[1,0]
+    det = 1/tmp
+    M[0,0] = det*D1[1,1]
+    M[0,1] = -det*D1[0,1]
+    M[1,0] = -det*D1[1,0]
+    M[1,1] = det*D1[0,0]
+    #D1i = inv(D1)
+   #print("D1i is ")
+   #print(D1i)
+    
+    
+    ### This is the number of layers in the structure
 
-    def _compute_dm(self, idx, num_layers):
+    
+    ### since kx is conserved through all layers, just compute it
+    ### in the upper layer (layer 1), for which you already known
+    ### the angle of incidence
+    kx = nA[0]*k0*np.sin(theta0)
+    kz[0] = np.sqrt((nA[0]*k0)**2 - kx**2)
+    kz[L-1] = np.sqrt((nA[L-1]*k0)**2 - kx**2)
+    
+    ### keeping consistent with K-R excitation
+    if np.real(kz[0])<0:
+        kz[0] = -1*kz[0]
+    if np.imag(kz[L-1])<0:
+        kz[L-1] = -1*kz[L-1]
+    ### loop through all layers 2 through L-1 and compute kz and cos(theta)...
+    ### note that when i = 1, we are dealing with layer 2... when 
+    ### i = L-2, we are dealing with layer L-1... this loop only goes through
+    ### intermediate layers!
+    for i in range(1,(L-1)):
+        kz[i] = np.sqrt((nA[i]*k0)**2 - kx**2)
+        if np.imag(kz[i])<0:
+            kz[i] = -1*kz[i]
+        
+        ctheta[i] = kz[i]/(nA[i]*k0)
+        theta[i] = np.arccos(ctheta[i])
+
+        phil[i] = kz[i]*tA[i]
+
+        Dl = BuildD(nA[i],ctheta[i], pol)
+        ## Invert Dl
+        tmp = Dl[0,0]*Dl[1,1]-Dl[0,1]*Dl[1,0]
+        det = 1/tmp
+        Dli[0,0] = det*Dl[1,1]
+        Dli[0,1] = -det*Dl[0,1]
+        Dli[1,0] = -det*Dl[1,0]
+        Dli[1,1] = det*Dl[0,0]
+        #Dli = inv(Dl)
+        ## form Pl
+        Pl = BuildP(phil[i])
+
+        t1 = np.matmul(M,Dl)
+        t2 = np.matmul(t1,Pl)
+        M  = np.matmul(t2,Dli)
+        
+    ### M is now the product of D_1^-1 .... D_l-1^-1... just need to 
+    ### compute D_L and multiply M*D_L
+    kz[L-1] = np.sqrt((nA[L-1]*k0)**2 - kx**2)
+    ctheta[L-1]= kz[L-1]/(nA[L-1]*k0)
+    DL = BuildD(nA[L-1], ctheta[L-1], pol)
+    t1 = np.matmul(M,DL)
+    ### going to create a dictionary called M which will 
+    ### contain the matrix elements of M as well as 
+    ### other important quantities like incoming and outgoing angles
+    theta[0] = theta0
+    theta[L-1] = np.arccos(ctheta[L-1])
+    ctheta[0] = np.cos(theta0)
+    M = {"M11": t1[0,0], 
+         "M12": t1[0,1], 
+         "M21": t1[1,0], 
+         "M22": t1[1,1],
+         "theta_i": theta0,
+         "theta_L": np.real(np.arccos(ctheta[L-1])),
+         "kz": kz,
+         "phil": phil,
+         "ctheta": ctheta,
+         "theta": theta
+         }
+
+    return M
+
+    def _compute_dm(self, refractive_index, cosine_theta):
 
         """compute the D and D_inv matrices for each layer and wavelength
 
+        Arguments
+        ---------
+            refractive_index : complex float
+                refractive index of the layer you are computing _dm and _dim for
+            
+            cosine_theta : complex float
+                cosine of the complex refraction angle within the layer you are computing _dm and _dim for
+
         Attributes
         ----------
-            refractive_index_array
-
-            polarization
-
-            _cos_of_refraction_angle_array
-
-            _dm
-
-            _dim
-
-
+            polarization : str
+                string indicating the polarization convention of the incident light
 
         Returns
         -------
-        None
+        _dm, _dim
         """
-        M = np.linalg.eye((2, 2), dtype=complex)
-        for i in range(len(num_layers)):
 
-            D = np.zeros((2, 2), dtype=complex)
-            if self.polarization == "s":
-                D[0][0] = 1.0 + 0j
-                D[0][1] = 1.0 + 0j
-                D[1][0] = (
-                    np.cos(self.incident_angle) * self._refractive_index_array[idx][i]
-                )
-                D[1][1] = (
-                    -1
-                    * np.cos(self.incident_angle)
-                    * self._refractive_index_array[idx][i]
-                )
+        _dm = np.zeros((2,2),dtype=complex)
+        _dim = np.zeros((2,2),dtype=complex)
 
-            elif self.polarization == "p":
-                D[0][0] = np.cos(self.incident_angle + 0j)
-                D[0][1] = np.cos(self.incident_angle + 0j)
-                D[1][0] = self.refractive_index_array[idx][i]
-                D[1][1] = -1 * self.refractive_index_array[idx][i]
+        if self.polarization=="s":
+            _dm[0,0] = 1+0j
+            _dm[0,1] = 1+0j
+            _dm[1,0] = refractive_index * cosine_theta
+            _dm[1,1] = -1 * refractive_index * cosine_theta
 
-            else:
+        elif self.polarization=="p":
+            _dm[0,0] = cosine_theta+0j
+            _dm[0,1] = cosine_theta+0j
+            _dm[1,0] = refractive_index
+            _dm[1,1] = -1 * refractive_index
 
-                print("needs polarization s or p")
-            D_inv = 1 / ((D[0][0] * D[1][1]) - (D[0][1] * D[1][0]))
-            print(D)
-        """if idx == 0:
-            det = D_inv
-            #return np.linalg.inv(D)
-            # Test manual inverse
-        elif idx == len(self.wavenumber_array):
-            return D
-        else:
-            #D = np.matmul(D,np.linalg.inv(D))
-            D = np.matmul(D,det)
-            return D
-        """
-        P = _compute_pm(idx, i)
+        # Note it is actually faster to invert the 2x2 matrix
+        # "By Hand" than it is to use linalg.inv
+        # and this inv step seems to be the bottleneck for the TMM function
+        # but numpy way would just look like this:
+        # _dim = inv(_dm)
+        _tmp = _dm[0,0] * _dm[1,1] - _dm[0,1] * _dm[1,0]
+        _det = 1 / _tmp
+        _dim[0,0] = _det * _dm[1,1]
+        _dim[0,1] = -1 * _det * _dm[0,1]
+        _dim[1,0] = -1 * _det * _dm[1,0]
+        _dim[1,1] = _det * _dm[0,0]
 
-        if idx == 0:
-            return D_inv
+        return _dm, _dim
 
-        elif idx == len(self.wavenumber_array):
-            return D
-        else:
-            inner = np.dot(D_inv, np.dot(D, P))
-            return inner
-
-    def _compute_pm(self, idx, i):
+    def _compute_pm(self, phil):
         """compute the P matrices for each intermediate-layer layer and wavelength
 
-        Attributes
-        ----------
-            thickness_array
-
-            _kz_array
-
-            _pm
-
-
+        Arguments
+        ---------
+            phil : complex float
+                kz * d of the current layer
 
         Returns
         -------
-        None
+        _pm
         """
 
-        P = np.zeros((2, 2), dtype=complex)
-        ci = 0 + 1j
+        _pm = np.zeros((2,2),dtype=complex)
+        ci = 0+1j
+        a = -1 * ci * phil
+        b = ci * phil
 
-        a = -1 * ci * self._kxz_array[idx] * self.thickness_array[idx][i]
-        b = ci * self._kxz_array[idx] * self.thickness_array[idx][i]
+        _pm[0,0] = np.exp(a)
+        _pm[1,1] = np.exp(b)
 
-        P[0][1] = 0 + 0j
-        P[1][0] = 0 + 0j
-        P[0][0] = np.exp(a)
-        P[1][1] = np.exp(b)
-        print(P)
-        return P
+        return _pm
+
+
