@@ -171,20 +171,20 @@ class TmmDriver(SpectrumDriver, Materials):
         self._compute_kx()
         self._compute_kz()
 
-        k0_test = self._k0_array[3]
-        kx_test = self._kx_array[3]
-        ri_test = self._refractive_index_array[3,:]
-        kz_test = self._kz_array[3,:]
+        # compute the reflectivity in a loop for now!
+        self.reflectivity_array = np.zeros_like(self.wavelength_array)
 
-        print("k0_test",k0_test)
-        print("kx test",kx_test)
-        print("kz_test")
-        print(kz_test)
-        print("ri test")
-        print(ri_test)
-        tm = self._compute_tm(ri_test, k0_test, kz_test, kx_test, self.thickness_array)
-        print(tm)
+        for i in range(0,self.number_of_wavelengths):
+            k0 = self._k0_array[i]
+            kx = self._kx_array[i]
+            ri = self._refractive_index_array[i,:]
+            kz = self._kz_array[i,:]
 
+            tm = self._compute_tm(ri, k0, kz, kx, self.thickness_array)
+
+            r = tm[1,0] / tm[0,0]
+            
+            self.reflectivity_array[i] = np.real(r * np.conj(r))
 
 
     def _compute_kz(self):
@@ -272,11 +272,12 @@ class TmmDriver(SpectrumDriver, Materials):
         _DM[:,:,0], _tm = self._compute_dm(_refractive_index[0], _CTHETA[0])
 
         for i in range(1, self.number_of_layers-1):
-            _DM[:,:,i], _DIM[:,:,i] = self._compute_dm( _refractive_index[0], _CTHETA[0])
+            _DM[:,:,i], _DIM[:,:,i] = self._compute_dm( _refractive_index[i], _CTHETA[i])
             _PM[:,:,i] = self._compute_pm(_PHIL[i])
             _tm = np.matmul(_tm, _DM[:,:,i])
             _tm = np.matmul(_tm, _PM[:,:,i])
             _tm = np.matmul(_tm, _DIM[:,:,i])
+
 
         _DM[:,:,self.number_of_layers-1], _DIM[:,:,self.number_of_layers-1] = self._compute_dm(
             _refractive_index[self.number_of_layers-1], _CTHETA[self.number_of_layers-1])
