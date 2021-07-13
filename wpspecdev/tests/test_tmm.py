@@ -14,7 +14,7 @@ import sys
     in air with ri = 1.0+0j
 """
 sf = wpspecdev.SpectrumFactory()
-testargs = {userargs = {"wavelength_list": [400e-9, 800e-9, 10]}
+testargs = {"wavelength_list": [400e-9, 800e-9, 10]}
 # create test instance of mie
 mietest = sf.spectrum_factory("Tmm", testargs)
 
@@ -26,7 +26,7 @@ def test_compute_spectrum():
        Should elaborate more tests in the future!
     
     """
-        expected_result = np.array(
+    expected_result = np.array(
         [
             0.0798722,
             0.00937256,
