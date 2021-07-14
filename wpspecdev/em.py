@@ -82,49 +82,116 @@ class TmmDriver(SpectrumDriver, Materials):
         transmissivity_array, and emissivity_array
 
         """
-
-        """ hard-coded a lot of this for now, we will obviously generalize soon! """
-        self.number_of_wavelengths = 10
-        self.number_of_layers = 3
-        self.wavelength_array = np.linspace(400e-9, 800e-9, self.number_of_wavelengths)
-        self.wavenumber_array = 1 / self.wavelength_array
-        self.thickness_array = np.array([0, 900e-9, 0])
-        self.polarization = "s"
-        self.incident_angle = 0.0
-
-        # pretty pythonic way to create the _refractive_index_array
-        # that will result in self._refractive_index_array[1, 3] -> RI of layer index 1 (2nd layer)
-        # at wavelength index 3 (4th wavelength in wavelength_array)
-        self._refractive_index_array = np.reshape(
-            np.tile(np.array([1 + 0j, 1.5 + 0j, 1 + 0j]), self.number_of_wavelengths),
-            (self.number_of_wavelengths, self.number_of_layers),
-        )
+        self.parse_input(args)
 
     def parse_input(self, args):
+        """ method to parse the user inputs and define structures / simulation
+        
+            Returns
+            -------
+            None
+        
+        """
+        if "incident_angle" in args:
+            self.incident_angle = args["incident_angle"]
+        else:
+            self.incident_angle = 0.
+
+        if "polarization" in args:
+            self.polarization = args["polarization"]
+            self.polarization = self.polarization.lower()
+        else:
+            self.polarization = "s"
+
         if "wavelength_list" in args:
             lamlist = args["wavelength_list"]
             self.wavelength_array = np.linspace(lamlist[0], lamlist[1], int(lamlist[2]))
             self.number_of_wavelengths = int(lamlist[2])
+            self.wavenumber_array = 1 / self.wavelength_array
+        # default wavelength array
         else:
             self.wavelength_array = np.linspace(400e-9, 800e-9, 10)
             self.number_of_wavelengths = 10
-
+            self.wavenumber_array = 1 / self.wavelength_array
+        
+        # need to throw some exceptions if len(self.thickness_array)!=len(self.material_array)
         if "thickness_list" in args:
             self.thickness_array = args["thickness_list"]
-        ### default structure
+        # default structure
         else:
             print("  Thickness array not specified!")
             print("  Proceeding with default structure - optically thick W! ")
             self.thickness_array = [0, 900e-9, 0]
-            self.material_array = ["Air", "SiO2", "Air"]
 
         if "material_list" in args:
             self.material_array = args["material_list"]
+            self.number_of_layers = len(self.material_array)
         else:
             print("  Material array not specified!")
-            print("  Proceeding with default structure - optically thick W! ")
-            self.thickness_array = [0, 900e-9, 0]
+            print("  Proceeding with default structure - Air / SiO2 / Air ")
             self.material_array = ["Air", "SiO2", "Air"]
+            self.number_of_layers = 3
+
+    def set_refractive_indicex_array(self):
+        """once materials are specified, define the refractive_index_array values """
+                # pretty pythonic way to create the _refractive_index_array
+        # that will result in self._refractive_index_array[1, 3] -> RI of layer index 1 (2nd layer)
+        # at wavelength index 3 (4th wavelength in wavelength_array)
+        # dummy refractive index list for each layer
+        _ri_list = np.ones(self.number_of_layers,dtype=complex)
+
+        # just initialize this array and define the values later!
+        self._refractive_index_array = np.reshape(
+            np.tile(_ri_list, self.number_of_wavelengths),
+            (self.number_of_wavelengths, self.number_of_layers),
+        )
+
+        # terminal layers default to air for now
+        self.material_Air(0)
+        self.material_Air(self.number_of_layers-1)
+        for i in range(1, self.number_of_layers-1):
+            _lm = self.material_array[i].lower()
+            if _lm=="air":
+                self.material_Air(i)
+            elif _lm=="ag":
+                self.material_Ag(i)
+            elif _lm=="al":
+                self.material_Al(i)
+            elif _lm=="al2o3":
+                self.material_Al2O3(i)
+            elif _lm=="aln":
+                self.material_AlN(i)
+            elif _lm=="au":
+                self.material_Au(i)
+            elif _lm=="hfo2":
+                self.material_HfO2(i)
+            elif _lm=="pb":
+                self.material_Pb(i)
+            elif _lm=="polystyrene":
+                self.material_polystyrene(i)
+            elif _lm=="pt":
+                self.material_Pt(i)
+            elif _lm=="re":
+                self.material_Re(i)
+            elif _lm=="rh":
+                self.material_Rh(i)
+            elif _lm=="ru":
+                self.material_Ru(i)
+            elif _lm=="si":
+                self.material_Si(i)
+            elif _lm=="sio2":
+                self.material_SiO2(i)
+            elif _lm=="ta2O5":
+                self.material_Ta2O5(i)
+            elif _lm=="tin":
+                self.material_TiN(i)
+            elif _lm=="tio2":
+                self.material_TiO2(i)
+            elif _lm=="w":
+                self.material_W(i)
+            else:
+                self.material_SiO2(i)
+
 
     def compute_spectrum(self):
         """computes the following attributes:
