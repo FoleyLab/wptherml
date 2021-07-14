@@ -75,8 +75,8 @@ class Materials:
 
     def material_Ta2O5(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """ defines the refractive index of layer layer_number to be Ta2O5
-            
+            """defines the refractive index of layer layer_number to be Ta2O5
+
             Arguments
             ----------
             layer_number : int
@@ -84,7 +84,7 @@ class Materials:
 
             wavelength_range (optional) : str
             specifies wavelength regime that is desired for modelling the material
-            
+
             Attributes
             ----------
             _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
@@ -92,7 +92,7 @@ class Materials:
             Returns
             -------
             None
-            
+
             Examples
             --------
             >>> material_Ta2O5(1, wavelength_range="visible") -> layer 1 will be Ta2O5 from the Rodriguez data set good from visible to 1.5 microns
@@ -103,43 +103,47 @@ class Materials:
             # data sets
             data1 = {
                 "file": "data/Ta2O5_Rodriguez.txt",
-                "lower_wavelength": 2.9494E-08,
-                "upper_wavelength": 1.5143E-06
+                "lower_wavelength": 2.9494e-08,
+                "upper_wavelength": 1.5143e-06,
             }
             data2 = {
                 "file": "data/Ta2O5_Bright.txt",
                 "lower_wavelength": 5.0000e-07,
-                "upper_wavelength": 1.0000e-03
+                "upper_wavelength": 1.0000e-03,
             }
 
             shortest_wavelength = self.wavelength_array[0]
-            longest_wavelength = self.wavelength_array[self.number_of_wavelengths-1]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
 
-            
-
-            if shortest_wavelength >= data1["lower_wavelength"] and longest_wavelength <= data1["upper_wavelength"]:
+            if (
+                shortest_wavelength >= data1["lower_wavelength"]
+                and longest_wavelength <= data1["upper_wavelength"]
+            ):
                 file_path = path + data1["file"]
-            
-            elif shortest_wavelength >= data2["lower_wavelength"] and longest_wavelength <= data2["upper_wavelength"]:
+
+            elif (
+                shortest_wavelength >= data2["lower_wavelength"]
+                and longest_wavelength <= data2["upper_wavelength"]
+            ):
                 file_path = path + data2["file"]
-            
+
             else:
                 file_path = path + data1["file"]
-             
 
-            if override=='false':
+            if override == "false":
                 # make sure the wavelength_range string is all  lowercase
                 wavelength_range = wavelength_range.lower()
-                if wavelength_range=="visible" or wavelength_range=="short" or wavelength_range=="vis":
+                if (
+                    wavelength_range == "visible"
+                    or wavelength_range == "short"
+                    or wavelength_range == "vis"
+                ):
                     file_path = path + "data/Ta2O5_Rodriguez.txt"
-                    
-                elif wavelength_range=="ir" or wavelength_range=="long":
+
+                elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Ta2O5_Bright.txt"
 
-            
-
-
-            print("read from ",file_path)
+            print("read from ", file_path)
             # now read TiO2 data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -347,15 +351,15 @@ class Materials:
 
     def material_Au(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """ defines the refractive index of layer layer_number to be Au
-            
+            """defines the refractive index of layer layer_number to be Au
+
             Arguments
             ----------
             layer_number : int
             specifies the layer of the stack that will be modelled as Au
             wavelength_range (optional) : str
             specifies wavelength regime that is desired for modelling the material
-            
+
             Attributes
             ----------
             _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
@@ -363,7 +367,7 @@ class Materials:
             Returns
             -------
             None
-            
+
             Examples
             --------
             >>> material_Au(1, wavelength_range="visible") -> layer 1 will be Au from the Rodriguez data set good from visible to 1.5 microns
@@ -375,42 +379,46 @@ class Materials:
             data1 = {
                 "file": "data/Au_JC_RI_f.txt",
                 "lower_wavelength": 2e-07,
-                "upper_wavelength": 1.00025e-06
+                "upper_wavelength": 1.00025e-06,
             }
             data2 = {
                 "file": "data/Au_IR.txt",
-                "lower_wavelength": 3.000000E-07,
-                "upper_wavelength": 2.493000E-05
+                "lower_wavelength": 3.000000e-07,
+                "upper_wavelength": 2.493000e-05,
             }
 
             shortest_wavelength = self.wavelength_array[0]
-            longest_wavelength = self.wavelength_array[self.number_of_wavelengths-1]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
 
-            
-
-            if shortest_wavelength >= data1["lower_wavelength"] and longest_wavelength <= data1["upper_wavelength"]:
+            if (
+                shortest_wavelength >= data1["lower_wavelength"]
+                and longest_wavelength <= data1["upper_wavelength"]
+            ):
                 file_path = path + data1["file"]
-            
-            elif shortest_wavelength >= data2["lower_wavelength"] and longest_wavelength <= data2["upper_wavelength"]:
+
+            elif (
+                shortest_wavelength >= data2["lower_wavelength"]
+                and longest_wavelength <= data2["upper_wavelength"]
+            ):
                 file_path = path + data2["file"]
-            
+
             else:
                 file_path = path + data1["file"]
-             
 
-            if override=='false':
+            if override == "false":
                 # make sure the wavelength_range string is all  lowercase
                 wavelength_range = wavelength_range.lower()
-                if wavelength_range=="visible" or wavelength_range=="short" or wavelength_range=="vis":
+                if (
+                    wavelength_range == "visible"
+                    or wavelength_range == "short"
+                    or wavelength_range == "vis"
+                ):
                     file_path = path + "data/Au_JC_RI_f.txt.txt"
-                    
-                elif wavelength_range=="ir" or wavelength_range=="long":
+
+                elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Au_IR.txt"
 
-            
-
-
-            print("read from ",file_path)
+            print("read from ", file_path)
             # now read TiO2 data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -426,7 +434,6 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
-
 
     def material_Rh(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
@@ -539,11 +546,10 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-
     def material_AlN(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """ defines the refractive index of layer layer_number to be AlN
-            
+            """defines the refractive index of layer layer_number to be AlN
+
             Arguments
             ----------
             layer_number : int
@@ -551,7 +557,7 @@ class Materials:
 
             wavelength_range (optional) : str
             specifies wavelength regime that is desired for modelling the material
-            
+
             Attributes
             ----------
             _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
@@ -559,7 +565,7 @@ class Materials:
             Returns
             -------
             None
-            
+
             Examples
             --------
             >>> material_AlN(1, wavelength_range="visible") -> layer 1 will be AlN from the Pastrnak data set good from visible to 1.5 microns
@@ -570,41 +576,47 @@ class Materials:
             # data sets
             data1 = {
                 "file": "data/AlN_Pastrnak.txt",
-                "lower_wavelength": 0.22E-6,
-                "upper_wavelength": 5.00E-6
+                "lower_wavelength": 0.22e-6,
+                "upper_wavelength": 5.00e-6,
             }
             data2 = {
                 "file": "data/AlN_Kischkat.txt",
-                "lower_wavelength": 1.53846E-06,
-                "upper_wavelength": 14.2857E-06
+                "lower_wavelength": 1.53846e-06,
+                "upper_wavelength": 14.2857e-06,
             }
 
             shortest_wavelength = self.wavelength_array[0]
-            longest_wavelength = self.wavelength_array[self.number_of_wavelengths-1]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
 
-            
-
-            if shortest_wavelength >= data1["lower_wavelength"] and longest_wavelength <= data1["upper_wavelength"]:
+            if (
+                shortest_wavelength >= data1["lower_wavelength"]
+                and longest_wavelength <= data1["upper_wavelength"]
+            ):
                 file_path = path + data1["file"]
                 print("1")
-            elif shortest_wavelength >= data2["lower_wavelength"] and longest_wavelength <= data2["upper_wavelength"]:
+            elif (
+                shortest_wavelength >= data2["lower_wavelength"]
+                and longest_wavelength <= data2["upper_wavelength"]
+            ):
                 file_path = path + data2["file"]
                 print("2")
             else:
                 file_path = path + data1["file"]
-             
 
-            if override=='false':
+            if override == "false":
                 # make sure the wavelength_range string is all  lowercase
                 wavelength_range = wavelength_range.lower()
-                if wavelength_range=="visible" or wavelength_range=="short" or wavelength_range=="vis":
+                if (
+                    wavelength_range == "visible"
+                    or wavelength_range == "short"
+                    or wavelength_range == "vis"
+                ):
                     file_path = path + "data/AlN_Pastrnak.txt"
-                    
-                elif wavelength_range=="ir" or wavelength_range=="long":
-                    file_path = path + "data/AlN_Kischkat.txt"
-            
 
-            print("read from ",file_path)
+                elif wavelength_range == "ir" or wavelength_range == "long":
+                    file_path = path + "data/AlN_Kischkat.txt"
+
+            print("read from ", file_path)
             # now read AlN data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -621,11 +633,10 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-
     def material_W(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """ defines the refractive index of layer layer_number to be W
-            
+            """defines the refractive index of layer layer_number to be W
+
             Arguments
             ----------
             layer_number : int
@@ -633,7 +644,7 @@ class Materials:
 
             wavelength_range (optional) : str
             specifies wavelength regime that is desired for modelling the material
-            
+
             Attributes
             ----------
             _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
@@ -641,7 +652,7 @@ class Materials:
             Returns
             -------
             None
-            
+
             Examples
             --------
             >>> material_W(1, wavelength_range="visible") -> layer 1 will be W from the Pastrnak data set good from visible to 1.5 microns
@@ -652,40 +663,47 @@ class Materials:
             # data sets
             data1 = {
                 "file": "data/W_Rakic.txt",
-                "lower_wavelength": 2.4797E-07,
-                "upper_wavelength": 1.2398E-05
+                "lower_wavelength": 2.4797e-07,
+                "upper_wavelength": 1.2398e-05,
             }
             data2 = {
                 "file": "data/W_Ordal.txt",
-                "lower_wavelength": 6.67000E-07,
-                "upper_wavelength": 2.00000E-04
+                "lower_wavelength": 6.67000e-07,
+                "upper_wavelength": 2.00000e-04,
             }
 
             shortest_wavelength = self.wavelength_array[0]
-            longest_wavelength = self.wavelength_array[self.number_of_wavelengths-1]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
 
-            
-
-            if shortest_wavelength >= data1["lower_wavelength"] and longest_wavelength <= data1["upper_wavelength"]:
+            if (
+                shortest_wavelength >= data1["lower_wavelength"]
+                and longest_wavelength <= data1["upper_wavelength"]
+            ):
                 file_path = path + data1["file"]
-            
-            elif shortest_wavelength >= data2["lower_wavelength"] and longest_wavelength <= data2["upper_wavelength"]:
+
+            elif (
+                shortest_wavelength >= data2["lower_wavelength"]
+                and longest_wavelength <= data2["upper_wavelength"]
+            ):
                 file_path = path + data2["file"]
-            
+
             else:
                 file_path = path + data1["file"]
-             
 
-            if override=='false':
+            if override == "false":
                 # make sure the wavelength_range string is all  lowercase
                 wavelength_range = wavelength_range.lower()
-                if wavelength_range=="visible" or wavelength_range=="short" or wavelength_range=="vis":
+                if (
+                    wavelength_range == "visible"
+                    or wavelength_range == "short"
+                    or wavelength_range == "vis"
+                ):
                     file_path = path + "data/W_Rakic.txt"
-                    
-                elif wavelength_range=="ir" or wavelength_range=="long":
+
+                elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/W_Ordal.txt"
 
-            print("read from ",file_path)
+            print("read from ", file_path)
             # now read AlN data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
