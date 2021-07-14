@@ -86,7 +86,9 @@ class MieDriver(SpectrumDriver, Materials):
         self.number_of_layers = 3
 
         # start out with _refractive_index_array corresponding to air
-        self._refractive_index_array = np.ones((self.number_of_wavelengths, self.number_of_layers),dtype=complex)
+        self._refractive_index_array = np.ones(
+            (self.number_of_wavelengths, self.number_of_layers), dtype=complex
+        )
 
     def parse_input(self, args):
         if "radius" in args:
