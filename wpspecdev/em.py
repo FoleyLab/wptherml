@@ -79,7 +79,7 @@ class TmmDriver(SpectrumDriver, Materials):
         # parse user inputs
         self.parse_input(args)
         # set refractive index array
-        self.set_refractive_indicex_array()
+        self.set_refractive_index_array()
         # compute reflectivity spectrum
         self.compute_spectrum()
         # print output message
@@ -136,7 +136,7 @@ class TmmDriver(SpectrumDriver, Materials):
             self.material_array = ["Air", "SiO2", "Air"]
             self.number_of_layers = 3
 
-    def set_refractive_indicex_array(self):
+    def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
 
         # initialize _ri_list based on the number of layers
