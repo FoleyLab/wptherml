@@ -80,49 +80,105 @@ class MieDriver(SpectrumDriver, Materials):
         self.parse_input(args)
         print("Radius of the sphere is ", self.radius)
         self.ci = 0 + 1j
-        # this is hard-coded for Mie theory
-        # and we will use layer 1 and layer 3 as the medium
-        # and layer 1 for the medium
-        self.number_of_layers = 3
 
-        # start out with _refractive_index_array corresponding to air
-        self._refractive_index_array = np.ones((self.number_of_wavelengths, self.number_of_layers),dtype=complex)
+        self.set_refractive_indicex_array()
+        self.compute_spectrum()
+
 
     def parse_input(self, args):
         if "radius" in args:
             self.radius = args["radius"]
         else:
             self.radius = 100e-9
+
         if "wavelength_list" in args:
             lamlist = args["wavelength_list"]
             self.wavelength_array = np.linspace(lamlist[0], lamlist[1], int(lamlist[2]))
             self.number_of_wavelengths = int(lamlist[2])
+            self.wavenumber_array = 1 / self.wavelength_array
+        # default wavelength array
         else:
             self.wavelength_array = np.linspace(400e-9, 800e-9, 10)
             self.number_of_wavelengths = 10
+            self.wavenumber_array = 1 / self.wavelength_array
 
-        if "sphere_refractive_index" in args:
-            self._sphere_refractive_index_array = args[
-                "sphere_refractive_index"
-            ] * np.ones(self.number_of_wavelengths)
+        if "sphere_material" in args:
+            self.sphere_material = args['sphere_material']
         else:
-            self._sphere_refractive_index_array = (1.5 + 0j) * np.ones(
-                self.number_of_wavelengths
-            )
-        if "medium_refractive_index" in args:
-            self._medium_refractive_index = args["medium_refractive_index"]
+            self.sphere_material = "ag"
+    
+        if "medium_material" in args:
+            self.medium_material = args["medium_material"]
         else:
-            self._medium_refractive_index = 1.0 + 0j
+            self.medium_material = "air"
 
-        self._relative_refractive_index_array = (
-            self._sphere_refractive_index_array / self._medium_refractive_index
-        )
+        self.number_of_layers = 3
+        self._refractive_index_array = np.ones((self.number_of_wavelengths, 3),dtype=complex)
         self._relative_permeability = 1.0 + 0j
         self._size_factor_array = np.pi * 2 * self.radius / self.wavelength_array
 
         self.q_ext = np.zeros_like(self.wavelength_array)
         self.q_scat = np.zeros_like(self.wavelength_array)
         self.q_abs = np.zeros_like(self.wavelength_array)
+
+    def set_refractive_indicex_array(self):
+        """once materials are specified, define the refractive_index_array values"""
+
+
+        # terminal layers default to air for now... generalize later!
+        self.material_Air(0)
+
+        _lm = self.sphere_material.lower()
+
+        # check all possible values of the material string
+        # and set material as appropriate.
+        # in future probably good to create a single wrapper
+        # function in materials.py that will do this so
+        # that MieDriver and TmmDriver can just use it rather
+        # than duplicating this kind of code in both classes
+        if _lm == "air":
+            self.material_Air(1)
+        elif _lm == "ag":
+            self.material_Ag(1)
+        elif _lm == "al":
+            self.material_Al(1)
+        elif _lm == "al2o3":
+            self.material_Al2O3(1)
+        elif _lm == "aln":
+            self.material_AlN(1)
+        elif _lm == "au":
+            self.material_Au(1)
+        elif _lm == "hfo2":
+            self.material_HfO2(1)
+        elif _lm == "pb":
+            self.material_Pb(1)
+        elif _lm == "polystyrene":
+            self.material_polystyrene(1)
+        elif _lm == "pt":
+            self.material_Pt(1)
+        elif _lm == "re":
+            self.material_Re(1)
+        elif _lm == "rh":
+            self.material_Rh(1)
+        elif _lm == "ru":
+            self.material_Ru(1)
+        elif _lm == "si":
+            self.material_Si(1)
+        elif _lm == "sio2":
+            self.material_SiO2(1)
+        elif _lm == "ta2O5":
+            self.material_Ta2O5(1)
+        elif _lm == "tin":
+            self.material_TiN(1)
+        elif _lm == "tio2":
+            self.material_TiO2(1)
+        elif _lm == "w":
+            self.material_W(1)
+        # default is SiO2
+        else:
+            self.material_SiO2(1)
+
+        self._relative_refractive_index_array = self._refractive_index_array[:,1] / self._refractive_index_array[:,0]
 
     def compute_spectrum(self):
         """Will prepare the attributes forcomputing q_ext, q_abs, q_scat, c_abs, c_ext, c_scat
@@ -148,6 +204,7 @@ class MieDriver(SpectrumDriver, Materials):
             # compute q_scat
             self.q_scat[i] = self._compute_q_scattering(x_val)
             self.q_ext[i] = self._compute_q_extinction(x_val)
+            self.q_abs[i] = self.q_ext[i] - self.q_scat[i]
 
     def _compute_s_jn(self, n, z):
         """Compute the spherical bessel function from the Bessel function
@@ -287,7 +344,6 @@ class MieDriver(SpectrumDriver, Materials):
         """
         self._compute_n_array(x)
         # self._n_array will be an array from 1 to n_max
-        print(self._n_array)
 
         # pre-compute terms that will be used numerous times in computing coefficients
         _jnx = spherical_jn(self._n_array, x)
