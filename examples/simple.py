@@ -1,29 +1,32 @@
 import wpspecdev
-import numpy as np
 from matplotlib import pyplot as plt
+args = {  
+'wavelength_list': [300e-9, 800e-9, 100],  
+'sphere_material': "au",
+'medium_material': "air",
+'radius': 5e-9  
+}  
 
-thickness = 100e-9
-userargs = {
-    'wavelength_list': [500e-9, 502e-9, 3],
-    'material_list': ["Air", "TiO2", "SiO2", "Ag", "Au", "Pt", "AlN", "Al2O3", "Air"],
-    'thickness_list': [0, 200e-9, 100e-9, 5e-9, 6e-9, 7e-9, 100e-9, 201e-9, 0]
-}
-sf = wpspecdev.SpectrumFactory()
-mt = sf.spectrum_factory('Tmm', userargs)
-
-#print(mt._refractive_index_array[1,:])
-#print(mt.wavelength_array[1])
-
-
-
-
-
-# before compute spectrum, mt.q_ext is not define
-
-#print(mt.reflectivity_array)
+sf = wpspecdev.SpectrumFactory()  
+mt_5 = sf.spectrum_factory('Mie', args)
+args['radius'] = 20e-9
+mt_20 = sf.spectrum_factory('Mie', args)
+args['radius'] = 40e-9
+mt_40 = sf.spectrum_factory('Mie', args)
+args['radius'] = 80e-9
+mt_80 = sf.spectrum_factory('Mie', args)
 
 
 
+
+plt.plot(mt_5.wavelength_array*1e9, mt_5.q_abs, label='r=5 nm')
+plt.plot(mt_5.wavelength_array*1e9, mt_20.q_abs, label='r=20 nm')
+plt.plot(mt_5.wavelength_array*1e9, mt_40.q_abs,label='r=40 nm')
+plt.xlabel("Wavelength (nm)")
+plt.ylabel("Absorption efficiency")
+plt.legend()
+plt.savefig("absorption.png")
+plt.show()
 
 
 

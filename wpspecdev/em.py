@@ -84,7 +84,7 @@ class TmmDriver(SpectrumDriver, Materials):
         self.compute_spectrum()
         # print output message
         print(
-            " Yay!!! Your reflection spectum has been computed! \N{smiling face with sunglasses} "
+            " Your spectra have been computed! \N{smiling face with sunglasses} "
         )
 
     def parse_input(self, args):
