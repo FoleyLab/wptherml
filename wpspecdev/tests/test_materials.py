@@ -47,27 +47,24 @@ def test_material_tio2():
 
 
 def test_material_ta2o5():
-    """ Dictionaries from material_Ta2O5 """
+    """Dictionaries from material_Ta2O5"""
     data1 = {
         "file": "data/Ta2O5_Rodriguez.txt",
-        "lower_wavelength": 2.9494E-08,
-        "upper_wavelength": 1.5143E-06,
-        "test_wavelength": 3.6899E-08,
-        "test_n":      8.6165E-01,
-        "test_k":      2.9300E-01
+        "lower_wavelength": 2.9494e-08,
+        "upper_wavelength": 1.5143e-06,
+        "test_wavelength": 3.6899e-08,
+        "test_n": 8.6165e-01,
+        "test_k": 2.9300e-01,
     }
     data2 = {
         "file": "data/Ta2O5_Bright.txt",
         "lower_wavelength": 5.0000e-07,
         "upper_wavelength": 1.0000e-03,
         "test_wavelength": 2.5907e-06,
-        "test_n": 2.0246e+00,
-        "test_k": 7.5989e-03
-
+        "test_n": 2.0246e00,
+        "test_k": 7.5989e-03,
     }
-    
-    
-    
+
     expected_n_1 = data1["test_n"]
     expected_k_1 = data1["test_k"]
     wavelength_1 = data1["test_wavelength"]
@@ -91,7 +88,6 @@ def test_material_ta2o5():
 
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
     result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
-
 
     assert np.isclose(result_n_1, expected_n_1, 1e-3)
     assert np.isclose(result_k_1, expected_k_1, 1e-3)
@@ -146,7 +142,7 @@ def test_material_al():
 
     # create test multilayer that has 3 layers and wavelength array centered at 206.64 nm
     material_test._create_test_multilayer(central_wavelength=2.06640e-07)
-    
+
     # define central layer as Al
     material_test.material_Al(1)
 
@@ -155,7 +151,6 @@ def test_material_al():
 
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
-
 
 
 def test_material_hfo2():
@@ -179,26 +174,24 @@ def test_material_hfo2():
 
 
 def test_material_au():
-    """ Dictionaries from material_Au """
+    """Dictionaries from material_Au"""
     data1 = {
         "file": "data/Au_JC_RI_f.txt",
         "lower_wavelength": 2e-07,
-        "upper_wavelength":1.00025e-06,
+        "upper_wavelength": 1.00025e-06,
         "test_wavelength": 5.00188e-07,
-        "test_n":      0.962208410850276,
-        "test_k":      1.8695066263351445
+        "test_n": 0.962208410850276,
+        "test_k": 1.8695066263351445,
     }
     data2 = {
         "file": "data/Au_IR.txt",
-        "lower_wavelength": 3.000000E-07,
-        "upper_wavelength": 2.493000E-05,
-        "test_wavelength": 5.024000E-06,
-        "test_n": 3.031000E+00,
-        "test_k": 3.447000E+01
-
+        "lower_wavelength": 3.000000e-07,
+        "upper_wavelength": 2.493000e-05,
+        "test_wavelength": 5.024000e-06,
+        "test_n": 3.031000e00,
+        "test_k": 3.447000e01,
     }
-   
-    
+
     expected_n_1 = data1["test_n"]
     expected_k_1 = data1["test_k"]
     wavelength_1 = data1["test_wavelength"]
@@ -223,11 +216,11 @@ def test_material_au():
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
     result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
 
-
     assert np.isclose(result_n_1, expected_n_1, 1e-3)
     assert np.isclose(result_k_1, expected_k_1, 1e-3)
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
+
 
 def test_material_pt():
     """tests material_Pt method using tabulated n and k at lambda=610 nm
@@ -374,28 +367,26 @@ def test_material_si():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
+
 def test_material_aln():
-    """ Dictionaries from material_AlN """
+    """Dictionaries from material_AlN"""
     data1 = {
         "file": "data/AlN_Pastrnak.txt",
         "lower_wavelength": 0.000000220,
         "upper_wavelength": 0.000005000,
         "test_wavelength": 0.000001082,
-        "test_n":  2.129298842,
-        "test_k":  0.000000000
+        "test_n": 2.129298842,
+        "test_k": 0.000000000,
     }
     data2 = {
         "file": "data/AlN_Kischkat.txt",
-        "lower_wavelength": 1.53846E-06,
-        "upper_wavelength": 1.42857E-05,
-        "test_wavelength":  6.26566E-06,
+        "lower_wavelength": 1.53846e-06,
+        "upper_wavelength": 1.42857e-05,
+        "test_wavelength": 6.26566e-06,
         "test_n": 1.87617,
-        "test_k": 0.00264
-
+        "test_k": 0.00264,
     }
-    
-    
-    
+
     expected_n_1 = data1["test_n"]
     expected_k_1 = data1["test_k"]
     wavelength_1 = data1["test_wavelength"]
@@ -420,7 +411,6 @@ def test_material_aln():
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
     result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
 
-    
     assert np.isclose(result_n_1, expected_n_1, 1e-3)
     assert np.isclose(result_k_1, expected_k_1, 1e-3)
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
@@ -428,27 +418,25 @@ def test_material_aln():
 
 
 def test_material_w():
-    """ Dictionaries from material_W """
+    """Dictionaries from material_W"""
     data1 = {
         "file": "data/W_Rakic.txt",
-        "lower_wavelength": 1.53846E-06,
-        "upper_wavelength": 1.2398E-05,
-        "test_wavelength": 1.3620E-06,
-        "test_n":  3.1024E+00,
-        "test_k":  4.3555E+00
+        "lower_wavelength": 1.53846e-06,
+        "upper_wavelength": 1.2398e-05,
+        "test_wavelength": 1.3620e-06,
+        "test_n": 3.1024e00,
+        "test_k": 4.3555e00,
     }
-    
+
     data2 = {
         "file": "data/W_Ordal.txt",
-        "lower_wavelength": 6.67000E-07,
-        "upper_wavelength": 2.00000E-04,
-        "test_wavelength": 2.22000E-05,
+        "lower_wavelength": 6.67000e-07,
+        "upper_wavelength": 2.00000e-04,
+        "test_wavelength": 2.22000e-05,
         "test_n": 27.5991880,
-        "test_k": 83.5173670
+        "test_k": 83.5173670,
     }
-    
 
-    
     expected_n_1 = data1["test_n"]
     expected_k_1 = data1["test_k"]
     wavelength_1 = data1["test_wavelength"]
@@ -473,9 +461,7 @@ def test_material_w():
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
     result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
 
-
     assert np.isclose(result_n_1, expected_n_1, 1e-3)
     assert np.isclose(result_k_1, expected_k_1, 1e-3)
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
-
