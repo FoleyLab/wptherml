@@ -751,9 +751,9 @@ class Materials:
             # dictionary specific to W with wavelength range information corresponding to different
             # data sets
             data1 = {
-                "file": "data/Si_Aspnes.txt",
-                "lower_wavelength": 2.066E-07,
-                "upper_wavelength": 8.266E-07,
+                "file": "data/Si_Schinke.txt",
+                "lower_wavelength": 0.000000250,
+                "upper_wavelength": 0.000001450,
             }
             data2 = {
                 "file": "data/Si_Shkondin.txt",
@@ -787,7 +787,7 @@ class Materials:
                     or wavelength_range == "short"
                     or wavelength_range == "vis"
                 ):
-                    file_path = path + "data/Si_Aspnes.txt"
+                    file_path = path + "data/Si_Schinke.txt"
 
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Si_Shkondin.txt"
