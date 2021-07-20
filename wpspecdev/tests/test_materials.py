@@ -349,25 +349,6 @@ def test_material_ru():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
-
-def test_material_si():
-    """tests material_Si method using tabulated n and k at lambda=85 nm
-    0.00000085	3.636	3.46E-03"""
-
-    expected_n = 3.636
-    expected_k = 3.46e-03
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
-    material_test._create_test_multilayer(central_wavelength=0.00000085)
-    # define central layer as Si
-    material_test.material_Si(1)
-
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
-
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
-
-
 def test_material_aln():
     """Dictionaries from material_AlN"""
     data1 = {
@@ -457,6 +438,56 @@ def test_material_w():
     material_test._create_test_multilayer(central_wavelength=wavelength_2)
     # define central layer as W using data2
     material_test.material_W(1)
+
+    result_n_2 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
+
+    assert np.isclose(result_n_1, expected_n_1, 1e-3)
+    assert np.isclose(result_k_1, expected_k_1, 1e-3)
+    assert np.isclose(result_n_2, expected_n_2, 1e-3)
+    assert np.isclose(result_k_2, expected_k_2, 1e-3)
+
+
+def test_material_si():
+    """Dictionaries from material_Si"""
+    data1 = {
+        "file": "data/Si_Schinke.txt",
+        "lower_wavelength": 0.000000250,
+        "upper_wavelength": 0.000001450,
+        "test_wavelength": 0.000000790,
+        "test_n": 3.677000000,
+        "test_k": 0.005688800,
+    }
+
+    data2 = {
+        "file": "data/Si_Shkondin.txt",
+        "lower_wavelength": 2.00000e-06,
+        "upper_wavelength": 2.00000e-04,
+        "test_wavelength": 0.00001052000,
+        "test_n": 3.46969768200,
+        "test_k": 0.00008077950,
+    }
+
+    expected_n_1 = data1["test_n"]
+    expected_k_1 = data1["test_k"]
+    wavelength_1 = data1["test_wavelength"]
+
+    expected_n_2 = data2["test_n"]
+    expected_k_2 = data2["test_k"]
+    wavelength_2 = data2["test_wavelength"]
+
+    # create test multilayer for data1
+    material_test._create_test_multilayer(central_wavelength=wavelength_1)
+    # define central layer as Si using data1
+    material_test.material_Si(1)
+
+    result_n_1 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_1 = np.imag(material_test._refractive_index_array[1, 1])
+
+    # update test multilayer for data2
+    material_test._create_test_multilayer(central_wavelength=wavelength_2)
+    # define central layer as Si using data2
+    material_test.material_Si(1)
 
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
     result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
