@@ -349,25 +349,6 @@ def test_material_ru():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
-
-def test_material_si():
-    """tests material_Si method using tabulated n and k at lambda=85 nm
-    0.00000085	3.636	3.46E-03"""
-
-    expected_n = 3.636
-    expected_k = 3.46e-03
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
-    material_test._create_test_multilayer(central_wavelength=0.00000085)
-    # define central layer as Si
-    material_test.material_si(1)
-
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
-
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
-
-
 def test_material_aln():
     """Dictionaries from material_AlN"""
     data1 = {
@@ -467,7 +448,7 @@ def test_material_w():
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
 
-def test_material_Si():
+def test_material_si():
     """Dictionaries from material_Si"""
     data1 = {
         "file": "data/Si_Schinke.txt",
@@ -480,7 +461,7 @@ def test_material_Si():
 
     data2 = {
         "file": "data/Si_Shkondin.txt",
-        "lower_wavelength": 6.67000e-07,
+        "lower_wavelength": 2.00000e-06,
         "upper_wavelength": 2.00000e-04,
         "test_wavelength": 0.00001052000,
         "test_n": 3.46969768200,
