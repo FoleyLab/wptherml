@@ -496,3 +496,16 @@ def test_material_si():
     assert np.isclose(result_k_1, expected_k_1, 1e-3)
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
+
+def test_material_UD_Ag():
+    "dictionaries from Ag_JC and Ag_Yang"
+    data1 = {
+        "file": "data/Ag_JC.txt",
+        "lower_wavelength": 1.88e-7,
+                "upper_wavelength": 1.9e-06,
+    }
+    data2 = {
+        "file": "data/Ag_Yang.txt",
+        "lower_wavelength": 1.91e-06,
+        "upper_wavelength": 24.00e-06,
+    }
