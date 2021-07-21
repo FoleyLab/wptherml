@@ -818,8 +818,8 @@ class Materials:
             # data sets
             data1 = {
                 "file": "data/Re_Windt.txt",
-                "lower_wavelength": 0.0004,
-                "upper_wavelength": 0.006,
+                "lower_wavelength": 2.36E-09,
+                "upper_wavelength": 1.2157E-07,
             }
             data2 = {
                 "file": "data/Re_Palik.txt",
