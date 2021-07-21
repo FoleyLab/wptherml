@@ -501,11 +501,11 @@ def test_material_Re():
     """Dictionaries from material_Re"""
     data1 = {
         "file": "data/Re_Windt.txt",
-        "lower_wavelength": 0.0004,
-        "upper_wavelength": 0.006,
-        "test_wavelength": 0.0007508,
-        "test_n": 3.340357553,
-        "test_k": 2.799410269,
+        "lower_wavelength": 2.36E-09,
+        "upper_wavelength": 1.2157E-07,
+        "test_wavelength": 5.391E-08,
+        "test_n": 0.786,
+        "test_k": 0.723,
     }
 
     data2 = {
