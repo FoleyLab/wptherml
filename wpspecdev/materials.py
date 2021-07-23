@@ -808,10 +808,10 @@ class Materials:
                     or wavelength_range == "short"
                     or wavelength_range == "vis"
                 ):
-                    file_path = path + "data/Ta2O5_Rodriguez.txt"
+                    file_path = path + "data/Ag_JC.txt"
 
                 elif wavelength_range == "ir" or wavelength_range == "long":
-                    file_path = path + "data/Ta2O5_Bright.txt"
+                    file_path = path + "data/Ag_Yang.txt"
 
         print("read from ", file_path)
             # now read Ag data into a numpy array
