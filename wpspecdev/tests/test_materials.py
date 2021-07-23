@@ -497,15 +497,50 @@ def test_material_si():
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
-def test_material_UD_Ag():
+def test_material_ag():
     "dictionaries from Ag_JC and Ag_Yang"
     data1 = {
         "file": "data/Ag_JC.txt",
         "lower_wavelength": 1.88e-7,
-                "upper_wavelength": 1.9e-06,
+        "upper_wavelength": 1.9e-06,
+        "test_wavelength": 2.924E-07,
+        "test_n": 1.39,
+        "test_k": 1.161,
     }
     data2 = {
         "file": "data/Ag_Yang.txt",
         "lower_wavelength": 1.91e-06,
         "upper_wavelength": 24.00e-06,
+        "test_wavelength": 2.3400E-06,
+        "test_n": 5.79E-01,
+        "test_k": 1.66E+01,
     }
+
+    expected_n_1 = data1["test_n"]
+    expected_k_1 = data1["test_k"]
+    wavelength_1 = data1["test_wavelength"]
+
+    expected_n_2 = data2["test_n"]
+    expected_k_2 = data2["test_k"]
+    wavelength_2 = data2["test_wavelength"]
+
+# create test multilayer for data1
+    material_test._create_test_multilayer(central_wavelength=wavelength_1)
+# define central layer as Ag using data1
+    material_test.material_Ag(1)
+
+    result_n_1 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_1 = np.imag(material_test._refractive_index_array[1, 1])
+
+# update test multilayer for data2
+    material_test._create_test_multilayer(central_wavelength=wavelength_2)
+# define central layer as Ag using data2
+    material_test.material_Ag(1)
+
+    result_n_2 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
+
+    assert np.isclose(result_n_1, expected_n_1, 1e-3)
+    assert np.isclose(result_k_1, expected_k_1, 1e-3)
+    assert np.isclose(result_n_2, expected_n_2, 1e-3)
+    assert np.isclose(result_k_2, expected_k_2, 1e-3)
