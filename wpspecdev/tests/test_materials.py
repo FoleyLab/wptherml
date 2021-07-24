@@ -277,24 +277,6 @@ def test_material_pb():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
-def test_material_re():
-    """tests material_Re method using tabulated n and k at lambda=1106 nm
-    0.00066	3.525691261	2.530539094"""
-
-    expected_n = 3.525691261
-    expected_k = 2.530539094
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
-    material_test._create_test_multilayer(central_wavelength=0.00066)
-    # define central layer as Re
-    material_test.material_Re(1)
-
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
-
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
-
-
 def test_material_polystyrene():
     """tests material_Polystyrene method using tabulated n and k at lambda=500 nm
     0.0000005	1.60021	6.11E-07"""
@@ -497,23 +479,27 @@ def test_material_si():
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
-def test_material_ag():
-    "dictionaries from Ag_JC and Ag_Yang"
+
+
+
+def test_material_Ag():
+    """Dictionaries from material_Ag"""
     data1 = {
         "file": "data/Ag_JC.txt",
-        "lower_wavelength": 1.879E-07,
-        "upper_wavelength": 0.000001937,
-        "test_wavelength": 2.924E-07,
-        "test_n": 1.39,
-        "test_k": 1.161,
+        "lower_wavelength": 1.87900E-07,
+        "upper_wavelength": 1.93700E-06,
+        "test_wavelength": 3.81500E-07,
+        "test_n": 5.00000E-02,
+        "test_k": 1.86400E+00,
     }
+
     data2 = {
         "file": "data/Ag_Yang.txt",
-        "lower_wavelength":2.7000E-07,
-        "upper_wavelength": 2.4900E-05,
-        "test_wavelength": 2.3400E-06,
-        "test_n": 5.79E-01,
-        "test_k": 1.66E+01,
+        "lower_wavelength": 2.70000E-07,
+        "upper_wavelength": 2.49200E-05,
+        "test_wavelength": 2.31400E-06,
+        "test_n": 5.67200E-01,
+        "test_k": 1.63800E+01,
     }
 
     expected_n_1 = data1["test_n"]
