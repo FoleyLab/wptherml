@@ -877,9 +877,7 @@ class Materials:
 
 
 
-
-
-    def material_Ag(self, layer_number, wavelength_range="visible", override="true"):
+def material_Ag(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Ag
 
@@ -901,11 +899,11 @@ class Materials:
 
             Examples
             --------
-            >>> material_Ag(1, wavelength_range="visible") -> layer 1 will be Ag from the Rodriguez data set good from visible to 1.5 microns
-            >>> material_Ag(2, wavelength_range="ir") -> layer 2 will be Ag from the Bright data set good until 1000 microns
+            >>> material_Ag(1, wavelength_range="visible") -> layer 1 will be Re from the Windt data set good from visible to 1.5 microns
+            >>> material_Ag(2, wavelength_range="ir") -> layer 2 will be Re from the Palik data set good until 1000 microns
             """
 
-            # dictionary specific to Ag with wavelength range information corresponding to different
+            # dictionary specific to W with wavelength range information corresponding to different
             # data sets
             data1 = {
                 "file": "data/Ag_JC.txt",
@@ -950,7 +948,7 @@ class Materials:
                     file_path = path + "data/Ag_Yang.txt"
 
             print("read from ", file_path)
-            # now read Ag data into a numpy array
+            # now read Si data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
             # file_path[:,1] -> real part of the refractive index
@@ -965,3 +963,4 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
+
