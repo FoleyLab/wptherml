@@ -12,14 +12,15 @@ material_test = wpspecdev.Materials()
 
 
 def test_material_sio2():
-    """tests material_sio2 method using tabulated n and k at lambda=636 nm"""
+    """tests material_sio2 method using tabulated n and k at lambda=636 nm
+    6.359999999E-7 1.45693 0.00000"""
 
     expected_n = 1.45693
     expected_k = 0.00000
 
     # create test multilayer that has 3 layers and wavelength array centered at 636 nm
     material_test._create_test_multilayer(central_wavelength=636e-9)
-    # define central layer as SiO2
+    # define central layer as siO2
     material_test.material_SiO2(1)
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
@@ -30,13 +31,15 @@ def test_material_sio2():
 
 
 def test_material_tio2():
-    """tests material_tio2 method using tabulated n and k at lambda=664 nm"""
+    """tests material_tio2 method using tabulated n and k at lambda=664 nm
+    6.639999999E-7 2.377021563 6.79e-10"""
+
     expected_n = 2.377021563
     expected_k = 6.79e-10
 
     # create test multilayer that has 3 layers and wavelength array centered at 664 nm
     material_test._create_test_multilayer(central_wavelength=664e-9)
-    # define central layer as TiO2
+    # define central layer as tiO2
     material_test.material_TiO2(1)
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
@@ -102,7 +105,7 @@ def test_material_tin():
     expected_n = 2.175019337515494
     expected_k = 5.175973473259225
 
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 1106 nm
     material_test._create_test_multilayer(central_wavelength=1.106906906906907e-06)
     # define central layer as TiN
     material_test.material_TiN(1)
@@ -121,7 +124,7 @@ def test_material_ag():
     expected_n = 1.3443610273525322
     expected_k = 0.9839804733145654
 
-    # create test multilayer that has 3 layers and wavelength array centered at 709 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 300 nm
     material_test._create_test_multilayer(central_wavelength=3.00128e-07)
     # define central layer as Ag
     material_test.material_Ag(1)
@@ -202,7 +205,7 @@ def test_material_au():
 
     # create test multilayer for data1
     material_test._create_test_multilayer(central_wavelength=wavelength_1)
-    # define central layer as Ta2O5 using data1
+    # define central layer as au using data1
     material_test.material_Au(1)
 
     result_n_1 = np.real(material_test._refractive_index_array[1, 1])
@@ -210,7 +213,7 @@ def test_material_au():
 
     # update test multilayer for data2
     material_test._create_test_multilayer(central_wavelength=wavelength_2)
-    # define central layer as Ta2O5 using data2
+    # define central layer as au using data2
     material_test.material_Au(1)
 
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
@@ -228,7 +231,7 @@ def test_material_pt():
 
     expected_n = 5.4685e00
     expected_k = 2.4477e01
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 610 nm
     material_test._create_test_multilayer(central_wavelength=6.1096e-06)
     # define central layer as Pt
     material_test.material_Pt(1)
@@ -241,8 +244,8 @@ def test_material_pt():
 
 
 def test_material_al2o3():
-    """tests material_Au method using tabulated n and k at lambda=500 nm
-    5.00E-07	1.74007	0"""
+    """tests material_al2o3 method using tabulated n and k at lambda=500 nm
+    5.00E-07 1.74007 0"""
 
     expected_n = 1.74007
     expected_k = 0
@@ -260,13 +263,13 @@ def test_material_al2o3():
 
 
 def test_material_pb():
-    """tests material_Pb method using tabulated n and k at lambda=605nm
-    0.0000605	0.7928	0.6622"""
+    """tests material_Pb method using tabulated n and k at lambda=118.08nm
+    1.180800000E-07	5.367000000E-01	9.540000000E-01"""
 
-    expected_n = 0.7928
-    expected_k = 0.6622
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
-    material_test._create_test_multilayer(central_wavelength=0.0000605)
+    expected_n = 5.367000000E-01
+    expected_k = 9.540000000E-01
+    # create test multilayer that has 3 layers and wavelength array centered at 118.08 nm
+    material_test._create_test_multilayer(central_wavelength=1.180800000E-07)
     # define central layer as Pb
     material_test.material_Pb(1)
 
@@ -302,7 +305,7 @@ def test_material_rh():
 
     expected_n = 2
     expected_k = 5.11
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 564 nm
     material_test._create_test_multilayer(central_wavelength=5.636e-07)
     # define central layer as Rh
     material_test.material_Rh(1)
@@ -320,7 +323,7 @@ def test_material_ru():
 
     expected_n = 5.1101514677
     expected_k = 4.1107371518
-    # create test multilayer that has 3 layers and wavelength array centered at 664 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 750 nm
     material_test._create_test_multilayer(central_wavelength=0.0000007508)
     # define central layer as Ru
     material_test.material_Ru(1)
@@ -559,7 +562,7 @@ def test_material_Ag():
 
     # create test multilayer for data1
     material_test._create_test_multilayer(central_wavelength=wavelength_1)
-    # define central layer as Re using data1
+    # define central layer as Ag using data1
     material_test.material_Ag(1)
 
     result_n_1 = np.real(material_test._refractive_index_array[1, 1])
@@ -567,7 +570,7 @@ def test_material_Ag():
 
     # update test multilayer for data2
     material_test._create_test_multilayer(central_wavelength=wavelength_2)
-    # define central layer as Re using data2
+    # define central layer as Ag using data2
     material_test.material_Ag(1)
 
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
