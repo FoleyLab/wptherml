@@ -459,3 +459,26 @@ class MieDriver(SpectrumDriver, Materials):
     def _compute_n_array(self, x):
         _n_max = int(x + 4 * x ** (1 / 3.0) + 2)
         self._n_array = np.copy(np.linspace(1, _n_max, _n_max, dtype=int))
+
+    
+    def _compute_gl(r, h, mu, omega_p):
+        ''' docstring goes here! '''
+
+    def _compute_omega_l(omega_p, eps_inf, eps_d):
+        """ docstring goes here! """
+
+    def compute_hamiltonian(self, h, drude_dictionary, emitter_dictionary):
+        """ docstring goes here! """
+        # get parameters of the metal nanoparticle
+        _omega_p = drude_dictionary['omega_p']
+        _eps_inf = drude_dictionary['eps_inf']
+        _gamma_p = drude_dictionary['gamma_p']
+        _eps_D = drude_dictionary['eps_d']
+
+        # get parameters of the quantum emitter
+        _gamma_qe = emitter_dictionary['gamma_qe']
+        _omega_0 = emitter_dictionary['omega_0']
+        _mu = emitter_dictionary['mu']
+
+    
+
