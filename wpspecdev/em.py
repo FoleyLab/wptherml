@@ -454,3 +454,130 @@ class TmmDriver(SpectrumDriver, Materials):
         _pm[1, 1] = np.exp(_b)
 
         return _pm
+
+    def _compute_pm_analytical_gradient(self, kzl, phil):
+        """ compute the derivative of the P matrix with respect to layer thickness
+        
+        Arguments
+        ---------
+            kzl : complex float
+                the z-component of the wavevector in layer l
+
+            phil : complex float
+                kzl * sl where sl is the thickness of layer l
+
+        Reference
+        ---------
+            Equation 18 of https://journals.aps.org/prresearch/pdf/10.1103/PhysRevResearch.2.013018 
+
+        Returns
+        -------
+            _pm_analytical_gradient : 2x2 numpy array of complex floats
+                the analytical derivative of the P matrix with respect to thickness of layer l
+        
+        """
+        return _pm_analytical_gradient
+
+
+    """ this is the tmm_gradient code from wptherml:
+    def tmm_grad(k0, theta0, pol, nA, tA, layers):
+    n = len(layers)
+    N = len(tA)
+    ### Initialize arrays!
+    Dli = np.zeros((N,2,2), dtype = complex)
+    Dl = np.zeros((N,2,2), dtype = complex)
+    D1 = np.zeros((2,2),dtype=complex)
+    Pl = np.zeros((N, 2, 2), dtype = complex)
+    Plp = np.zeros((n,2,2), dtype = complex)
+    Mp = np.zeros((n, 2,2), dtype = complex)
+    t1 = np.zeros((2,2), dtype = complex)
+    t2 = np.zeros((2,2), dtype = complex)
+    kz = np.zeros(N, dtype = complex)
+    phil = np.zeros(N, dtype = complex)
+    ctheta = np.zeros(N, dtype = complex)
+    theta = np.zeros(N, dtype = complex)
+    M = np.zeros((2,2), dtype = complex)
+    ### compute kx
+    kx = nA[0]*np.sin(theta0)*k0
+    ### compute D1
+    ctheta[0] = np.cos(theta0)
+    D1 = BuildD(nA[0],ctheta[0], pol)
+    ### compute D1^-1
+    tmp = D1[0,0]*D1[1,1]-D1[0,1]*D1[1,0]
+    det = 1/tmp
+    M[0,0] = det*D1[1,1]
+    M[0,1] = -det*D1[0,1]
+    M[1,0] = -det*D1[1,0]
+    M[1,1] = det*D1[0,0]
+    Dli[0,:,:] = np.copy(M)
+    ### Initialize gradient of M with D1^-1
+    for i in range(0,n):
+        Mp[i,:,:] = np.copy(M)
+    ### Compute kz0
+    kz[0] = np.sqrt(nA[0]*k0)**2-kx**2
+    ### Compute kz, phil, D, P, D^-1 quantities for all  finite layers!
+    for i in range (1,(N-1)):
+        kz[i] = np.sqrt((nA[i]*k0)**2-kx**2)
+        if np.imag(kz[i]) < 0:
+            kz[i] = -1 * kz[i]
+        ctheta[i] = kz[i]/(nA[i]*k0)
+        theta[i] = np.arccos(ctheta[i])
+        phil[i] = kz[i]*tA[i]
+        Dl[i,:,:] = BuildD(nA[i], ctheta[i], pol)
+        tmp = Dl[i,0,0]*Dl[i,1,1]-Dl[i,0,1]*Dl[i,1,0]
+        det = 1/tmp
+        Dli[i,0,0] = det*Dl[i,1,1]
+        Dli[i,0,1] = -det*Dl[i,0,1]
+        Dli[i,1,0] = -det*Dl[i,1,0]
+        Dli[i,1,1] = det*Dl[i,0,0]
+        Pl[i,:,:] = BuildP(phil[i])
+        t1 = np.dot(M,Dl[i,:,:])
+        t2 = np.dot(t1, Pl[i,:,:])
+        M = np.dot(t2,Dli[i,:,:])
+        
+    ### kz, Dl for final layer!
+    kz[N-1] = np.sqrt((nA[N-1]*k0)**2-kx**2)
+    ctheta[N-1] = kz[N-1]/(nA[N-1]*k0)
+    Dl[N-1,:,:] = BuildD(nA[N-1],ctheta[N-1], pol)
+    t1 = np.dot(M,Dl[N-1,:,:])
+    ### This is the transfer matrix!
+    M = np.copy(t1)
+    ### for all layers we want to differentiate with respect to, 
+    ### form Plp matrices
+    for l in range(0,n):
+        Plp[l,:,:] = Build_dP_ds(kz[layers[l]],tA[layers[l]])
+    ### for all those layers, compute associated matrix products!
+    idx = 0
+    for i in layers:
+        for l in range(1,i):
+            t1 = np.dot(Mp[idx,:,:], Dl[l,:,:])
+            t2 = np.dot(t1, Pl[l,:,:])
+            Mp[idx,:,:] = np.dot(t2,Dli[l,:,:])
+        t1 = np.dot(Mp[idx,:,:],Dl[i,:,:])
+        t2 = np.dot(t1,Plp[idx,:,:])
+        Mp[idx,:,:] = np.dot(t2,Dli[i,:,:])
+        for l in range(i+1,N-1):
+            t1 = np.dot(Mp[idx,:,:], Dl[l,:,:])
+            t2 = np.dot(t1, Pl[l,:,:])
+            Mp[idx,:,:] = np.dot(t2,Dli[l,:,:])
+        t1 = np.dot(Mp[idx,:,:],Dl[N-1,:,:])
+        Mp[idx,:,:] = np.copy(t1)
+        idx = idx+1
+    
+    M = {
+         "Mp": Mp,   
+         "M11": M[0,0], 
+         "M12": M[0,1], 
+         "M21": M[1,0], 
+         "M22": M[1,1],
+         "theta_i": theta0,
+         "theta_L": np.real(np.arccos(ctheta[N-1])),
+         "kz": kz,
+         "phil": phil,
+         "ctheta": ctheta,
+         "theta": theta
+            
+            
+            }
+    return M
+    """
