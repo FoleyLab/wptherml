@@ -400,7 +400,7 @@ class Materials:
 
             Examples
             --------
-            >>> material_AlN(1, wavelength_range="visible") -> layer 1 will be AlN from the AlN_Kischkat data set good from 1.53846 to 14.2857 microns 
+            >>> material_AlN(1, wavelength_range="visible") -> layer 1 will be AlN from the AlN_Kischkat data set good from 1.53846 to 14.2857 microns
             """
             # get path to the AlN data file
             file_path = path + "data/AlN_Kischkat.txt"
@@ -571,7 +571,7 @@ class Materials:
 
             Examples
             --------
-            >>> material_Re(1, wavelength_range="visible") -> layer 1 will be Re from the Re_Windt data set good from 0.0024 to 0.1220 microns 
+            >>> material_Re(1, wavelength_range="visible") -> layer 1 will be Re from the Re_Windt data set good from 0.0024 to 0.1220 microns
             """
             self._refractive_index_array[:, layer_number] = (
                 np.ones(len(self.wavelength_array), dtype=complex) * 2.4
@@ -856,7 +856,6 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-
     def material_AlN(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be AlN
@@ -1031,8 +1030,6 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-
-
     def material_Si(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Si
@@ -1150,8 +1147,8 @@ class Materials:
             # data sets
             data1 = {
                 "file": "data/Re_Windt.txt",
-                "lower_wavelength": 2.36E-09,
-                "upper_wavelength": 1.2157E-07,
+                "lower_wavelength": 2.36e-09,
+                "upper_wavelength": 1.2157e-07,
             }
             data2 = {
                 "file": "data/Re_Palik.txt",
@@ -1208,93 +1205,85 @@ class Materials:
             ) + 1j * k_spline(self.wavelength_array)
 
 
-
 def material_Ag(self, layer_number, wavelength_range="visible", override="true"):
-        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be Ag
+    if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+        """defines the refractive index of layer layer_number to be Ag
 
-            Arguments
-            ----------
-            layer_number : int
-            specifies the layer of the stack that will be modelled as Ag
+        Arguments
+        ----------
+        layer_number : int
+        specifies the layer of the stack that will be modelled as Ag
 
-            wavelength_range (optional) : str
-            specifies wavelength regime that is desired for modelling the material
+        wavelength_range (optional) : str
+        specifies wavelength regime that is desired for modelling the material
 
-            Attributes
-            ----------
-            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+        Attributes
+        ----------
+        _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
 
-            Returns
-            -------
-            None
+        Returns
+        -------
+        None
 
-            Examples
-            --------
-            >>> material_Ag(1, wavelength_range="visible") -> layer 1 will be Ag from the Ag_JC data set good from 0.1879 to 1.937
-            >>> material_Ag(2, wavelength_range="ir") -> layer 2 will be Ag from the Yang data set good until 24.92 microns (0.27-24.92)
-            """
+        Examples
+        --------
+        >>> material_Ag(1, wavelength_range="visible") -> layer 1 will be Ag from the Ag_JC data set good from 0.1879 to 1.937
+        >>> material_Ag(2, wavelength_range="ir") -> layer 2 will be Ag from the Yang data set good until 24.92 microns (0.27-24.92)
+        """
 
-            # dictionary specific to W with wavelength range information corresponding to different
-            # data sets
-            data1 = {
-                "file": "data/Ag_JC.txt",
-                "lower_wavelength": 1.87900E-07,
-                "upper_wavelength": 1.93700E-06,
-            }
-            data2 = {
-                "file": "data/Ag_Yang.txt",
-                "lower_wavelength": 2.70000E-07,
-                "upper_wavelength": 2.49200E-05,
-            }
+        # dictionary specific to W with wavelength range information corresponding to different
+        # data sets
+        data1 = {
+            "file": "data/Ag_JC.txt",
+            "lower_wavelength": 1.87900e-07,
+            "upper_wavelength": 1.93700e-06,
+        }
+        data2 = {
+            "file": "data/Ag_Yang.txt",
+            "lower_wavelength": 2.70000e-07,
+            "upper_wavelength": 2.49200e-05,
+        }
 
-            shortest_wavelength = self.wavelength_array[0]
-            longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
+        shortest_wavelength = self.wavelength_array[0]
+        longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
 
+        if (
+            shortest_wavelength >= data1["lower_wavelength"]
+            and longest_wavelength <= data1["upper_wavelength"]
+        ):
+            file_path = path + data1["file"]
+
+        elif (
+            shortest_wavelength >= data2["lower_wavelength"]
+            and longest_wavelength <= data2["upper_wavelength"]
+        ):
+            file_path = path + data2["file"]
+
+        else:
+            file_path = path + data1["file"]
+
+        if override == "false":
+            # make sure the wavelength_range string is all  lowercase
+            wavelength_range = wavelength_range.lower()
             if (
-                shortest_wavelength >= data1["lower_wavelength"]
-                and longest_wavelength <= data1["upper_wavelength"]
+                wavelength_range == "visible"
+                or wavelength_range == "short"
+                or wavelength_range == "vis"
             ):
-                file_path = path + data1["file"]
+                file_path = path + "data/Ag_JC.txt"
 
-            elif (
-                shortest_wavelength >= data2["lower_wavelength"]
-                and longest_wavelength <= data2["upper_wavelength"]
-            ):
-                file_path = path + data2["file"]
+            elif wavelength_range == "ir" or wavelength_range == "long":
+                file_path = path + "data/Ag_Yang.txt"
 
-            else:
-                file_path = path + data1["file"]
+        print("read from ", file_path)
+        # now read Ag data into a numpy array
+        file_data = np.loadtxt(file_path)
+        # file_path[:,0] -> wavelengths in meters
+        # file_path[:,1] -> real part of the refractive index
+        # file_path[:,2] -> imaginary part of the refractive index
+        n_spline = InterpolatedUnivariateSpline(file_data[:, 0], file_data[:, 1], k=1)
+        k_spline = InterpolatedUnivariateSpline(file_data[:, 0], file_data[:, 2], k=1)
 
-            if override == "false":
-                # make sure the wavelength_range string is all  lowercase
-                wavelength_range = wavelength_range.lower()
-                if (
-                    wavelength_range == "visible"
-                    or wavelength_range == "short"
-                    or wavelength_range == "vis"
-                ):
-                    file_path = path + "data/Ag_JC.txt"
-
-                elif wavelength_range == "ir" or wavelength_range == "long":
-                    file_path = path + "data/Ag_Yang.txt"
-
-            print("read from ", file_path)
-            # now read Ag data into a numpy array
-            file_data = np.loadtxt(file_path)
-            # file_path[:,0] -> wavelengths in meters
-            # file_path[:,1] -> real part of the refractive index
-            # file_path[:,2] -> imaginary part of the refractive index
-            n_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
-            k_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 2], k=1
-            )
-
-            self._refractive_index_array[:, layer_number] = n_spline(
-                self.wavelength_array
-            ) + 1j * k_spline(self.wavelength_array)
-
-
-
+        self._refractive_index_array[:, layer_number] = n_spline(
+            self.wavelength_array
+        ) + 1j * k_spline(self.wavelength_array)
