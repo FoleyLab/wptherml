@@ -84,7 +84,6 @@ class MieDriver(SpectrumDriver, Materials):
         self.set_refractive_indicex_array()
         self.compute_spectrum()
 
-
     def parse_input(self, args):
         if "radius" in args:
             self.radius = args["radius"]
@@ -103,17 +102,19 @@ class MieDriver(SpectrumDriver, Materials):
             self.wavenumber_array = 1 / self.wavelength_array
 
         if "sphere_material" in args:
-            self.sphere_material = args['sphere_material']
+            self.sphere_material = args["sphere_material"]
         else:
             self.sphere_material = "ag"
-    
+
         if "medium_material" in args:
             self.medium_material = args["medium_material"]
         else:
             self.medium_material = "air"
 
         self.number_of_layers = 3
-        self._refractive_index_array = np.ones((self.number_of_wavelengths, 3),dtype=complex)
+        self._refractive_index_array = np.ones(
+            (self.number_of_wavelengths, 3), dtype=complex
+        )
         self._relative_permeability = 1.0 + 0j
         self._size_factor_array = np.pi * 2 * self.radius / self.wavelength_array
 
@@ -123,7 +124,6 @@ class MieDriver(SpectrumDriver, Materials):
 
     def set_refractive_indicex_array(self):
         """once materials are specified, define the refractive_index_array values"""
-
 
         # terminal layers default to air for now... generalize later!
         self.material_Air(0)
@@ -178,7 +178,9 @@ class MieDriver(SpectrumDriver, Materials):
         else:
             self.material_SiO2(1)
 
-        self._relative_refractive_index_array = self._refractive_index_array[:,1] / self._refractive_index_array[:,0]
+        self._relative_refractive_index_array = (
+            self._refractive_index_array[:, 1] / self._refractive_index_array[:, 0]
+        )
 
     def compute_spectrum(self):
         """Will prepare the attributes forcomputing q_ext, q_abs, q_scat, c_abs, c_ext, c_scat
@@ -460,83 +462,79 @@ class MieDriver(SpectrumDriver, Materials):
         _n_max = int(x + 4 * x ** (1 / 3.0) + 2)
         self._n_array = np.copy(np.linspace(1, _n_max, _n_max, dtype=int))
 
-    
     def _compute_gl(l, r, h, mu, omega_p, eps_inf, eps_d):
-        ''' docstring goes here! '''
+        """docstring goes here!"""
         zeta = h / r
 
         omega_l = self._compute_omega_l(l, omega_p, eps_inf, eps_d)
-        # note in atomics, 4 * pi * epsilon_0 = 1 
-        g_l_squared = mu * omega_p/(1 * h * r**3) * (omega_l/omega_p)**3
-        g_l_squared *= (l + 1)**2 / ((1 + zeta) ** (2*l+4)) * (1 + 1/(2*l))
+        # note in atomics, 4 * pi * epsilon_0 = 1
+        g_l_squared = mu * omega_p / (1 * h * r ** 3) * (omega_l / omega_p) ** 3
+        g_l_squared *= (l + 1) ** 2 / ((1 + zeta) ** (2 * l + 4)) * (1 + 1 / (2 * l))
 
         return np.sqrt(g_l_squared), omega_l
 
     def _compute_gm(l_max, r, h, mu, omega_p, eps_inf, eps_d):
-        gm_array = np.zeros(len(l_max)-2)
-        omegam_array = np.zeros(len(l_max)-2)
-        for i in range(2,l_max):
-            gm_array[i-2], omegam_array[i-2] = self._compute_gl(i, r, h, mu, omega_p, eps_inf, eps_d)
+        gm_array = np.zeros(len(l_max) - 2)
+        omegam_array = np.zeros(len(l_max) - 2)
+        for i in range(2, l_max):
+            gm_array[i - 2], omegam_array[i - 2] = self._compute_gl(
+                i, r, h, mu, omega_p, eps_inf, eps_d
+            )
 
-        gm = np.sqrt( np.sum( gm_array * gm_array) )
-        omegam = np.sum(omegam_array * gm_array * gm_array) / np.sum(gm_array * gm_array)
+        gm = np.sqrt(np.sum(gm_array * gm_array))
+        omegam = np.sum(omegam_array * gm_array * gm_array) / np.sum(
+            gm_array * gm_array
+        )
 
         return gm, omegam
 
-
     def _compute_omega_l(l, omega_p, eps_inf, eps_d):
-        """ docstring goes here! """
-        return omega_p / np.sqrt(eps_inf + (1 + 1/l) * eps_d)
+        """docstring goes here!"""
+        return omega_p / np.sqrt(eps_inf + (1 + 1 / l) * eps_d)
 
     def compute_hamiltonian(self, N, h, drude_dictionary, emitter_dictionary):
-        """ docstring goes here! """
+        """docstring goes here!"""
         # this is the wavelength relevant for the system studied in PRL 112, 253601 (2014)
         # it is not general! should think of a more general way to get the l_max value!
-        # in that paper, the set omega_0 to 2.5 eV so we can convert that frequency into a wavelength 
+        # in that paper, the set omega_0 to 2.5 eV so we can convert that frequency into a wavelength
         lambda_0 = 1240 / 2.5
         # now we can get the size parameter
-        x = 2  * np.pi * self.radius / lambda_0 
+        x = 2 * np.pi * self.radius / lambda_0
         _l_max = int(x + 4 * x ** (1 / 3.0) + 2)
 
         # get parameters of the metal nanoparticle
-        _omega_p = drude_dictionary['omega_p']
-        _eps_inf = drude_dictionary['eps_inf']
-        _gamma_p = drude_dictionary['gamma_p']
-        _eps_d = drude_dictionary['eps_d']
+        _omega_p = drude_dictionary["omega_p"]
+        _eps_inf = drude_dictionary["eps_inf"]
+        _gamma_p = drude_dictionary["gamma_p"]
+        _eps_d = drude_dictionary["eps_d"]
 
         # get parameters of the quantum emitter
-        _gamma_qe = emitter_dictionary['gamma_qe']
-        _omega_0 = emitter_dictionary['omega_0']
-        _mu = emitter_dictionary['mu']
+        _gamma_qe = emitter_dictionary["gamma_qe"]
+        _omega_0 = emitter_dictionary["omega_0"]
+        _mu = emitter_dictionary["mu"]
 
         # compute g_1 and omega_1
-        _g1, _omega1 = self._compute_gl(1, self.radius, h, _mu, _omega_p, _eps_inf, _eps_d)
-        
+        _g1, _omega1 = self._compute_gl(
+            1, self.radius, h, _mu, _omega_p, _eps_inf, _eps_d
+        )
 
-        # compute g_M and omega_M 
-        _gm, _omegam = self._compute_gm(_l_max, self.radius, h, _mu, _omega_p, _eps_inf, _eps_d)
+        # compute g_M and omega_M
+        _gm, _omegam = self._compute_gm(
+            _l_max, self.radius, h, _mu, _omega_p, _eps_inf, _eps_d
+        )
 
-        H = np.zeros((3,3),dtype=complex)
-        ci = 0+1j
+        H = np.zeros((3, 3), dtype=complex)
+        ci = 0 + 1j
 
         # diagonal elements
-        H[0,0] = _omega_0 - ci * _gamma_qe / 2
-        H[1,1] = _omega1 - ci * _gamma_p / 2
-        H[2,2] = _omegam - ci * _gamma_p / 2
+        H[0, 0] = _omega_0 - ci * _gamma_qe / 2
+        H[1, 1] = _omega1 - ci * _gamma_p / 2
+        H[2, 2] = _omegam - ci * _gamma_p / 2
 
         # off-diagonal for coupling to dipolar term
-        H[0,1] = _g1 * np.sqrt(N/3)
-        H[1,0] = _g1 * np.sqrt(N/3)
+        H[0, 1] = _g1 * np.sqrt(N / 3)
+        H[1, 0] = _g1 * np.sqrt(N / 3)
 
         # off-diagonal for coupling to all higher multipoles
-        H[0,2] = _gm
-        H[2,0] = _gm
-
-
-
-
-
-
-
-    
-
+        H[0, 2] = _gm
+        H[2, 0] = _gm

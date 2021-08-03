@@ -10,6 +10,7 @@ import sys
 
 sf = wpspecdev.SpectrumFactory()
 
+
 def test_compute_spectrum():
     """tests public method in TmmDriver compute_spectrum()
     using several test cases with a structure as follows:

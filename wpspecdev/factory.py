@@ -5,6 +5,7 @@ from .mie import MieDriver
 from .em import TmmDriver
 from .therml import Therml
 
+
 class SpectrumFactory:
     def spectrum_factory(self, spectrum_toolkit, args):
         if spectrum_toolkit == "Mie":
