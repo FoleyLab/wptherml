@@ -7,8 +7,10 @@ A python package for modeling light-matter interactions!
 from .spectrum_driver import SpectrumDriver
 from .em import TmmDriver
 from .mie import MieDriver
+from .therml import Therml
 from .factory import SpectrumFactory
 from .materials import Materials
+
 # Handle versioneer
 from ._version import get_versions
 versions = get_versions()
