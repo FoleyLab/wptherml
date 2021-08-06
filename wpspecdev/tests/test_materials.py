@@ -266,10 +266,10 @@ def test_material_pb():
     """tests material_Pb method using tabulated n and k at lambda=118.08nm
     1.180800000E-07	5.367000000E-01	9.540000000E-01"""
 
-    expected_n = 5.367000000E-01
-    expected_k = 9.540000000E-01
+    expected_n = 5.367000000e-01
+    expected_k = 9.540000000e-01
     # create test multilayer that has 3 layers and wavelength array centered at 118.08 nm
-    material_test._create_test_multilayer(central_wavelength=1.180800000E-07)
+    material_test._create_test_multilayer(central_wavelength=1.180800000e-07)
     # define central layer as Pb
     material_test.material_Pb(1)
 
@@ -333,6 +333,7 @@ def test_material_ru():
 
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
+
 
 def test_material_aln():
     """Dictionaries from material_AlN"""
@@ -482,13 +483,14 @@ def test_material_si():
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
+
 def test_material_re():
     """Dictionaries from material_Re"""
     data1 = {
         "file": "data/Re_Windt.txt",
-        "lower_wavelength": 2.36E-09,
-        "upper_wavelength": 1.2157E-07,
-        "test_wavelength": 5.391E-08,
+        "lower_wavelength": 2.36e-09,
+        "upper_wavelength": 1.2157e-07,
+        "test_wavelength": 5.391e-08,
         "test_n": 0.786,
         "test_k": 0.723,
     }
@@ -498,7 +500,7 @@ def test_material_re():
         "lower_wavelength": 0.0000004000,
         "upper_wavelength": 0.0000060000,
         "test_wavelength": 0.0000007508,
-        "test_n":  3.3403575532,
+        "test_n": 3.3403575532,
         "test_k": 2.7994102694,
     }
 
@@ -536,20 +538,20 @@ def test_material_Ag():
     """Dictionaries from material_Ag"""
     data1 = {
         "file": "data/Ag_JC.txt",
-        "lower_wavelength": 1.87900E-07,
-        "upper_wavelength": 1.93700E-06,
-        "test_wavelength": 3.97400E-07,
-        "test_n": 5.00000E-02,
-        "test_k": 2.07000E+00,
+        "lower_wavelength": 1.87900e-07,
+        "upper_wavelength": 1.93700e-06,
+        "test_wavelength": 3.97400e-07,
+        "test_n": 5.00000e-02,
+        "test_k": 2.07000e00,
     }
 
     data2 = {
         "file": "data/Ag_Yang.txt",
-        "lower_wavelength": 2.70000E-07,
-        "upper_wavelength": 2.49200E-05,
-        "test_wavelength": 2.08400E-06,
-        "test_n": 4.61000E-01,
-        "test_k": 1.47300E+01,
+        "lower_wavelength": 2.70000e-07,
+        "upper_wavelength": 2.49200e-05,
+        "test_wavelength": 2.08400e-06,
+        "test_n": 4.61000e-01,
+        "test_k": 1.47300e01,
     }
 
     expected_n_1 = data1["test_n"]
