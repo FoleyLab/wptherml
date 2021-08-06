@@ -14,11 +14,16 @@ import sys
     in air with ri = 1.0+0j
 """
 sf = wpspecdev.SpectrumFactory()
-testargs = {"radius": 100e-9, "wavelength_list": [500e-9, 500e-9, 1], "sphere_material": "sio2", "medium_material" : "air"}
+testargs = {
+    "radius": 100e-9,
+    "wavelength_list": [500e-9, 500e-9, 1],
+    "sphere_material": "sio2",
+    "medium_material": "air",
+}
 # create test instance of mie
 mietest = sf.spectrum_factory("Mie", testargs)
 # hard-code relative refractive index to be 1.5+0j
-mietest._relative_refractive_index_array[:] = 1.5+0j
+mietest._relative_refractive_index_array[:] = 1.5 + 0j
 # create test instance of coefficient array
 mietest._compute_n_array(mietest._size_factor_array[0])
 

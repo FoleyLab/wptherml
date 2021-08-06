@@ -3,14 +3,15 @@ from .spectrum_driver import SpectrumDriver
 # child classes
 from .mie import MieDriver
 from .em import TmmDriver
+from .therml import Therml
 
 
 class SpectrumFactory:
-    def spectrum_factory(self, spectrum_toolkit, size):
+    def spectrum_factory(self, spectrum_toolkit, args):
         if spectrum_toolkit == "Mie":
-            return MieDriver(size)
+            return MieDriver(args)
         elif spectrum_toolkit == "Tmm":
-            return TmmDriver(size)
+            return TmmDriver(args)
         else:
             raise TypeError("Toolkit not found")
 
