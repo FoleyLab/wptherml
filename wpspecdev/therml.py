@@ -174,7 +174,8 @@ class Therml:
             Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        pass
+        return np.pi()/self.lambda_bandgap*self.integrate(wavelength_array*\
+            self.compute_therml_spectrum(wavelength_array, self.thermal_emission_array))
 
     def _compute_stpv_spectral_efficiency(wavelength_array):
         """method to compute the stpv spectral efficiency from the thermal emission spectrum of a structure
