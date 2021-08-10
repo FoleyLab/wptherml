@@ -174,6 +174,14 @@ class Therml:
             Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
+        ### JJF Comments: I suggest breaking this calculation into a few steps:
+        
+        # 1. compute an intermediate array that is the product of self.thermal_emission_array and wavelength_array / self.lambda_bandgap
+        # 2. fit a spline to this array similar to line 106 in _compute_power_density()
+        # 3. find the lower limit of the integral from wavelength_array[0]; the upper limit of the integral is self.lambda_bandgap
+        # 4. use the built-in integral method of your spline to integrate from the lower limit to the upper limit, storing the result to self.stpv_power_density
+        # 5. multiply self.stpv_power_density by np.pi (note np.pi is the built-in variable for pi; I don't think np.pi() returns the value of pi.
+        
         return np.pi()/self.lambda_bandgap*self.integrate(wavelength_array*\
             self.compute_therml_spectrum(wavelength_array, self.thermal_emission_array))
 
