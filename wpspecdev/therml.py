@@ -174,11 +174,11 @@ class Therml:
             Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        self.power_density_array = (self.thermal_emission_array * wavelength_array) / self.lambda_bandgap
+        power_density_array = (self.thermal_emission_array * wavelength_array) / self.lambda_bandgap
 
         # fit cubic spline to power density
-        self.power_density_array_spline = UnivariateSpline(
-            wavelength_array, self.thermal_emission_array
+        power_density_array_spline = UnivariateSpline(
+            wavelength_array, power_density_array
         )    
  
         # get upper- and lower-bounds of integration
@@ -187,7 +187,7 @@ class Therml:
         b = self.lambda_bandgap
 
         # integrate the power density between 0 to lambda_bandgap
-        self.stpv_power_density = self.power_density_array_spline.integral(a, b)
+        self.stpv_power_density = power_density_array_spline.integral(a, b)
 
         # account for stpv power density (assuming no angle dependence of power density)
         self.stpv_power_density *= np.pi
