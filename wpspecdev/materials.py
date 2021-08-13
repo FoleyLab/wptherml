@@ -1287,3 +1287,91 @@ def material_Ag(self, layer_number, wavelength_range="visible", override="true")
         self._refractive_index_array[:, layer_number] = n_spline(
             self.wavelength_array
         ) + 1j * k_spline(self.wavelength_array)
+
+
+def material_Pb(self, layer_number, wavelength_range="visible", override="true"):
+    if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be Pb
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as Pb
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_pb(1, wavelength_range="visible") -> layer 1 will be Pb from the Werner data set good from visible to 2.47 microns
+            >>> material_pb(2, wavelength_range="ir") -> layer 2 will be Pb from the ordal data set good until 667 microns
+            """
+
+            # dictionary specific to W with wavelength range information corresponding to different
+            # data sets
+            data1 = {
+                "file": "data/Pb_Werner.txt",
+                "lower_wavelength": 1.758600000E-08,
+                "upper_wavelength": 2.479684000E-06,
+            }
+            data2 = {
+                "file": "data/Pb_Ordal.txt",
+                "lower_wavelength": 0.00000066700000,
+                "upper_wavelength": 0.00066700000000,
+            }
+
+            shortest_wavelength = self.wavelength_array[0]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
+
+            if (
+                shortest_wavelength >= data1["lower_wavelength"]
+                and longest_wavelength <= data1["upper_wavelength"]
+            ):
+                file_path = path + data1["file"]
+
+            elif (
+                shortest_wavelength >= data2["lower_wavelength"]
+                and longest_wavelength <= data2["upper_wavelength"]
+            ):
+                file_path = path + data2["file"]
+
+            else:
+                file_path = path + data1["file"]
+
+            if override == "false":
+                # make sure the wavelength_range string is all  lowercase
+                wavelength_range = wavelength_range.lower()
+                if (
+                    wavelength_range == "visible"
+                    or wavelength_range == "short"
+                    or wavelength_range == "vis"
+                ):
+                    file_path = path + "data/Pb_Werner.txt"
+
+                elif wavelength_range == "ir" or wavelength_range == "long":
+                    file_path = path + "data/Pb_Ordal.txt"
+
+            print("read from ", file_path)
+            # now read Pb data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
