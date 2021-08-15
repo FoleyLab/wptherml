@@ -189,8 +189,7 @@ class Therml:
         # integrate the power density between 0 to lambda_bandgap
         self.stpv_power_density = power_density_array_spline.integral(a, b)
 
-        # account for stpv power density (assuming no angle dependence of power density)
-        self.stpv_power_density *= np.pi
+       
 
 
     def _compute_stpv_spectral_efficiency(wavelength_array):
@@ -251,4 +250,25 @@ class Therml:
             Equation (27) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        pass
+        power_density_array = (self.thermal_emission_array * wavelength_array) / self.lambda_bandgap
+
+        # fit cubic spline to power density
+        power_density_array_spline = UnivariateSpline(
+            wavelength_array, power_density_array
+        )    
+        # get photopic luminosity array
+        c = self._compute_photopic_luminosity(wavelength_array)
+
+        # get upper- and lower-bounds of integration which is lambda_max and lambda_min
+        
+        a = wavelength_array[len(wavelength_array)-1]
+        b = wavelength_array[0]
+
+        # integrate the luminous effienciency between lambda_min and lambda_max for the top integral
+        self.luminous_efficiency1 = c * power_density_array_spline.integral(a, b)
+        
+        # integrate the luminous effienciency between lambda_min and lambda_max for the bottom integral
+        self.luminous_efficiency2 = power_density_array_spline.integral(a, b)
+
+        # After integrals are computed separately, they can be divided to compute luminous efficiency
+        self._compute_luminous_efficiency = luminpus_efficiency1/luminous_efficiency2
