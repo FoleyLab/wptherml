@@ -77,8 +77,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         transmissivity_array, and emissivity_array
 
         """
-        # make sure all keys are lowercase only
-        args =  {k.lower(): v for k, v in args.items()}
         # parse user inputs
         self.parse_input(args)
         # set refractive index array
@@ -89,11 +87,9 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         print(" Your spectra have been computed! \N{smiling face with sunglasses} ")
 
         if "therml" in args:
-            args =  {k.lower(): v for k, v in args.items()}
             self._parse_therml_input(args)
             self._compute_therml_spectrum(self.wavelength_array, self.emissivity_array)
             self._compute_power_density(self.wavelength_array)
-            self._compute_stpv_power_density(self.wavelength_array)
 
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation
@@ -463,7 +459,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         return _pm
 
-        # def _compute_pm_analytical_gradient(self, kzl, phil):
+    def _compute_pm_analytical_gradient(self, kzl, phil):
         """ compute the derivative of the P matrix with respect to layer thickness
         
         Arguments
@@ -484,10 +480,22 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 the analytical derivative of the P matrix with respect to thickness of layer l
         
         """
-        # return _pm_analytical_gradient
+        
+
+        _pm_analytical_gradient = np.zeros((2, 2), dtype=complex)
+        _ci = 0 + 1j
+        _a = -1 * _ci * phil
+        _b = _ci * phil
+
+        _pm_analytical_gradient[0, 0] = -kzl*np.exp(_a)
+        _pm_analytical_gradient[1, 1] = kzl*np.exp(_b)
+
+        
+        return _pm_analytical_gradient
+
 
     """ this is the tmm_gradient code from wptherml:
-    def tmm_grad(k0, theta0, pol, nA, tA, layers):
+    def tmm_grad(k0, theta0, pol, nA, tA, layers): 
     n = len(layers)
     N = len(tA)
     ### Initialize arrays!
