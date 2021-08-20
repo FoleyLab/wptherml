@@ -6,79 +6,55 @@ import numpy as np
 
 class TmmDriver(SpectrumDriver, Materials, Therml):
     """Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
-
     Attributes
     ----------
         number_of_layers : int
             the number of layers in the multilayer
-
         number_of_wavelengths : int
             the number of wavelengths in the wavelength_array
-
         thickness_array : 1 x number_of_layers numpy array of floats
             the thickness of each layer
-
         material_array : 1 x number_of_layers numpy array of str
             the materia of each layer
-
         wavelength_array : numpy array of floats
             the array of wavelengths in meters over which you will compute the spectra
-
         incident_angle : float
             the incident angle of light relative to the normal to the multilayer (0 = normal incidence!)
-
         polarization : str
             indicates if incident light is 's' or 'p' polarized
-
         reflectivity_array : 1 x number_of_wavelengths numpy array of floats
             the reflection spectrum
-
         transmissivity_array : 1 x number_of_wavelengths numpy array of floats
             the transmission spectrum
-
         emissivity_array : 1 x number_of_wavelengths numpy array of floats
             the absorptivity / emissivity spectrum
-
         _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
             the array of refractive index values corresponding to wavelength_array
-
         _tm : 2 x 2 x number_of_wavelengths numpy array of complex floats
             the transfer matrix for each wavelength
-
         _kz_array : 1 x number_lf_layers x number_of_wavelengths numpy array of complex floats
             the z-component of the wavevector in each layer of the multilayer for each wavelength
-
         _k0_array : 1 x number_of_wavelengths numpy array of floats
             the wavevector magnitude in the incident layer for each wavelength
-
         _kx_array : 1 x number_of_wavelengths numpy array of floats
             the x-component of the wavevector for each wavelength (conserved throughout layers)
-
         _pm : 2 x 2 x (number_of_layers-2) x number_of_wavelengths numpy array of complex floats
             the P matrix for each of the finite-thickness layers for each wavelength
-
         _dm : 2 x 2 x number_of_layers x number_of_wavelengths numpy array of complex floats
             the D matrix for each of the layers for each wavelength
-
         _dim : 2 x 2 x number_of_layers x number_of_wavelengts numpy array of complex floats
             the inverse of the D matrix for each of the layers for each wavelength
-
     Returns
     -------
         None
-
     """
 
     def __init__(self, args):
         """constructor for the TmmDriver class
-
         Assign values for attributes thickness_array, material_array then call
         compute_spectrum to compute values for attributes reflectivity_array,
         transmissivity_array, and emissivity_array
-
         """
-        # make sure all keys are lowercase only
-        args =  {k.lower(): v for k, v in args.items()}
         # parse user inputs
         self.parse_input(args)
         # set refractive index array
@@ -89,19 +65,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         print(" Your spectra have been computed! \N{smiling face with sunglasses} ")
 
         if "therml" in args:
-            args =  {k.lower(): v for k, v in args.items()}
             self._parse_therml_input(args)
             self._compute_therml_spectrum(self.wavelength_array, self.emissivity_array)
             self._compute_power_density(self.wavelength_array)
-            self._compute_stpv_power_density(self.wavelength_array)
 
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation
-
         Returns
         -------
         None
-
         """
         if "incident_angle" in args:
             # user input expected in deg so convert to radians
@@ -215,15 +187,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     def compute_spectrum(self):
         """computes the following attributes:
-
         Attributes
         ----------
             reflectivity_array
-
             transmissivity_array
-
             emissivity_array
-
         Returns
         -------
             None
@@ -275,21 +243,16 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     def _compute_kz(self):
         """computes the z-component of the wavevector in each layer of the stack
-
         Attributes
         ----------
             _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
                 the array of refractive index values corresponding to wavelength_array
-
             _kz_array : number_of_layers x number_of_wavelengths numpy array of complex floats
                 the z-component of the wavevector in each layer of the multilayer for each wavelength
-
             _kx_array : 1 x number_of_wavelengths numpy array of complex floats
                 the x-component of the wavevector in each layer for each wavelength
-
             _k0_array : 1 x number_of_wavelengths numpy array of floats
                 the wavevector magnitude in the incident layer for each wavelength
-
         """
         self._kz_array = np.sqrt(
             (self._refractive_index_array * self._k0_array[:, np.newaxis]) ** 2
@@ -298,32 +261,25 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     def _compute_k0(self):
         """computes the _k0_array
-
         Attributes
         ----------
             wavelength_array : 1 x number of wavelengths float
                 the wavelengths that will illuminate the structure in SI units
-
             _k0_array : 1 x number of wavelengths float
                 the wavenumbers that will illuminate the structure in SI units
-
         """
         self._k0_array = np.pi * 2 / self.wavelength_array
 
     def _compute_kx(self):
         """computes the _kx_array
-
         Attributes
         ----------
             _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
                 the array of refractive index values corresponding to wavelength_array
-
             incident_angle : float
                 the angle of incidence of light illuminating the structure
-
             _kx_array : 1 x number_of_wavelengths numpy array of complex floats
                 the x-component of the wavevector in each layer for each wavelength
-
             _k0_array : 1 x number_of_wavelengths numpy array of floats
                 the wavevector magnitude in the incident layer for each wavelengthhe wavenumbers that will illuminate the structure in SI units
         """
@@ -336,18 +292,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     def _compute_tm(self, _refractive_index, _k0, _kz, _d):
         """compute the transfer matrix for each wavelength
-
         Returns
         -------
         _tm : 2 x 2 complex numpy array
             transfer matrix for the _k0 value
-
         _THETA : 1 x number_of_layers complex numpy array
             refraction angles in each layer for the _k0 value
-
         _CTHETA : 1 x number_of_layers complex numpy array
             cosine of the refraction angles in each layer for the _k0 value
-
         """
         _DM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
         _DIM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
@@ -392,20 +344,16 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
     def _compute_dm(self, refractive_index, cosine_theta):
 
         """compute the D and D_inv matrices for each layer and wavelength
-
         Arguments
         ---------
             refractive_index : complex float
                 refractive index of the layer you are computing _dm and _dim for
-
             cosine_theta : complex float
                 cosine of the complex refraction angle within the layer you are computing _dm and _dim for
-
         Attributes
         ----------
             polarization : str
                 string indicating the polarization convention of the incident light
-
         Returns
         -------
         _dm, _dim
@@ -442,12 +390,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     def _compute_pm(self, phil):
         """compute the P matrices for each intermediate-layer layer and wavelength
-
         Arguments
         ---------
             phil : complex float
                 kz * d of the current layer
-
         Returns
         -------
         _pm
@@ -463,31 +409,40 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         return _pm
 
-        # def _compute_pm_analytical_gradient(self, kzl, phil):
+    def _compute_pm_analytical_gradient(self, kzl, phil):
         """ compute the derivative of the P matrix with respect to layer thickness
         
         Arguments
         ---------
             kzl : complex float
                 the z-component of the wavevector in layer l
-
             phil : complex float
                 kzl * sl where sl is the thickness of layer l
-
         Reference
         ---------
             Equation 18 of https://journals.aps.org/prresearch/pdf/10.1103/PhysRevResearch.2.013018 
-
         Returns
         -------
             _pm_analytical_gradient : 2x2 numpy array of complex floats
                 the analytical derivative of the P matrix with respect to thickness of layer l
         
         """
-        # return _pm_analytical_gradient
+        
+
+        _pm_analytical_gradient = np.zeros((2, 2), dtype=complex)
+        _ci = 0 + 1j
+        _a = -1 * _ci * phil
+        _b = _ci * phil
+
+        _pm_analytical_gradient[0, 0] = -kzl*np.exp(_a)
+        _pm_analytical_gradient[1, 1] = kzl*np.exp(_b)
+
+        
+        return _pm_analytical_gradient
+
 
     """ this is the tmm_gradient code from wptherml:
-    def tmm_grad(k0, theta0, pol, nA, tA, layers):
+    def tmm_grad(k0, theta0, pol, nA, tA, layers): 
     n = len(layers)
     N = len(tA)
     ### Initialize arrays!
