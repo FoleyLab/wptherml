@@ -420,46 +420,6 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-    def material_Pb(self, layer_number):
-        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be Pb
-
-            Arguments
-            ----------
-            layer_number : int
-            specifies the layer of the stack that will be modelled as Pb
-
-            wavelength_range (optional) : str
-            specifies wavelength regime that is desired for modelling the material
-
-            Attributes
-            ----------
-            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
-
-            Returns
-            -------
-            None
-
-            Examples
-            --------
-            >>> material_Pb(1, wavelength_range="visible") -> layer 1 will be Pb from the Pb_Werner data set good from visible to 2.48 microns (0.0176-2.48)
-            """
-            self._refractive_index_array[:, layer_number] = (
-                np.ones(len(self.wavelength_array), dtype=complex) * 2.4
-            )
-            # get path to the Lead data file
-            file_path = path + "data/Pb_Werner.txt"
-            # now read Lead data into a numpy array
-            file_data = np.loadtxt(file_path)
-            n_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
-            k_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 2], k=1
-            )
-            self._refractive_index_array[:, layer_number] = n_spline(
-                self.wavelength_array
-            ) + 1j * k_spline(self.wavelength_array)
 
     def material_HfO2(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
