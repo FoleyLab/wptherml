@@ -28,6 +28,39 @@ class Materials:
             (self.number_of_wavelengths, self.number_of_layers),
         )
 
+    def _find_unique_ri_file_data(self, wl_array):
+        """
+        A simple method to eliminate redundant or numerically indistinguishable
+        data from refractive index files.
+
+        Arguments
+        ---------
+            wl_array : numpy array of floats
+                the array of wavelengths read from a refractive index file
+
+        Returns
+        -------
+            unique_index_array : array of ints
+                the array of the indices of the unique elements of the
+                refractive index file
+        
+        """
+        
+        wl_val = wl_array[0]
+        unique_index_array = [0]
+        
+        for i in range(1, len(wl_array)):
+            new_wl_val = wl_array[i]
+            # skip over redundant values
+            if new_wl_val<=wl_val:
+                wl_val = new_wl_val
+                print("skipping element",i)
+            else:
+                unique_index_array.append(i)
+                wl_val = new_wl_val
+                
+        return unique_index_array
+
     def material_Air(self, layer_number):
         self._refractive_index_array[:, layer_number] = (
             np.ones(len(self.wavelength_array), dtype=complex) * 1.0
@@ -451,50 +484,6 @@ class Materials:
             # get path to the HfO2 data file
             file_path = path + "data/HfO2_Al-Kuhaili.txt"
 
-            file_data = np.loadtxt(file_path)
-            # file_path[:,0] -> wavelengths in meters
-            # file_path[:,1] -> real part of the refractive index
-            # file_path[:,2] -> imaginary part of the refractive index
-            n_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
-            k_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 2], k=1
-            )
-            self._refractive_index_array[:, layer_number] = n_spline(
-                self.wavelength_array
-            ) + 1j * k_spline(self.wavelength_array)
-
-    def material_Ag(self, layer_number):
-        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be Ag
-
-            Arguments
-            ----------
-            layer_number : int
-            specifies the layer of the stack that will be modelled as Ag
-
-            wavelength_range (optional) : str
-            specifies wavelength regime that is desired for modelling the material
-
-            Attributes
-            ----------
-            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
-
-            Returns
-            -------
-            None
-
-            Examples
-            --------
-            >>> material_Ag(1, wavelength_range="visible") -> layer 1 will be Ag from the Ag_ri.txt data set good from visible to 200 microns (0.000123-200)
-            """
-            self._refractive_index_array[:, layer_number] = (
-                np.ones(len(self.wavelength_array), dtype=complex) * 2.4
-            )
-            # get path to the Ag data file
-            file_path = path + "data/Ag_ri.txt"
-            # now read Ag data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
             # file_path[:,1] -> real part of the refractive index
@@ -1236,8 +1225,13 @@ class Materials:
             # file_path[:,0] -> wavelengths in meters
             # file_path[:,1] -> real part of the refractive index
             # file_path[:,2] -> imaginary part of the refractive index
-            n_spline = InterpolatedUnivariateSpline(file_data[:, 0], file_data[:, 1], k=1)
-            k_spline = InterpolatedUnivariateSpline(file_data[:, 0], file_data[:, 2], k=1)
+
+            # sometimes there are duplicate wavelength, n, and k entries 
+            # in a data set; we want only the unique elements
+            idx = self._find_unique_ri_file_data(file_data[:,0])
+
+            n_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 1], k=1)
+            k_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 2], k=1)
 
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
