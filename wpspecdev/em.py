@@ -94,7 +94,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self._compute_therml_spectrum(self.wavelength_array, self.emissivity_array)
             self._compute_power_density(self.wavelength_array)
             self._compute_stpv_power_density(self.wavelength_array)
-
+            print(" Your spectra have been computed! \N{fire} ")
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation
 
