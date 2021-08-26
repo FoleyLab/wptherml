@@ -8,6 +8,7 @@ wpspecdev
 [![Github Downloads All Releases](https://img.shields.io/github/downloads/FoleyLab/wpspecdev/total)](https://github.com/FoleyLab/wpspecdev/releases)
 [![Release to PyPI](https://github.com/FoleyLab/wpspecdev/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/FoleyLab/wpspecdev/actions/workflows/release.yml)
 
+Making a stupid change!
 A python package for modeling light-matter interactions in nanoscale and molecular materials!  
 
 ### Copyright
