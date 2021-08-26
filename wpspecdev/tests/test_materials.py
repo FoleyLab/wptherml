@@ -117,25 +117,6 @@ def test_material_tin():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
-def test_material_ag():
-    """tests material_Ag method using tabulated n and k at lambda=300 nm
-    3.00128e-07	1.3443610273525322	0.9839804733145654"""
-
-    expected_n = 1.3443610273525322
-    expected_k = 0.9839804733145654
-
-    # create test multilayer that has 3 layers and wavelength array centered at 300 nm
-    material_test._create_test_multilayer(central_wavelength=3.00128e-07)
-    # define central layer as Ag
-    material_test.material_Ag(1)
-
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
-
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
-
-
 def test_material_al():
     """tests material_Al method using tabulated n and k at lambda=206.64 nm
     2.06640E-07	1.26770E-01	2.35630E+00"""
@@ -254,24 +235,6 @@ def test_material_al2o3():
     material_test._create_test_multilayer(central_wavelength=5.00e-07)
     # define central layer as Al2O3
     material_test.material_Al2O3(1)
-
-    result_n = np.real(material_test._refractive_index_array[1, 1])
-    result_k = np.imag(material_test._refractive_index_array[1, 1])
-
-    assert np.isclose(result_n, expected_n, 1e-3)
-    assert np.isclose(result_k, expected_k, 1e-3)
-
-
-def test_material_pb():
-    """tests material_Pb method using tabulated n and k at lambda=118.08nm
-    1.180800000E-07	5.367000000E-01	9.540000000E-01"""
-
-    expected_n = 5.367000000e-01
-    expected_k = 9.540000000e-01
-    # create test multilayer that has 3 layers and wavelength array centered at 118.08 nm
-    material_test._create_test_multilayer(central_wavelength=1.180800000e-07)
-    # define central layer as Pb
-    material_test.material_Pb(1)
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
     result_k = np.imag(material_test._refractive_index_array[1, 1])
@@ -534,7 +497,7 @@ def test_material_re():
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
 
 
-def test_material_Ag():
+def test_material_ag():
     """Dictionaries from material_Ag"""
     data1 = {
         "file": "data/Ag_JC.txt",
@@ -574,6 +537,56 @@ def test_material_Ag():
     material_test._create_test_multilayer(central_wavelength=wavelength_2)
     # define central layer as Ag using data2
     material_test.material_Ag(1)
+
+    result_n_2 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
+
+    assert np.isclose(result_n_1, expected_n_1, 1e-3)
+    assert np.isclose(result_k_1, expected_k_1, 1e-3)
+    assert np.isclose(result_n_2, expected_n_2, 1e-3)
+    assert np.isclose(result_k_2, expected_k_2, 1e-3)
+
+
+def test_material_pb():
+    """Dictionaries from material_Pb"""
+    data1 = {
+        "file": "data/Pb_Werner.txt",
+        "lower_wavelength": 1.758600000E-08,
+        "upper_wavelength": 2.479684000E-06,
+        "test_wavelength": 3.262700000E-08,
+        "test_n": 9.903000000E-01,
+        "test_k": 2.206000000E-01,
+    }
+
+    data2 = {
+        "file": "data/Pb_Ordal.txt",
+        "lower_wavelength": 0.00000066700000,
+        "upper_wavelength": 0.00066700000000,
+        "test_wavelength": 0.00000286000000,
+        "test_n": 3.940000000,
+        "test_k": 15.600000000,
+    }
+
+    expected_n_1 = data1["test_n"]
+    expected_k_1 = data1["test_k"]
+    wavelength_1 = data1["test_wavelength"]
+
+    expected_n_2 = data2["test_n"]
+    expected_k_2 = data2["test_k"]
+    wavelength_2 = data2["test_wavelength"]
+
+    # create test multilayer for data1
+    material_test._create_test_multilayer(central_wavelength=wavelength_1)
+    # define central layer as Re using data1
+    material_test.material_Pb(1)
+
+    result_n_1 = np.real(material_test._refractive_index_array[1, 1])
+    result_k_1 = np.imag(material_test._refractive_index_array[1, 1])
+
+    # update test multilayer for data2
+    material_test._create_test_multilayer(central_wavelength=wavelength_2)
+    # define central layer as Re using data2
+    material_test.material_Pb(1)
 
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
     result_k_2 = np.imag(material_test._refractive_index_array[1, 1])
