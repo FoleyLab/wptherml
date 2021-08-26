@@ -109,33 +109,33 @@ def test_compute_spectrum():
 
     # test1
     assert np.isclose(
-        test1.reflectivity_array[0], expected_result_normal_incidence[0], 1e-5
+        test1.reflectivity_array[0], expected_result_normal_incidence[0], 5e-3
     )
     assert np.isclose(
-        test1.transmissivity_array[0], expected_result_normal_incidence[1], 1e-5
+        test1.transmissivity_array[0], expected_result_normal_incidence[1], 5e-3
     )
     assert np.isclose(
-        test1.emissivity_array[0], expected_result_normal_incidence[2], 1e-5
+        test1.emissivity_array[0], expected_result_normal_incidence[2], 5e-3
     )
 
     # test2
     assert np.isclose(
-        test2.reflectivity_array[0], expected_result_45_degress_s_polarized[0], 1e-5
+        test2.reflectivity_array[0], expected_result_45_degress_s_polarized[0], 5e-3
     )
     assert np.isclose(
-        test2.transmissivity_array[0], expected_result_45_degress_s_polarized[1], 1e-5
+        test2.transmissivity_array[0], expected_result_45_degress_s_polarized[1], 5e-3
     )
     assert np.isclose(
-        test2.emissivity_array[0], expected_result_45_degress_s_polarized[2], 1e-5
+        test2.emissivity_array[0], expected_result_45_degress_s_polarized[2], 5e-3
     )
 
     # test3
     assert np.isclose(
-        test3.reflectivity_array[0], expected_result_55_degress_p_polarized[0], 1e-5
+        test3.reflectivity_array[0], expected_result_55_degress_p_polarized[0], 5e-3
     )
     assert np.isclose(
-        test3.transmissivity_array[0], expected_result_55_degress_p_polarized[1], 1e-5
+        test3.transmissivity_array[0], expected_result_55_degress_p_polarized[1], 5e-3
     )
     assert np.isclose(
-        test3.emissivity_array[0], expected_result_55_degress_p_polarized[2], 1e-5
+        test3.emissivity_array[0], expected_result_55_degress_p_polarized[2], 5e-3
     )
