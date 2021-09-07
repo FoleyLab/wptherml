@@ -176,8 +176,7 @@ class Therml:
         self.stpv_power_density = np.trapz(power_density_array[:bg_idx],wavelength_array[:bg_idx])
         #self.stpv_power_density = power_density_array_spline.integral(a, b)
 
-        # account for stpv power density (assuming no angle dependence of power density)
-        self.stpv_power_density *= np.pi
+       
 
 
     def _compute_stpv_spectral_efficiency(wavelength_array):
@@ -238,4 +237,12 @@ class Therml:
             Equation (27) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        pass
+        #self._compute_therml_spectrum(wavelength_array, emissivity_array)
+        self._compute_photopic_luminosity(wavelength_array)
+        vl=self._photopic_luminosity_array
+        TE = self.thermal_emission_array
+
+        Numerator= np.trapz(vl*TE, wavelength_array)
+        Denominator=np.trapz(TE,wavelength_array)
+        
+        self.spectral_efficiency= Numerator/Denominator
