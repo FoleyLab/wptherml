@@ -16,6 +16,7 @@ class Therml:
 
     def __init__(self, args):
         """constructor for the Therml class"""
+        # parse args 
         self._parse_therml_input(args)
         # self._compute_therml_spectrum()
         # self._compute_power_density()
@@ -40,7 +41,7 @@ class Therml:
             self.lambda_bandgap = args["bandgap wavelength"]
         else:
             # default is ~InGaAsSb bandgap
-            self.lambda_bandgap = 2250e-9
+            self.lambda_bandgap = 2254e-9
 
     def _compute_therml_spectrum(self, wavelength_array, emissivity_array):
         """method to compute thermal emission spectrum of a structure
@@ -97,24 +98,12 @@ class Therml:
             Equation (15) and (16) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        # fit cubic spline to blackbody spectrum
-        blackbody_spline = UnivariateSpline(
-            wavelength_array, self.blackbody_spectrum, k=3
-        )
 
-        # fit cubic spline to thermal emission spectrum
-        thermal_emission_spline = UnivariateSpline(
-            wavelength_array, self.thermal_emission_array
-        )
+        # integrate blackbody spectrum over wavelength using np.trapz
+        self.blackbody_power_density = np.trapz(self.blackbody_spectrum, wavelength_array)
 
-        # get upper- and lower-bounds of integration
-        a = wavelength_array[0]
-        b = wavelength_array[len(wavelength_array) - 1]
-
-        # integrate the spectra over wavelength
-        self.blackbody_power_density = blackbody_spline.integral(a, b)
-
-        self.power_density = thermal_emission_spline.integral(a, b)
+        # integrate the thermal emission spectrum over wavelength using np.trapz
+        self.power_density = np.trapz(self.thermal_emission_array, wavelength_array)
 
         # account for angular integrals over hemisphere (assuming no angle dependence of emissivity)
         self.blackbody_power_density *= np.pi
@@ -148,7 +137,7 @@ class Therml:
 
         self.photopic_luminosity_array = a * np.exp(-b * (wavelength_array - c) ** 2)
 
-    def _compute_stpv_power_density(wavelength_array):
+    def _compute_stpv_power_density(self, wavelength_array):
         """method to compute the stpv power density from the thermal emission spectrum of a structure
 
         Arguments
@@ -174,20 +163,18 @@ class Therml:
             Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
+        # compute the useful power density spectrum 
         power_density_array = (self.thermal_emission_array * wavelength_array) / self.lambda_bandgap
 
-        # fit cubic spline to power density
-        power_density_array_spline = UnivariateSpline(
-            wavelength_array, power_density_array
-        )    
- 
-        # get upper- and lower-bounds of integration
-        
-        a = wavelength_array[0]
-        b = self.lambda_bandgap
+        # determine the index corresponding to lambda_bandgap in the wavelength_array
+        # which will be used to determine the appropriate slice to feed to np.trapz
+        bg_idx = np.abs(wavelength_array-self.lambda_bandgap).argmin()
 
         # integrate the power density between 0 to lambda_bandgap
-        self.stpv_power_density = power_density_array_spline.integral(a, b)
+        # by feeding the slice of the power_density_array and wavelength_array 
+        # from 0:bg_idx to the trapz function
+        self.stpv_power_density = np.trapz(power_density_array[:bg_idx],wavelength_array[:bg_idx])
+        #self.stpv_power_density = power_density_array_spline.integral(a, b)
 
        
 
@@ -250,25 +237,12 @@ class Therml:
             Equation (27) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        power_density_array = (self.thermal_emission_array * wavelength_array) / self.lambda_bandgap
+        #self._compute_therml_spectrum(wavelength_array, emissivity_array)
+        self._compute_photopic_luminosity(wavelength_array)
+        vl=self._photopic_luminosity_array
+        TE = self.thermal_emission_array
 
-        # fit cubic spline to power density
-        power_density_array_spline = UnivariateSpline(
-            wavelength_array, power_density_array
-        )    
-        # get photopic luminosity array
-        c = self._compute_photopic_luminosity(wavelength_array)
-
-        # get upper- and lower-bounds of integration which is lambda_max and lambda_min
+        Numerator= np.trapz(vl*TE, wavelength_array)
+        Denominator=np.trapz(TE,wavelength_array)
         
-        a = wavelength_array[len(wavelength_array)-1]
-        b = wavelength_array[0]
-
-        # integrate the luminous effienciency between lambda_min and lambda_max for the top integral
-        self.luminous_efficiency1 = c * power_density_array_spline.integral(a, b)
-        
-        # integrate the luminous effienciency between lambda_min and lambda_max for the bottom integral
-        self.luminous_efficiency2 = power_density_array_spline.integral(a, b)
-
-        # After integrals are computed separately, they can be divided to compute luminous efficiency
-        self._compute_luminous_efficiency = luminpus_efficiency1/luminous_efficiency2
+        self.spectral_efficiency= Numerator/Denominator
