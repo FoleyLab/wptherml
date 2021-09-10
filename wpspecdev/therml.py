@@ -114,7 +114,7 @@ class Therml:
         sig = 5.670374419e-8
         self.stefan_boltzmann_law = sig * self.temperature ** 4
 
-    def _compute_photopic_luminosity(wavelength_array):
+    def _compute_photopic_luminosity(self,wavelength_array):
         """computes the photopic luminosity function from a Gaussian fit
 
         Arguments
@@ -179,7 +179,7 @@ class Therml:
        
 
 
-    def _compute_stpv_spectral_efficiency(wavelength_array):
+    def _compute_stpv_spectral_efficiency(self,wavelength_array):
         """method to compute the stpv spectral efficiency from the thermal emission spectrum of a structure
 
         Arguments
@@ -210,9 +210,14 @@ class Therml:
             Equation (18) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
+
+        self._compute_stpv_power_density(wavelength_array)
+        self._compute_power_density(wavelength_array)
+        self.stpv_spectral_efficiency = self.stpv_power_density / self.power_density
+
         pass
 
-    def _compute_luminous_efficiency(wavelength_array):
+    def _compute_luminous_efficiency(self,wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
 
         Arguments
