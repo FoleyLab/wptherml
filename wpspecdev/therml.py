@@ -16,7 +16,7 @@ class Therml:
 
     def __init__(self, args):
         """constructor for the Therml class"""
-        # parse args 
+        # parse args
         self._parse_therml_input(args)
         # self._compute_therml_spectrum()
         # self._compute_power_density()
@@ -100,7 +100,9 @@ class Therml:
         """
 
         # integrate blackbody spectrum over wavelength using np.trapz
-        self.blackbody_power_density = np.trapz(self.blackbody_spectrum, wavelength_array)
+        self.blackbody_power_density = np.trapz(
+            self.blackbody_spectrum, wavelength_array
+        )
 
         # integrate the thermal emission spectrum over wavelength using np.trapz
         self.power_density = np.trapz(self.thermal_emission_array, wavelength_array)
@@ -114,7 +116,7 @@ class Therml:
         sig = 5.670374419e-8
         self.stefan_boltzmann_law = sig * self.temperature ** 4
 
-    def _compute_photopic_luminosity(self,wavelength_array):
+    def _compute_photopic_luminosity(self, wavelength_array):
         """computes the photopic luminosity function from a Gaussian fit
 
         Arguments
@@ -135,7 +137,7 @@ class Therml:
         b = 2.59462e14
         c = 5.60186e-07
 
-        self.photopic_luminosity_array = a * np.exp(-b * (wavelength_array - c) ** 2)
+        self._photopic_luminosity_array = a * np.exp(-b * (wavelength_array - c) ** 2)
 
     def _compute_stpv_power_density(self, wavelength_array):
         """method to compute the stpv power density from the thermal emission spectrum of a structure
@@ -163,23 +165,24 @@ class Therml:
             Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        # compute the useful power density spectrum 
-        power_density_array = (self.thermal_emission_array * wavelength_array) / self.lambda_bandgap
+        # compute the useful power density spectrum
+        power_density_array = (
+            self.thermal_emission_array * wavelength_array
+        ) / self.lambda_bandgap
 
         # determine the index corresponding to lambda_bandgap in the wavelength_array
         # which will be used to determine the appropriate slice to feed to np.trapz
-        bg_idx = np.abs(wavelength_array-self.lambda_bandgap).argmin()
+        bg_idx = np.abs(wavelength_array - self.lambda_bandgap).argmin()
 
         # integrate the power density between 0 to lambda_bandgap
-        # by feeding the slice of the power_density_array and wavelength_array 
+        # by feeding the slice of the power_density_array and wavelength_array
         # from 0:bg_idx to the trapz function
-        self.stpv_power_density = np.trapz(power_density_array[:bg_idx],wavelength_array[:bg_idx])
-        #self.stpv_power_density = power_density_array_spline.integral(a, b)
+        self.stpv_power_density = np.trapz(
+            power_density_array[:bg_idx], wavelength_array[:bg_idx]
+        )
+        # self.stpv_power_density = power_density_array_spline.integral(a, b)
 
-       
-
-
-    def _compute_stpv_spectral_efficiency(self,wavelength_array):
+    def _compute_stpv_spectral_efficiency(self, wavelength_array):
         """method to compute the stpv spectral efficiency from the thermal emission spectrum of a structure
 
         Arguments
@@ -217,7 +220,7 @@ class Therml:
 
         pass
 
-    def _compute_luminous_efficiency(self,wavelength_array):
+    def _compute_luminous_efficiency(self, wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
 
         Arguments
@@ -234,7 +237,7 @@ class Therml:
             photopic_luminosity_array : numpy array of floats (can be computed by calling self._compute_photopic_luminosity(wavelength_array))
                 photopic luminosity function values corresponding to wavelength_array
 
-            spectral_efficiency : float (will be computed by this function)
+            luminous_efficiency : float (will be computed by this function)
                 the spectral efficiency of the incandescent source
 
         References
@@ -242,12 +245,12 @@ class Therml:
             Equation (27) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
-        #self._compute_therml_spectrum(wavelength_array, emissivity_array)
+        # self._compute_therml_spectrum(wavelength_array, emissivity_array)
         self._compute_photopic_luminosity(wavelength_array)
-        vl=self._photopic_luminosity_array
+        vl = self._photopic_luminosity_array
         TE = self.thermal_emission_array
 
-        Numerator= np.trapz(vl*TE, wavelength_array)
-        Denominator=np.trapz(TE,wavelength_array)
-        
-        self.spectral_efficiency= Numerator/Denominator
+        Numerator = np.trapz(vl * TE, wavelength_array)
+        Denominator = np.trapz(TE, wavelength_array)
+
+        self.luminous_efficiency = Numerator / Denominator
