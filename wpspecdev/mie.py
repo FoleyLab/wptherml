@@ -125,8 +125,15 @@ class MieDriver(SpectrumDriver, Materials):
     def set_refractive_indicex_array(self):
         """once materials are specified, define the refractive_index_array values"""
 
-        # terminal layers default to air for now... generalize later!
-        self.material_Air(0)
+        # terminal layers can be air or water now
+        _lmed = self.medium_material.lower()
+
+        if _lmed == "air":
+            self.material_Air(0)
+        elif _lmed == "water":
+            self.material_H2O(0)
+        elif _lmed == "h2o":
+            self.material_H2O(0)
 
         _lm = self.sphere_material.lower()
 
