@@ -61,7 +61,18 @@ class Materials:
                 
         return unique_index_array
 
+    def material_H2O(self, layer_number):
+        """ defines the refractive index layer of layer_number to be water 
+            assuming static refractive index of n = 1.33 + 0j 
+        """
+        self._refractive_index_array[:, layer_number] = (
+            np.ones(len(self.wavelength_array), dtype=complex) * 1.33
+        )
+
     def material_Air(self, layer_number):
+        """ defines the refractive index layer of layer_number to be air 
+            assuming static refractive index of n = 1.0 + 0j 
+        """
         self._refractive_index_array[:, layer_number] = (
             np.ones(len(self.wavelength_array), dtype=complex) * 1.0
         )
@@ -328,48 +339,6 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-    def material_W(self, layer_number):
-        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be W
-
-            Arguments
-            ----------
-            layer_number : int
-            specifies the layer of the stack that will be modelled as W
-
-            wavelength_range (optional) : str
-            specifies wavelength regime that is desired for modelling the material
-
-            Attributes
-            ----------
-            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
-
-            Returns
-            -------
-            None
-
-            Examples
-            --------
-            >>> material_W(1, wavelength_range="visible") -> layer 1 will be W from the W_Ordal data set good from visible to 200 microns (0.667-200)
-            """
-
-            # get path to the W data file
-            file_path = path + "data/W_Ordal.txt"
-            # now read W data into a numpy array
-            file_data = np.loadtxt(file_path)
-            # file_path[:,0] -> wavelengths in meters
-            # file_path[:,1] -> real part of the refractive index
-            # file_path[:,2] -> imaginary part of the refractive index
-            n_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
-            k_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 2], k=1
-            )
-            self._refractive_index_array[:, layer_number] = n_spline(
-                self.wavelength_array
-            ) + 1j * k_spline(self.wavelength_array)
-
     def material_Pt(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Pt
@@ -410,49 +379,6 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
-
-    def material_AlN(self, layer_number):
-        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be AlN
-
-            Arguments
-            ----------
-            layer_number : int
-            specifies the layer of the stack that will be modelled as AlN
-
-            wavelength_range (optional) : str
-            specifies wavelength regime that is desired for modelling the material
-
-            Attributes
-            ----------
-            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
-
-            Returns
-            -------
-            None
-
-            Examples
-            --------
-            >>> material_AlN(1, wavelength_range="visible") -> layer 1 will be AlN from the AlN_Kischkat data set good from 1.53846 to 14.2857 microns
-            """
-            # get path to the AlN data file
-            file_path = path + "data/AlN_Kischkat.txt"
-            # now read AlN data into a numpy array
-
-            file_data = np.loadtxt(file_path)
-            # file_path[:,0] -> wavelengths in meters
-            # file_path[:,1] -> real part of the refractive index
-            # file_path[:,2] -> imaginary part of the refractive index
-            n_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
-            k_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 2], k=1
-            )
-            self._refractive_index_array[:, layer_number] = n_spline(
-                self.wavelength_array
-            ) + 1j * k_spline(self.wavelength_array)
-
 
     def material_HfO2(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
@@ -498,49 +424,6 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-    def material_Re(self, layer_number):
-        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be Re
-
-            Arguments
-            ----------
-            layer_number : int
-            specifies the layer of the stack that will be modelled as Re
-
-            wavelength_range (optional) : str
-            specifies wavelength regime that is desired for modelling the material
-
-            Attributes
-            ----------
-            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
-
-            Returns
-            -------
-            None
-
-            Examples
-            --------
-            >>> material_Re(1, wavelength_range="visible") -> layer 1 will be Re from the Re_Windt data set good from 0.0024 to 0.1220 microns
-            """
-            self._refractive_index_array[:, layer_number] = (
-                np.ones(len(self.wavelength_array), dtype=complex) * 2.4
-            )
-            # get path to the Re data file
-            file_path = path + "data/Re_Windt.txt"
-            # now read Lead data into a numpy array
-            file_data = np.loadtxt(file_path)
-            # file_path[:,0] -> wavelengths in meters
-            # file_path[:,1] -> real part of the refractive index
-            # file_path[:,2] -> imaginary part of the refractive index
-            n_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
-            k_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 2], k=1
-            )
-            self._refractive_index_array[:, layer_number] = n_spline(
-                self.wavelength_array
-            ) + 1j * k_spline(self.wavelength_array)
 
     def material_Au(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
