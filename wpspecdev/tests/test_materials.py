@@ -30,6 +30,25 @@ def test_material_sio2():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
+
+def test_material_h2o():
+    """tests material_H2O method using the fact that n = 1.33 + 0j for all lambda
+    """
+
+    expected_n = 1.33
+    expected_k = 0.00000
+
+    # create test multilayer that has 3 layers and wavelength array centered at 636 nm
+    material_test._create_test_multilayer(central_wavelength=636e-9)
+    # define central layer as siO2
+    material_test.material_H2O(1)
+
+    result_n = np.real(material_test._refractive_index_array[1, 1])
+    result_k = np.imag(material_test._refractive_index_array[1, 1])
+
+    assert np.isclose(result_n, expected_n, 1e-3)
+    assert np.isclose(result_k, expected_k, 1e-3)
+
 def test_material_tio2():
     """tests material_tio2 method using tabulated n and k at lambda=664 nm
     6.639999999E-7 2.377021563 6.79e-10"""
