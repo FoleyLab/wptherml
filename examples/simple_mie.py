@@ -1,10 +1,10 @@
 import wpspecdev
 from matplotlib import pyplot as plt
 args = {  
-'wavelength_list': [300e-9, 800e-9, 500],  
-'sphere_material': "Ag",
+'wavelength_list': [200e-9, 1100e-9, 500],  
+'sphere_material': "SiO2",
 'medium_material': "air",
-'radius': 10e-9  
+'radius': 200e-9  
 }  
 
 sf = wpspecdev.SpectrumFactory()  
