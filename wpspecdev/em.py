@@ -467,7 +467,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         return _pm
 
-        # def _compute_pm_analytical_gradient(self, kzl, phil):
+    def _compute_pm_analytical_gradient(self, kzl, phil):
         """ compute the derivative of the P matrix with respect to layer thickness
         
         Arguments
@@ -488,9 +488,20 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 the analytical derivative of the P matrix with respect to thickness of layer l
         
         """
-        # return _pm_analytical_gradient
+        _pm_analytical_gradient = np.zeros((2, 2), dtype=complex)
+        _ci = 0 + 1j
+        _a = -1 * _ci * phil
+        _b = _ci * phil
 
-    """ this is the tmm_gradient code from wptherml:
+        _pm_analytical_gradient[0, 0] = - _ci * kzl * np.exp( _a )
+        _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp( _b )
+
+        
+        return _pm_analytical_gradient
+
+    # return _pm_analytical_gradient
+
+    """ this is the tmm_gradient code from wptherml, it is commented out currently!
     def tmm_grad(k0, theta0, pol, nA, tA, layers):
     n = len(layers)
     N = len(tA)
