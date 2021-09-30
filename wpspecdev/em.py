@@ -1,8 +1,7 @@
-from .spectrum_driver import SpectrumDriver
-from .materials import Materials
+from .spectrum_driver   import SpectrumDriver
+from .materials  import Materials
 from .therml import Therml
 import numpy as np
-
 
 class TmmDriver(SpectrumDriver, Materials, Therml):
     """Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
@@ -282,10 +281,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         Attributes
         ----------
-            _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
+            _refractive_index_array : number_of_wavelength x number_of_layers numpy array of complex floats
                 the array of refractive index values corresponding to wavelength_array
 
-            _kz_array : number_of_layers x number_of_wavelengths numpy array of complex floats
+            _kz_array : number_of_wavelength x number_of_layers numpy array of complex floats
                 the z-component of the wavevector in each layer of the multilayer for each wavelength
 
             _kx_array : 1 x number_of_wavelengths numpy array of complex floats
@@ -495,111 +494,97 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         _pm_analytical_gradient[0, 0] = - _ci * kzl * np.exp( _a )
         _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp( _b )
-
         
         return _pm_analytical_gradient
 
-    # return _pm_analytical_gradient
-
-    """ this is the tmm_gradient code from wptherml, it is commented out currently!
-    def tmm_grad(k0, theta0, pol, nA, tA, layers):
-    n = len(layers)
-    N = len(tA)
-    ### Initialize arrays!
-    Dli = np.zeros((N,2,2), dtype = complex)
-    Dl = np.zeros((N,2,2), dtype = complex)
-    D1 = np.zeros((2,2),dtype=complex)
-    Pl = np.zeros((N, 2, 2), dtype = complex)
-    Plp = np.zeros((n,2,2), dtype = complex)
-    Mp = np.zeros((n, 2,2), dtype = complex)
-    t1 = np.zeros((2,2), dtype = complex)
-    t2 = np.zeros((2,2), dtype = complex)
-    kz = np.zeros(N, dtype = complex)
-    phil = np.zeros(N, dtype = complex)
-    ctheta = np.zeros(N, dtype = complex)
-    theta = np.zeros(N, dtype = complex)
-    M = np.zeros((2,2), dtype = complex)
-    ### compute kx
-    kx = nA[0]*np.sin(theta0)*k0
-    ### compute D1
-    ctheta[0] = np.cos(theta0)
-    D1 = BuildD(nA[0],ctheta[0], pol)
-    ### compute D1^-1
-    tmp = D1[0,0]*D1[1,1]-D1[0,1]*D1[1,0]
-    det = 1/tmp
-    M[0,0] = det*D1[1,1]
-    M[0,1] = -det*D1[0,1]
-    M[1,0] = -det*D1[1,0]
-    M[1,1] = det*D1[0,0]
-    Dli[0,:,:] = np.copy(M)
-    ### Initialize gradient of M with D1^-1
-    for i in range(0,n):
-        Mp[i,:,:] = np.copy(M)
-    ### Compute kz0
-    kz[0] = np.sqrt(nA[0]*k0)**2-kx**2
-    ### Compute kz, phil, D, P, D^-1 quantities for all  finite layers!
-    for i in range (1,(N-1)):
-        kz[i] = np.sqrt((nA[i]*k0)**2-kx**2)
-        if np.imag(kz[i]) < 0:
-            kz[i] = -1 * kz[i]
-        ctheta[i] = kz[i]/(nA[i]*k0)
-        theta[i] = np.arccos(ctheta[i])
-        phil[i] = kz[i]*tA[i]
-        Dl[i,:,:] = BuildD(nA[i], ctheta[i], pol)
-        tmp = Dl[i,0,0]*Dl[i,1,1]-Dl[i,0,1]*Dl[i,1,0]
-        det = 1/tmp
-        Dli[i,0,0] = det*Dl[i,1,1]
-        Dli[i,0,1] = -det*Dl[i,0,1]
-        Dli[i,1,0] = -det*Dl[i,1,0]
-        Dli[i,1,1] = det*Dl[i,0,0]
-        Pl[i,:,:] = BuildP(phil[i])
-        t1 = np.dot(M,Dl[i,:,:])
-        t2 = np.dot(t1, Pl[i,:,:])
-        M = np.dot(t2,Dli[i,:,:])
-        
-    ### kz, Dl for final layer!
-    kz[N-1] = np.sqrt((nA[N-1]*k0)**2-kx**2)
-    ctheta[N-1] = kz[N-1]/(nA[N-1]*k0)
-    Dl[N-1,:,:] = BuildD(nA[N-1],ctheta[N-1], pol)
-    t1 = np.dot(M,Dl[N-1,:,:])
-    ### This is the transfer matrix!
-    M = np.copy(t1)
-    ### for all layers we want to differentiate with respect to, 
-    ### form Plp matrices
-    for l in range(0,n):
-        Plp[l,:,:] = Build_dP_ds(kz[layers[l]],tA[layers[l]])
-    ### for all those layers, compute associated matrix products!
-    idx = 0
-    for i in layers:
-        for l in range(1,i):
-            t1 = np.dot(Mp[idx,:,:], Dl[l,:,:])
-            t2 = np.dot(t1, Pl[l,:,:])
-            Mp[idx,:,:] = np.dot(t2,Dli[l,:,:])
-        t1 = np.dot(Mp[idx,:,:],Dl[i,:,:])
-        t2 = np.dot(t1,Plp[idx,:,:])
-        Mp[idx,:,:] = np.dot(t2,Dli[i,:,:])
-        for l in range(i+1,N-1):
-            t1 = np.dot(Mp[idx,:,:], Dl[l,:,:])
-            t2 = np.dot(t1, Pl[l,:,:])
-            Mp[idx,:,:] = np.dot(t2,Dli[l,:,:])
-        t1 = np.dot(Mp[idx,:,:],Dl[N-1,:,:])
-        Mp[idx,:,:] = np.copy(t1)
-        idx = idx+1
+    #This is the tmm_gradient code from wptherml:
+    def tmm_grad(self, layers):
+        n=len(layers)
+        N = len(self.thickness_array)
+        #Only works for one wavelength, the last wavelentgh in the array
+        k0 = self._k0_array[-1]
+        nA= self._refractive_index_array[-1,:]
     
-    M = {
-         "Mp": Mp,   
-         "M11": M[0,0], 
-         "M12": M[0,1], 
-         "M21": M[1,0], 
-         "M22": M[1,1],
-         "theta_i": theta0,
-         "theta_L": np.real(np.arccos(ctheta[N-1])),
-         "kz": kz,
-         "phil": phil,
-         "ctheta": ctheta,
-         "theta": theta
-            
-            
-            }
-    return M
-    """
+        ###Initialize arrays! 
+        Dli = np.zeros((N,2,2), dtype = complex)
+        Dl = np.zeros((N,2,2), dtype = complex)
+        D1 = np.zeros((2,2),dtype=complex)
+        Pl = np.zeros((N, 2, 2), dtype = complex)
+        Plp = np.zeros((n,2,2), dtype = complex)
+        Mp = np.zeros((n, 2,2), dtype = complex)
+        t1 = np.zeros((2,2), dtype = complex)
+        t2 = np.zeros((2,2), dtype = complex)
+        phil = np.zeros(N, dtype = complex)
+        ctheta = np.zeros(N, dtype = complex)
+        theta = np.zeros(N, dtype = complex)
+        M = np.zeros((2,2), dtype = complex)
+
+        ### compute D1
+        ctheta[0] = np.cos(self.incident_angle)
+        ctheta[1 : self.number_of_layers] = self._kz_array[-1,1 : self.number_of_layers] / (
+            self._refractive_index_array[-1, 1 : self.number_of_layers] * k0
+        )
+        theta[0]= self.incident_angle
+        theta[1 : self.number_of_layers] = np.arccos(ctheta[1 : self.number_of_layers])
+        phil[1 : self.number_of_layers] = self._kz_array[-1,1 : self.number_of_layers]*self.thickness_array[1 : self.number_of_layers]
+        D1, M = self. _compute_dm(self._refractive_index_array[-1, 0], ctheta[0])
+        Dli[0,:,:] = np.copy(M) 
+        
+        ### Initialize gradient of M with D1^-1
+        for i in range(0,n):
+            Mp[i,:,:] = np.copy(M)
+       
+        ### Compute D, P, D^-1 quantities for all finite layers!
+        
+        for i in range (1,(N-1)):
+            Dl[i,:,:], Dli[i,:,:] = self._compute_dm(self._refractive_index_array[-1, i], ctheta[i])
+            Pl[i,:,:] = self._compute_pm(phil[i])
+            t1 = np.dot(M,Dl[i,:,:])
+            t2 = np.dot(t1, Pl[i,:,:])
+            M = np.dot(t2, Dli[i,:,:])
+        
+        Dl[N-1,:,:], Dli[N-1,:,:] = self._compute_dm(self._refractive_index_array[-1, N-1], ctheta[N-1])
+        t1 = np.dot(M,Dl[N-1,:,:])
+        ### This is the transfer matrix!
+        M = np.copy(t1)
+
+        ### for all layers we want to differentiate with respect to, 
+        ### form Plp matrices
+        for l in range(0,n):
+            Plp[l,:,:]=self._compute_pm_analytical_gradient(self._kz_array[-1,layers[l]], phil[layers[l]])
+        ### for all those layers, compute associated matrix products!
+
+        idx = 0
+        
+        for i in layers:
+            for l in range(1,i):
+                t1 = np.dot(Mp[idx,:,:], Dl[l,:,:])
+                t2 = np.dot(t1, Pl[l,:,:])
+                Mp[idx,:,:] = np.dot(t2,Dli[l,:,:])
+            t1 = np.dot(Mp[idx,:,:],Dl[i,:,:])
+            t2 = np.dot(t1,Plp[idx,:,:])
+            Mp[idx,:,:] = np.dot(t2,Dli[i,:,:])
+            for l in range(i+1,N-1):
+                t1 = np.dot(Mp[idx,:,:], Dl[l,:,:])
+                t2 = np.dot(t1, Pl[l,:,:])
+                Mp[idx,:,:] = np.dot(t2,Dli[l,:,:])
+            t1 = np.dot(Mp[idx,:,:],Dl[N-1,:,:])
+            Mp[idx,:,:] = np.copy(t1)
+            idx = idx+1
+
+        M = {
+             "Mp": Mp,   
+             "M11": M[0,0], 
+             "M12": M[0,1], 
+             "M21": M[1,0], 
+             "M22": M[1,1],
+             "theta_i": self.incident_angle,
+             "theta_L": np.real(np.arccos(ctheta[N-1])),
+             "kz": self._kz_array[-1,:],
+             "phil": phil,
+             "ctheta": ctheta,
+             "theta": theta
+
+
+                }
+        return M
