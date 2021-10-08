@@ -232,6 +232,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             None
         """
 
+        
+
         # with all of these formed, you can now call _compute_tm()
         self._compute_k0()
         self._compute_kx()
@@ -252,6 +254,9 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 _ri, _k0, _kz, self.thickness_array
             )
 
+            #if self.gradient==True:
+            #    _tmg = self._compute_tm_grad(_ri, _k0, _kz, self.thickness_array)
+            
             # reflection amplitude
             _r = _tm[1, 0] / _tm[0, 0]
 

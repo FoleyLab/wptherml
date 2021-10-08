@@ -139,3 +139,38 @@ def test_compute_spectrum():
     assert np.isclose(
         test3.emissivity_array[0], expected_result_55_degress_p_polarized[2], 5e-3
     )
+
+
+
+def test_tmm_grad():
+    """
+
+    structure = {
+
+        'Material_List' : ['Air', 'SiO2', 'Air'],
+        ### Thicknesses just chosen arbitrarily, replace with "optimal" values
+        'Thickness_List': [0, 200e-9, 0],
+        ### add a number to Gradient_List to optimize over more layers
+        'Gradient_List': [1],
+        'Lambda_List': [600e-9, 602e-9, 3],
+        }
+
+
+    """
+
+    test_args = {
+        "wavelength_list": [600e-9, 602e-9, 3],
+        "material_list": [
+            "Air",
+            "SiO2",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 0],
+    }
+
+    ts = sf.spectrum_factory("Tmm", test_args)
+    M = ts.tmm_grad(ts.number_of_layers)
+    print(M["Mp"])
+
+
+
