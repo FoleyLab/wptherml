@@ -141,6 +141,46 @@ def test_compute_spectrum():
     )
 
 
+def test_pm_grad():
+    """
+
+    structure = {
+
+        'Material_List' : ['Air', 'SiO2', 'Air'],
+        ### Thicknesses just chosen arbitrarily, replace with "optimal" values
+        'Thickness_List': [0, 200e-9, 0],
+        ### add a number to Gradient_List to optimize over more layers
+        'Gradient_List': [1],
+        'Lambda_List': [600e-9, 602e-9, 3],
+        }
+
+
+    """
+
+    test_args = {
+        "wavelength_list": [600e-9, 602e-9, 3],
+        "material_list": [
+            "Air",
+            "SiO2",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 0],
+    }
+
+    ts = sf.spectrum_factory("Tmm", test_args)
+    _kz = 15475380.92450645+0.j
+    _phil = 3.09507618+0.j
+    pml = ts._compute_pm_analytical_gradient(_kz, _phil)
+
+    
+    print(pml)
+
+    expected_pml = np.array([[-719600.49694137+15458641.26899191j, 0+0j],
+    [0.00000000e+00 +0j, -719600.49694137-15458641.26899191j]])
+
+    assert np.allclose(pml, expected_pml)
+
+
 
 def test_tmm_grad():
     """
@@ -170,7 +210,10 @@ def test_tmm_grad():
 
     ts = sf.spectrum_factory("Tmm", test_args)
     M = ts.tmm_grad(ts.number_of_layers)
-    print(M["Mp"])
+    
+    print(M["Mp"][0])
 
+    expected_M0 = np.array([[-7.19600497e+05+16652636.92188255j, -5.82076609e-11 +6191988.90249864j],
+    [0.00000000e+00 -6191988.90249864j, -7.19600497e+05-16652636.92188255j]])
 
-
+    assert np.allclose(M["Mp"][0], expected_M0)

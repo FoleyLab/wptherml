@@ -147,6 +147,18 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.material_array = ["Air", "SiO2", "Air"]
             self.number_of_layers = 3
 
+        # user can specify which layers to compute gradients with respect to
+        # i.e. for a structure like ['Air', 'SiO2', 'Ag', 'TiO2', 'Air]
+        # the gradient list [1, 2] would take the gradients 
+        # with respect to layer 1 (top-most SiO2) and layer 2 (silver) only, while
+        # leaving out layer 3 (TiO2)
+        if "gradient_list" in args:
+            self.gradient_list = np.array(args["gradient_list"])
+        # default is all layers
+        else:
+            self.gradient_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
+
+
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
 
@@ -221,11 +233,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         Attributes
         ----------
-            reflectivity_array
+            reflectivity_array : 1 x number_of_wavelengths numpy array of floats
+                the reflectivity spectrum
 
-            transmissivity_array
+            transmissivity_array : 1 x number_of_wavelengths numpy array of floats
+                the transmissivity spectrum
 
-            emissivity_array
+            emissivity_array : 1 x number_of_wavelengths numpy array of floats
+                the absorptivity / emissivity spectrum
 
         Returns
         -------
@@ -280,6 +295,50 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.emissivity_array[i] = (
                 1 - self.reflectivity_array[i] - self.transmissivity_array[i]
             )
+            
+    def compute_spectrum_gradient(self):
+        """computes the following attributes:
+
+        Attributes
+        ----------
+            reflectivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
+                the reflectivity spectrum
+
+            transmissivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
+                the transmissivity spectrum
+
+            emissivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
+                the absorptivity / emissivity spectrum
+
+        Returns
+        -------
+            None
+        """
+
+        pass 
+        # initialize gradient arrays
+        # _nwl -> number of wavelengths
+        _nwl = len(self.wavelength_array)
+        # _ngr -> number of gradient dimensions
+        _ngr = len(self.gradient_list)
+
+        self.reflectivity_gradient_array = np.zeros((_nwl, _ngr))
+        self.transmissivity_gradient_array = np.zeros((_nwl, _ngr))
+        self.emissivity_gradient_array = np.zeros((_nwl, _ngr))
+
+        for i in range(0, _ngr):
+            for i in range(0, _nwl):
+                _k0 = self._k0_array[i]
+                _ri = self._refractive_index_array[i, :]
+                _kz = self._kz_array[i, :]
+
+            # get transfer matrix, theta_array, and co_theta_array for current k0 value
+            _tm, _theta_array, _cos_theta_array = self._compute_tm(
+                _ri, _k0, _kz, self.thickness_array)
+
+            # get gradient of transfer matrix with respect to layer i
+            _tm_grad = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i)
+
 
     def _compute_kz(self):
         """computes the z-component of the wavevector in each layer of the stack
@@ -341,6 +400,72 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             * np.sin(self.incident_angle)
             * self._k0_array
         )
+
+    def _compute_tm_gradient(self, _refractive_index, _k0, _kz, _d, _ln):
+        """compute the transfer matrix for each wavelength
+
+        _ln : int
+            specifies the layer number the gradient will be taken with respect to
+
+        Returns
+        -------
+        _tm : 2 x 2 complex numpy array
+            transfer matrix for the _k0 value
+
+        _THETA : 1 x number_of_layers complex numpy array
+            refraction angles in each layer for the _k0 value
+
+        _CTHETA : 1 x number_of_layers complex numpy array
+            cosine of the refraction angles in each layer for the _k0 value
+
+        JJF Note: Basically the only difference between the calculation 
+        of the dM/dS_ln and M is that a single P matrix corresponding 
+        to _ln is replaced by dP/DP_ln.  So, you can basically modify the
+        loop where _PM is computed to have a conditional that 
+        computes _PM by calling _compute_pm_gradient instead of _compute_pm
+        when i == _ln
+
+        """
+        pass 
+        _DM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
+        _DIM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
+        _PM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
+        _CTHETA = np.zeros(self.number_of_layers, dtype=complex)
+        _THETA = np.zeros(self.number_of_layers, dtype=complex)
+
+        _PHIL = _kz * _d
+        _THETA[0] = self.incident_angle
+        _CTHETA[0] = np.cos(self.incident_angle)
+
+        _CTHETA[1 : self.number_of_layers] = _kz[1 : self.number_of_layers] / (
+            _refractive_index[1 : self.number_of_layers] * _k0
+        )
+        _THETA[1 : self.number_of_layers] = np.arccos(
+            _CTHETA[1 : self.number_of_layers]
+        )
+
+        _DM[:, :, 0], _tm = self._compute_dm(_refractive_index[0], _CTHETA[0])
+
+        for i in range(1, self.number_of_layers - 1):
+            _DM[:, :, i], _DIM[:, :, i] = self._compute_dm(
+                _refractive_index[i], _CTHETA[i]
+            )
+            _PM[:, :, i] = self._compute_pm(_PHIL[i])
+            _tm = np.matmul(_tm, _DM[:, :, i])
+            _tm = np.matmul(_tm, _PM[:, :, i])
+            _tm = np.matmul(_tm, _DIM[:, :, i])
+
+        (
+            _DM[:, :, self.number_of_layers - 1],
+            _DIM[:, :, self.number_of_layers - 1],
+        ) = self._compute_dm(
+            _refractive_index[self.number_of_layers - 1],
+            _CTHETA[self.number_of_layers - 1],
+        )
+
+        _tm = np.matmul(_tm, _DM[:, :, self.number_of_layers - 1])
+
+        return _tm, _THETA, _CTHETA
 
     def _compute_tm(self, _refractive_index, _k0, _kz, _d):
         """compute the transfer matrix for each wavelength
@@ -496,6 +621,12 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _ci = 0 + 1j
         _a = -1 * _ci * phil
         _b = _ci * phil
+
+        print("phil")
+        print(phil)
+        print("kzl")
+        print(kzl)
+
 
         _pm_analytical_gradient[0, 0] = - _ci * kzl * np.exp( _a )
         _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp( _b )
