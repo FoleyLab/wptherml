@@ -191,17 +191,24 @@ def test_tm_grad():
         "material_list": [
             "Air",
             "SiO2",
-            "Air",
+	    "Air",
         ],
         "thickness_list": [0, 200e-9, 0],
     }
 
     ts = sf.spectrum_factory("Tmm", test_args)
-    M = ts._tm_grad(ts.number_of_layers)
+    _kz = np.array([10471975.51196598+0.j, 15475380.92450645+0.j, 10471975.51196598+0.j])
+    _k0 = 10471975.511965977
+    _d = np.array([0, 2e-07, 0])
+    _phil = 3.09507618+0.j
+    _ri = np.array([1+0j, 1.47779002+0.j, 1+0j])
+
+
+    M, theta, ctheta = ts._compute_tm_gradient(_ri, _k0, _kz, _d, 1)
     
-    print(M["Mp"][0])
+    print(M)
 
     expected_M0 = np.array([[-7.19600497e+05+16652636.92188255j, -5.82076609e-11 +6191988.90249864j],
     [0.00000000e+00 -6191988.90249864j, -7.19600497e+05-16652636.92188255j]])
 
-    assert np.allclose(M["Mp"][0], expected_M0)
+    assert np.allclose(M, expected_M0)
