@@ -360,7 +360,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             specifies the layer number the gradient will be taken with respect to
         Returns
         -------
-        _tm : 2 x 2 complex numpy array
+        _tm_gradient : 2 x 2 complex numpy array
             transfer matrix for the _k0 value
         _THETA : 1 x number_of_layers complex numpy array
             refraction angles in each layer for the _k0 value
@@ -398,7 +398,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 _refractive_index[i], _CTHETA[i]
             )
             if i==_ln:
-               _PM[:, :, i] = self._compute__pm_analytical_gradient(_kzl, _PHIL[i])
+               _PM[:, :, i] = self._compute_pm_analytical_gradient(_kzl, _PHIL[i])
             else:
               _PM[:, :, i] = self._compute_pm(_PHIL[i])
 
