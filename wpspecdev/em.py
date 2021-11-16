@@ -296,13 +296,12 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 _k0 = self._k0_array[i]
                 _ri = self._refractive_index_array[i, :]
                 _kz = self._kz_array[i, :]
-
-            # get transfer matrix, theta_array, and co_theta_array for current k0 value
-            _tm, _theta_array, _cos_theta_array = self._compute_tm(
-                _ri, _k0, _kz, self.thickness_array)
-
-            # get gradient of transfer matrix with respect to layer i
-            _tm_grad = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i)
+                
+                # get transfer matrix, theta_array, and co_theta_array for current k0 value
+                _tm, _theta_array, _cos_theta_array = self._compute_tm(_ri, _k0, _kz, self.thickness_array)
+                
+                # get gradient of transfer matrix with respect to layer i
+                _tm_grad, _theta_array, _cos_theta_array = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i)
 
 
     def _compute_kz(self):
@@ -390,7 +389,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _THETA[1 : self.number_of_layers] = np.arccos(
             _CTHETA[1 : self.number_of_layers]
         )
-
+        # initialize _tm_gradient here!  (was previously _tm)
         _DM[:, :, 0], _tm_gradient = self._compute_dm(_refractive_index[0], _CTHETA[0])
 
         for i in range(1, self.number_of_layers - 1):
