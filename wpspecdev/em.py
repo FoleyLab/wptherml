@@ -391,14 +391,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             _CTHETA[1 : self.number_of_layers]
         )
 
-        _DM[:, :, 0], _tm = self._compute_dm(_refractive_index[0], _CTHETA[0])
+        _DM[:, :, 0], _tm_gradient = self._compute_dm(_refractive_index[0], _CTHETA[0])
 
         for i in range(1, self.number_of_layers - 1):
             _DM[:, :, i], _DIM[:, :, i] = self._compute_dm(
                 _refractive_index[i], _CTHETA[i]
             )
             if i==_ln:
-               _PM[:, :, i] = self._compute_pm_analytical_gradient(_kzl, _PHIL[i])
+               _PM[:, :, i] = self._compute_pm_analytical_gradient(_kz[i], _PHIL[i])
             else:
               _PM[:, :, i] = self._compute_pm(_PHIL[i])
 
