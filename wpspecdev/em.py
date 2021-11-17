@@ -292,16 +292,34 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.emissivity_gradient_array = np.zeros((_nwl, _ngr))
 
         for i in range(0, _ngr):
-            for i in range(0, _nwl):
-                _k0 = self._k0_array[i]
-                _ri = self._refractive_index_array[i, :]
-                _kz = self._kz_array[i, :]
+            for j in range(0, _nwl):
+                _k0 = self._k0_array[j]
+                _ri = self._refractive_index_array[j, :]
+                _kz = self._kz_array[j, :]
                 
                 # get transfer matrix, theta_array, and co_theta_array for current k0 value
                 _tm, _theta_array, _cos_theta_array = self._compute_tm(_ri, _k0, _kz, self.thickness_array)
                 
                 # get gradient of transfer matrix with respect to layer i
                 _tm_grad, _theta_array, _cos_theta_array = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i)
+
+                # Using equation (14) from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+                # for the derivative of the reflection amplitude for wavelength j with respect to layer i
+                r_prime = (_tm[0,0] * _tm_grad[1,0] - _tm[1,0] * _tm_grad[0,0]) / _tm[0,0] ** 2
+                # using equation (12) to get the reflection amplitude at wavelength j
+                r = _tm[1,0] / _tm[0,0]
+
+                # Using equation (10) to get the derivative of R at waveleength j with respect to layer i
+                self.reflectivity_gradient_array[j,i] = r_prime * np.conj(r) - r * np.conj(r_prime)
+
+                # compute t_prime using equation (15)
+
+                # compute t using equation equation (13)
+
+                # compute the derivative of T at wavelength j with respect to layer i using Eq. (11)
+                #self.transmissivity_gradient_array[j,i] = 
+
+                
 
 
     def _compute_kz(self):
