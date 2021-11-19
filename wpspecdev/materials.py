@@ -1202,3 +1202,60 @@ class Materials:
                 self._refractive_index_array[:, layer_number] = n_spline(
                     self.wavelength_array
                 ) + 1j * k_spline(self.wavelength_array)
+
+    def _read_CIE(self):
+            """ Reads CIE data and stores as attributes self.cie_cr, self.cie_cg, self.cie_cb
+
+            Arguments
+            ----------
+            None
+
+            References
+            ----------
+            Equations 29-32 of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf 
+
+            Attributes
+            ----------
+            _cie_cr : 1 x wavelength array of floats
+                data corresponding to red cone response function in integrand of Eq. 29
+
+            _cie_cg : 1 x wavelength array of floats
+                data corresponding to the green cone response function in integrand of Eq. 30
+
+            _cie_cb : 1 x wavelength array of floats
+                data corresponding to the blue cone response function in integrand of Eq. 31
+
+            Returns
+            -------
+            None
+            """
+            # initialize cie arrays?
+            self._cie_cr = np.zeros_like(self.wavelength_array)
+            self._cie_cg = np.zeros_like(self.wavelength_array)
+            self._cie_cb = np.zeros_like(self.wavelength_array)
+            #)
+            # get path to the cie data 
+            file_path = path + "data/cie_cmf.txt"
+            # now read Rh data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_data[:,0] -> wavelengths in nm
+            # file_data[:,1] -> cr response function
+            # file_data[:,2] -> cg response function
+            # file_data[:,3] -> cb resposne function
+
+            _cr_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0] * 1e-9, file_data[:, 1], k=1
+            )
+            _cg_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0] * 1e-9, file_data[:, 2], k=1
+            )
+            _cb_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0] * 1e-9, file_data[:, 3], k=1
+            )
+            # values of data file at 500 nm
+            expected_values = np.array([0.0049, 0.3230, 0.2720])
+            spline_values = np.array([_cr_spline(500e-9), _cg_spline(500e-9), _cb_spline(500e-9)])
+            assert np.allclose(expected_values, spline_values) 
+            self._cie_cr[:] = _cr_spline(self.wavelength_array)
+            self._cie_cg[:] = _cg_spline(self.wavelength_array)
+            self._cie_cb[:] = _cb_spline(self.wavelength_array)
