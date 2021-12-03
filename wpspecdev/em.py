@@ -2,6 +2,10 @@ from .spectrum_driver   import SpectrumDriver
 from .materials  import Materials
 from .therml import Therml
 import numpy as np
+from matplotlib import pyplot as plt
+from matplotlib.patches import Circle
+import matplotlib.colors as colors
+import matplotlib.cm as cmx
 
 class TmmDriver(SpectrumDriver, Materials, Therml):
     """Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
@@ -265,6 +269,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.emissivity_array[i] = (
                 1 - self.reflectivity_array[i] - self.transmissivity_array[i]
             )
+        #self.render_color("ambient color")
             
     def compute_spectrum_gradient(self):
         """computes the following attributes:
@@ -292,17 +297,34 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.emissivity_gradient_array = np.zeros((_nwl, _ngr))
 
         for i in range(0, _ngr):
-            for i in range(0, _nwl):
-                _k0 = self._k0_array[i]
-                _ri = self._refractive_index_array[i, :]
-                _kz = self._kz_array[i, :]
+            for j in range(0, _nwl):
+                _k0 = self._k0_array[j]
+                _ri = self._refractive_index_array[j, :]
+                _kz = self._kz_array[j, :]
+                
+                # get transfer matrix, theta_array, and co_theta_array for current k0 value
+                _tm, _theta_array, _cos_theta_array = self._compute_tm(_ri, _k0, _kz, self.thickness_array)
+                
+                # get gradient of transfer matrix with respect to layer i
+                _tm_grad, _theta_array, _cos_theta_array = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i)
 
-            # get transfer matrix, theta_array, and co_theta_array for current k0 value
-            _tm, _theta_array, _cos_theta_array = self._compute_tm(
-                _ri, _k0, _kz, self.thickness_array)
+                # Using equation (14) from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+                # for the derivative of the reflection amplitude for wavelength j with respect to layer i
+                r_prime = (_tm[0,0] * _tm_grad[1,0] - _tm[1,0] * _tm_grad[0,0]) / _tm[0,0] ** 2
+                # using equation (12) to get the reflection amplitude at wavelength j
+                r = _tm[1,0] / _tm[0,0]
 
-            # get gradient of transfer matrix with respect to layer i
-            _tm_grad = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i)
+                # Using equation (10) to get the derivative of R at waveleength j with respect to layer i
+                self.reflectivity_gradient_array[j,i] = r_prime * np.conj(r) - r * np.conj(r_prime)
+
+                # compute t_prime using equation (15)
+
+                # compute t using equation equation (13)
+
+                # compute the derivative of T at wavelength j with respect to layer i using Eq. (11)
+                #self.transmissivity_gradient_array[j,i] = 
+
+                
 
 
     def _compute_kz(self):
@@ -390,15 +412,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _THETA[1 : self.number_of_layers] = np.arccos(
             _CTHETA[1 : self.number_of_layers]
         )
-
-        _DM[:, :, 0], _tm = self._compute_dm(_refractive_index[0], _CTHETA[0])
+        # initialize _tm_gradient here!  (was previously _tm)
+        _DM[:, :, 0], _tm_gradient = self._compute_dm(_refractive_index[0], _CTHETA[0])
 
         for i in range(1, self.number_of_layers - 1):
             _DM[:, :, i], _DIM[:, :, i] = self._compute_dm(
                 _refractive_index[i], _CTHETA[i]
             )
             if i==_ln:
-               _PM[:, :, i] = self._compute_pm_analytical_gradient(_kzl, _PHIL[i])
+               _PM[:, :, i] = self._compute_pm_analytical_gradient(_kz[i], _PHIL[i])
             else:
               _PM[:, :, i] = self._compute_pm(_PHIL[i])
 
@@ -571,3 +593,149 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp( _b )
         
         return _pm_analytical_gradient
+
+    def _compute_rgb(self, colorblindness="False"):
+
+        # get color response functions 
+        self._read_CIE()
+        #plt.plot(self.wavelength_array * 1e9, self.reflectivity_array, label="Reflectivity")
+        #plt.plot(self.wavelength_array * 1e9, self._cie_cr, label="CIE Red")
+        #plt.legend()
+        #plt.plot(self.wavelength_array, self._cie_cr * self.reflectivity_array)
+        #plt.show()
+
+        
+
+
+        # get X, Y, and Z from reflectivity spectrum and Cr, Cg, Cb response functions
+        X = np.trapz(self._cie_cr * self.reflectivity_array, self.wavelength_array)
+        Y = np.trapz(self._cie_cg * self.reflectivity_array, self.wavelength_array)
+        Z = np.trapz(self._cie_cb * self.reflectivity_array, self.wavelength_array)
+        
+        # zero out appropriate response if colorblindness is indicated
+        # from here: https://www.color-blindness.com/types-of-color-blindness/
+        # Tritanopia/Tritanomaly: Missing/malfunctioning S-cone (blue).
+        # Deuteranopia/Deuteranomaly: Missing/malfunctioning M-cone (green).
+        # Protanopia/Protanomaly: Missing/malfunctioning L-cone (red).
+
+        if colorblindness=="Tritanopia" or colorblindness=="Tritanomaly":
+            Z = 0
+        if colorblindness=="Deuteranopia" or colorblindness=="Deuteranomaly":
+            Y = 0
+        if colorblindness=="Protanopia" or colorblindness=="Protanomaly":
+            X = 0
+        
+    
+        # get total magnitude
+        tot = X+Y+Z
+
+        # get normalized values
+        x = X/tot
+        y = Y/tot
+        z = Z/tot
+
+        # should also be equal to z = 1 - x - y
+        # array of xr, xg, xb, xw, ..., zr, zg, zb, zw
+        # use hdtv standard
+        xrgbw = [0.670, 0.210, 0.150, 0.3127]
+        yrgbw = [0.330, 0.710, 0.060, 0.3291]
+        zrgbw = []
+        for i in range(0,len(xrgbw)):
+            zrgbw.append(1. - xrgbw[i] - yrgbw[i])
+
+
+        ## rx = yg*zb - yb*zg
+        rx = yrgbw[1]*zrgbw[2] - yrgbw[2]*zrgbw[1]
+        ## ry = xb*zg - xg*zb
+        ry = xrgbw[2]*zrgbw[1] - xrgbw[1]*zrgbw[2]
+        ## rz = (xg * yb) - (xb * yg)
+        rz = xrgbw[1]*yrgbw[2] - xrgbw[2]*yrgbw[1]
+        ## gx = (yb * zr) - (yr * zb)
+        gx = yrgbw[2]*zrgbw[0] - yrgbw[0]*zrgbw[2]
+        ## gy = (xr * zb) - (xb * zr)
+        gy = xrgbw[0]*zrgbw[2] - xrgbw[2]*zrgbw[0]
+        ## gz = (xb * yr) - (xr * yb)
+        gz = xrgbw[2]*yrgbw[0] - xrgbw[0]*yrgbw[2]
+        ## bx = (yr * zg) - (yg * zr)
+        bx = yrgbw[0]*zrgbw[1] - yrgbw[1]*zrgbw[0]
+        ## by = (xg * zr) - (xr * zg)
+        by = xrgbw[1]*zrgbw[0] - xrgbw[0]*zrgbw[1]
+        ## bz = (xr * yg) - (xg * yr)
+        bz = xrgbw[0]*yrgbw[1] - xrgbw[1]*yrgbw[0]
+
+
+        ## rw = ((rx * xw) + (ry * yw) + (rz * zw)) / yw;
+        rw = (rx * xrgbw[3] + ry * yrgbw[3] + rz * zrgbw[3])/yrgbw[3]
+        ## gw = ((gx * xw) + (gy * yw) + (gz * zw)) / yw;
+        gw = (gx * xrgbw[3] + gy * yrgbw[3] + gz * zrgbw[3])/yrgbw[3]
+        ## bw = ((bx * xw) + (by * yw) + (bz * zw)) / yw;
+        bw = (bx * xrgbw[3] + by * yrgbw[3] + bz * zrgbw[3])/yrgbw[3]
+
+        ## /* xyz -> rgb matrix, correctly scaled to white. */    
+        rx = rx / rw
+        ry = ry / rw
+        rz = rz / rw
+        gx = gx / gw
+        gy = gy / gw
+        gz = gz / gw
+        bx = bx / bw
+        by = by / bw
+        bz = bz / bw
+
+
+        ## /* rgb of the desired point */
+        r = (rx * x) + (ry * y) + (rz * z)
+        g = (gx * x) + (gy * y) + (gz * z)
+        b = (bx * x) + (by * y) + (bz * z)
+
+        rgblist = []
+        rgblist.append(r)
+        rgblist.append(g)
+        rgblist.append(b)
+
+        # are there negative values?
+        w = np.amin(rgblist)
+        if w<0:
+            rgblist[0] = rgblist[0] - w
+            rgblist[1] = rgblist[1] - w
+            rgblist[2] = rgblist[2] - w
+
+        # scale things so that max has value of 1
+        mag = np.amax(rgblist)
+
+
+        rgblist[0] = rgblist[0]/mag
+        rgblist[1] = rgblist[1]/mag
+        rgblist[2] = rgblist[2]/mag
+
+        #rgb = {'r': rgblist[0]/mag, 'g': rgblist[1]/mag, 'b': rgblist[2]/mag }
+
+        return rgblist
+
+    def render_color(self, string, colorblindness="False"):
+
+        fig, ax = plt.subplots()
+        # The grid of visible wavelengths corresponding to the grid of colour-matching
+        # functions used by the ColourSystem instance.
+
+        # Calculate the black body spectrum and the HTML hex RGB colour string
+        cierbg = self._compute_rgb(colorblindness)
+        #cierbg = [1.,0.427,0.713]
+        # Place and label a circle with the colour of a black body at temperature T
+        x, y = 0., 0.
+        circle = Circle(xy=(x, y*1.2), radius=0.4, fc=cierbg)
+        ax.add_patch(circle)
+        ax.annotate(string, xy=(x, y*1.2-0.5), va='center',
+                    ha='center', color=cierbg)
+
+        # Set the limits and background colour; remove the ticks
+        ax.set_xlim(-1, 1)
+        ax.set_ylim(-1, 1)
+        ax.set_xticks([])
+        ax.set_yticks([])
+        ax.set_facecolor('k')
+        #ax.set_axis_bgcolor('k')
+        # Make sure our circles are circular!
+        ax.set_aspect("equal")
+        plt.show()
+
