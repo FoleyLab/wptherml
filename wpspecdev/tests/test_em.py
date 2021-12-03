@@ -191,17 +191,35 @@ def test_tm_grad():
         "material_list": [
             "Air",
             "SiO2",
-            "Air",
+	    "Air",
         ],
         "thickness_list": [0, 200e-9, 0],
     }
-
+    # create instance of class
     ts = sf.spectrum_factory("Tmm", test_args)
-    M = ts._tm_grad(ts.number_of_layers)
-    
-    print(M["Mp"][0])
 
+    # define the z-component of wavevector exactly matching a air/sio2/air @ \lambda=600 nm
+    # case from original wptherml release
+    _kz = np.array([10471975.51196598+0.j, 15475380.92450645+0.j, 10471975.51196598+0.j])
+
+    # k0 = 2 * pi / \lambda
+    _k0 = 10471975.511965977
+
+    #  thickness array 200 nm glass
+    _d = np.array([0, 2e-07, 0])
+
+    # _kz * d for glass layer
+    _phil = 3.09507618+0.j
+
+    # refractive index array for air/glass/air @ \lambda = 600 nm
+    # exactly matching original wptherml release case
+    _ri = np.array([1+0j, 1.47779002+0.j, 1+0j])
+
+    # compute the gradient of the transfer matrix
+    M, theta, ctheta = ts._compute_tm_gradient(_ri, _k0, _kz, _d, 1)
+
+    # this is the expected gradient of the transfer matrix from original wptherml release
     expected_M0 = np.array([[-7.19600497e+05+16652636.92188255j, -5.82076609e-11 +6191988.90249864j],
     [0.00000000e+00 -6191988.90249864j, -7.19600497e+05-16652636.92188255j]])
 
-    assert np.allclose(M["Mp"][0], expected_M0)
+    assert np.allclose(M, expected_M0)
