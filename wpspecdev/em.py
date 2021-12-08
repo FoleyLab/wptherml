@@ -318,12 +318,19 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.reflectivity_gradient_array[j,i] = r_prime * np.conj(r) - r * np.conj(r_prime)
 
                 # compute t_prime using equation (15)
+                t_prime = (- _tm_grad[0,0]/_tm[0,0]**2)
 
                 # compute t using equation equation (13)
+                t = (1/_tm[0,0])
+
+                _factor = (
+                _ri[self.number_of_layers - 1]
+                * _cos_theta_array[self.number_of_layers - 1]
+                / (_ri[0] * _cos_theta_array[0])
+                ) 
 
                 # compute the derivative of T at wavelength j with respect to layer i using Eq. (11)
-                #self.transmissivity_gradient_array[j,i] = 
-
+                self.transmissivity_gradient_array[j,i] = [t_prime * np.conj(t)- t* np.conj(t_prime)] * factor
                 
 
 
