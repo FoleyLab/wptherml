@@ -174,6 +174,66 @@ def test_pm_grad():
 
 
 
+def test_compute_spectrum_gradient():
+
+    # simple structure - just glass layer
+    test_args_1 = {
+        "wavelength_list": [600e-9, 602e-9, 3],
+        "material_list": [
+            "Air",
+            "SiO2",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 0],
+    }
+    
+    # 2-layer structure - just glass coated gold
+    test_args_2 = {
+        "wavelength_list": [600e-9, 602e-9, 3],
+        "material_list": [
+            "Air",
+            "SiO2",
+            "Au",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 10e-9, 0],
+    }
+    
+    # create instance of class
+    ts1 = sf.spectrum_factory("Tmm", test_args_1)
+    # hard-code RI using data from old WPTherml package
+    ts1._refractive_index_array[0, :] = np.array([1+0j, 1.47779002+0.j, 1+0j])
+    # run compute_spectrum method so that new RI values get incorporated 
+    # into kz and kx arrays
+    ts1.compute_spectrum()
+    # compute spectrum gradient
+    ts1.compute_spectrum_gradient()
+
+    expected_T_prime_1 = 230498.36605705
+    expected_R_prime_1 = -230498.36605705
+
+    assert np.isclose(ts1.transmissivity_gradient_array[0,0], expected_T_prime_1)
+    assert np.isclose(ts1.reflectivity_gradient_array[0,0], expected_R_prime_1)
+
+        
+    # create instance of class
+    ts2 = sf.spectrum_factory("Tmm", test_args_2)
+    # hard-code RI using data from old WPTherml package
+    ts2._refractive_index_array[0, :] = np.array([1+0j, 1.47779002+0.j, 0.24463382+3.085112j, 1+0j])
+    # run compute_spectrum method so that new RI values get incorporated 
+    # into kz and kx arrays
+    ts2.compute_spectrum()
+    # compute spectrum gradient
+    ts2.compute_spectrum_gradient()
+
+    expected_R_prime_2 = np.array([-3782692.48735643, 32391843.05104597])
+    expected_T_prime_2 = np.array([3248937.92608693, -37935758.73941045])
+    expected_EPS_prime_2 = np.array([533754.5612695, 5543915.68836448])
+
+    assert np.allclose(ts2.transmissivity_gradient_array[0,:], expected_T_prime_2)
+    assert np.allclose(ts2.reflectivity_gradient_array[0,:], expected_R_prime_2)
+    assert np.allclose(ts2.emissivity_gradient_array[0,:], expected_EPS_prime_2 )
+
 def test_tm_grad():
     """
     structure = {
