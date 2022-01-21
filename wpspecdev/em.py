@@ -66,6 +66,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.set_refractive_index_array()
         # compute reflectivity spectrum
         self.compute_spectrum()
+
         # print output message
         print(" Your spectra have been computed! \N{smiling face with sunglasses} ")
 
@@ -80,6 +81,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
             print(" Your spectra have been computed! \N{fire} ")
 
+        
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation
         Returns
@@ -138,6 +140,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         else:
             self.gradient_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
 
+        # for now always get solar spectrum!
+        self._solar_spectrum = self._read_AM()
 
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
@@ -306,16 +310,17 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 _tm, _theta_array, _cos_theta_array = self._compute_tm(_ri, _k0, _kz, self.thickness_array)
                 
                 # get gradient of transfer matrix with respect to layer i
-                _tm_grad, _theta_array, _cos_theta_array = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i)
+                _tm_grad, _theta_array, _cos_theta_array = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i+1)
 
                 # Using equation (14) from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
                 # for the derivative of the reflection amplitude for wavelength j with respect to layer i
-                r_prime = (_tm[0,0] * _tm_grad[1,0] - _tm[1,0] * _tm_grad[0,0]) / _tm[0,0] ** 2
+                # from wptherml: r_prime = (M11*M21p[j] - M21*M11p[j])/(M11*M11)
+                r_prime = (_tm[0,0] * _tm_grad[1,0] - _tm[1,0] * _tm_grad[0,0]) / (_tm[0,0] ** 2)
                 # using equation (12) to get the reflection amplitude at wavelength j
                 r = _tm[1,0] / _tm[0,0]
 
                 # Using equation (10) to get the derivative of R at waveleength j with respect to layer i
-                self.reflectivity_gradient_array[j,i] = r_prime * np.conj(r) - r * np.conj(r_prime)
+                self.reflectivity_gradient_array[j,i] = np.real(r_prime * np.conj(r) + r * np.conj(r_prime))
 
                 # compute t_prime using equation (15)
                 t_prime = (- _tm_grad[0,0]/_tm[0,0]**2)
@@ -330,8 +335,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 ) 
 
                 # compute the derivative of T at wavelength j with respect to layer i using Eq. (11)
-                self.transmissivity_gradient_array[j,i] = [t_prime * np.conj(t)- t* np.conj(t_prime)] * factor
-                
+                self.transmissivity_gradient_array[j,i] = np.real((t_prime * np.conj(t) + t* np.conj(t_prime)) * _factor)
+                # derivative of \epsilon is - \partial R / \partial s -\partial T / \partial sß
+                self.emissivity_gradient_array[j,i] =  -self.transmissivity_gradient_array[j,i] - self.reflectivity_gradient_array[j,i]
+
 
 
     def _compute_kz(self):
@@ -589,12 +596,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _ci = 0 + 1j
         _a = -1 * _ci * phil
         _b = _ci * phil
-
-        print("phil")
-        print(phil)
-        print("kzl")
-        print(kzl)
-
 
         _pm_analytical_gradient[0, 0] = - _ci * kzl * np.exp( _a )
         _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp( _b )
