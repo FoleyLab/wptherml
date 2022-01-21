@@ -1259,3 +1259,43 @@ class Materials:
             self._cie_cr[:] = _cr_spline(self.wavelength_array)
             self._cie_cg[:] = _cg_spline(self.wavelength_array)
             self._cie_cb[:] = _cb_spline(self.wavelength_array)
+
+    def _read_AM(self):
+            """ Reads AM1.5 data and stores as attributes self._solar_spectrum
+
+            Arguments
+            ----------
+            None
+
+            References
+            ----------
+            add
+
+            Attributes
+            ----------
+            _solar_spectrum : 1 x wavelength array of floats
+                data corresponding to red cone response function in integrand of Eq. 29
+            Returns
+            -------
+            None
+            """
+           
+            # get path to the AM data 
+            file_path = path + "data/scaled_AM_1_5.txt"
+            # now read Rh data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_data[:,0] -> wavelengths in m
+            # file_data[:,1] -> solar spectrum in W / m / m^2 / sr
+
+            _solar_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+
+            # values of data file at 615 nm
+            # 0.000000615000000       1325400000.0000000000000000000000
+            _expected_value = 1325400000.
+            _spline_value = _solar_spline(615e-9)
+            assert np.isclose(_expected_value, _spline_value) 
+            print("getting solar spectrum")
+            return _solar_spline(self.wavelength_array)
+
