@@ -141,7 +141,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.gradient_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
 
         # for now always get solar spectrum!
-        self._solar_spetrum = self._read_AM()
+        self._solar_spectrum = self._read_AM()
 
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
