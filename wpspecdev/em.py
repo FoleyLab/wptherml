@@ -66,6 +66,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.set_refractive_index_array()
         # compute reflectivity spectrum
         self.compute_spectrum()
+
         # print output message
         print(" Your spectra have been computed! \N{smiling face with sunglasses} ")
 
@@ -80,6 +81,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
             print(" Your spectra have been computed! \N{fire} ")
 
+        
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation
         Returns
@@ -138,6 +140,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         else:
             self.gradient_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
 
+        # for now always get solar spectrum!
+        self._solar_spetrum = self._read_AM()
 
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
