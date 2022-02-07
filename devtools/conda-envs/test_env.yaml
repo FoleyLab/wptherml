@@ -20,11 +20,6 @@ dependencies:
   - matplotlib
   - scipy
 
-    # dependencies for ML interfaces
-  - pandas
-  - tensorflow
-  - sklearn
-  
     # Pip-only installs
   #- pip:
   #  - codecov
