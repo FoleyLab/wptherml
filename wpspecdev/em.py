@@ -140,8 +140,21 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         else:
             self.gradient_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
 
+        # if we specify a number of angles to compute the spectra over
+        # this only gets used if we need explicit inclusion of angle of incidence/emission
+        # for a given quantity
+        if "number_of_angles" in args:
+            self.number_of_angles = args["number_of_angles"]
+        else:
+            # this is a good default empirically if
+            # Gauss-Legendre quadrature is used for angular spectra
+            self.number_of_angles = 7
+
         # for now always get solar spectrum!
         self._solar_spectrum = self._read_AM()
+
+        # for now always get atmospheric transmissivity spectru
+        self._atmospheric_transmissivity = self._read_Atmospheric_Transmissivity()
 
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
@@ -274,6 +287,98 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 1 - self.reflectivity_array[i] - self.transmissivity_array[i]
             )
         #self.render_color("ambient color")
+
+    def compute_explicit_angle_spectrum(self):
+        """computes the following attributes:
+        Attributes
+        ----------
+            reflectivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+                the reflectivity spectrum vs wavelength and angle with s-polarization
+            reflectivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+                the reflectivity spectrum vs wavelength and angle with p-polarization
+            
+            transmissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+                the transmissivity spectrum vs wavelength and angle with s-polarization
+            transmissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+                the transmissivity spectrum vs wavelength and angle with p-polarization
+
+            emissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+                the emissivity spectrum vs wavelength and angle with s-polarization
+            emissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+                the emissivity spectrum vs wavelength and angle with p-polarization
+        Returns
+        -------
+            None
+        """
+        # initialize the angle-dependent arrays
+        self.reflectivity_array_s = np.zeros((self.number_of_angles, self.number_of_wavelengths ))
+        self.reflectivity_array_p = np.zeros((self.number_of_angles, self.number_of_wavelengths ))
+
+        self.transmissivity_array_s = np.zeros((self.number_of_angles, self.number_of_wavelengths ))
+        self.transmissivity_array_p = np.zeros((self.number_of_angles, self.number_of_wavelengths ))
+
+        self.emissivity_array_s = np.zeros((self.number_of_angles, self.number_of_wavelengths ))
+        self.emissivity_array_p = np.zeros((self.number_of_angles, self.number_of_wavelengths ))
+
+        # now set up the angular Gauss-Legendre grid
+        a = 0
+        b = np.pi/2.
+        self.x, self.theta_weights = np.polynomial.legendre.leggauss(self._number_of_angles)
+        self.theta_vals = 0.5*(self.x + 1)*(b - a) + a
+        self.theta_weights = self.theta_weights * 0.5 * (b-a)
+
+        # compute k0 which does not care about angle
+        self._compute_k0()
+
+        # loop over angles first
+        for i in range(0, self.number_of_angles):
+            self.incident_angle = self.theta_vals[i]
+            # compute kx and kz, which do depend on angle
+            self._compute_kx()
+            self._compute_kz()
+            
+            for j in range(0, self.number_of_wavelengths):
+                _k0 = self._k0_array[j]
+                _ri = self._refractive_index_array[j, :]
+                _kz = self._kz_array[j, :]
+                
+                # get transfer matrix, theta_array, and co_theta_array for current k0 value and 's' polarization
+                self.polarization = 's'
+                _tm_s, _theta_array_s, _cos_theta_array_s = self._compute_tm(_ri, _k0, _kz, self.thickness_array)
+
+                # get transfer matrix, theta_array, and cos_theta_array for current k0 value and 'p' polarization
+                self.polarization = 'p'
+                _tm_p, _theta_array_p, _cos_theta_array_p = self._compute_tm(_ri, _k0, _kz, self.thickness_array)
+                
+                # reflection amplitude
+                _r_s = _tm_s[1, 0] / _tm_s[0, 0]
+                _r_p = _tm_p[1, 0] / _tm_p[0, 0]
+                
+                # transmission amplitude
+                _t_s = 1 / _tm_s[0, 0]
+                _t_p = 1 / _tm_p[0, 0]
+                
+                # refraction angle and RI prefractor for computing transmission
+                _factor_s = (_ri[self.number_of_layers - 1] * _cos_theta_array_s[self.number_of_layers - 1] / (_ri[0] * _cos_theta_array_s[0]))
+                _factor_p = (_ri[self.number_of_layers - 1] * _cos_theta_array_p[self.number_of_layers - 1] / (_ri[0] * _cos_theta_array_p[0]))
+                
+                # reflectivity
+                self.reflectivity_array_s[i, j] = np.real(_r_s * np.conj(_r_s))
+                self.reflectivity_array_p[i, j] = np.real(_r_p * np.conj(_r_p))
+
+                # transmissivity
+                self.transmissivity_array_s[i, j] = np.real(_t_s * np.conj(_t_s) * _factor_s)
+                self.transmissivity_array_p[i, j] = np.real(_t_p * np.conj(_t_p) * _factor_p)
+                
+                # emissivity
+                self.emissivity_array_s[i, j] = (
+                    1 - self.reflectivity_array_s[i, j] - self.transmissivity_array_s[i, j]
+                )
+                self.emissivity_array_p[i, j] = (
+                    1 - self.reflectivity_array_p[i, j] - self.transmissivity_array_p[i, j]
+                )
+
+        
             
     def compute_spectrum_gradient(self):
         """computes the following attributes:
