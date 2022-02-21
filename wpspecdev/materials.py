@@ -1204,98 +1204,143 @@ class Materials:
                 ) + 1j * k_spline(self.wavelength_array)
 
     def _read_CIE(self):
-            """ Reads CIE data and stores as attributes self.cie_cr, self.cie_cg, self.cie_cb
+        """ Reads CIE data and stores as attributes self.cie_cr, self.cie_cg, self.cie_cb
 
-            Arguments
-            ----------
-            None
+        Arguments
+        ----------
+        None
 
-            References
-            ----------
-            Equations 29-32 of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf 
+        References
+        ----------
+        Equations 29-32 of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf 
 
-            Attributes
-            ----------
-            _cie_cr : 1 x wavelength array of floats
-                data corresponding to red cone response function in integrand of Eq. 29
+        Attributes
+        ----------
+        _cie_cr : 1 x wavelength array of floats
+            data corresponding to red cone response function in integrand of Eq. 29
 
-            _cie_cg : 1 x wavelength array of floats
-                data corresponding to the green cone response function in integrand of Eq. 30
+        _cie_cg : 1 x wavelength array of floats
+            data corresponding to the green cone response function in integrand of Eq. 30
 
-            _cie_cb : 1 x wavelength array of floats
-                data corresponding to the blue cone response function in integrand of Eq. 31
+        _cie_cb : 1 x wavelength array of floats
+            data corresponding to the blue cone response function in integrand of Eq. 31
 
-            Returns
-            -------
-            None
-            """
-            # initialize cie arrays?
-            self._cie_cr = np.zeros_like(self.wavelength_array)
-            self._cie_cg = np.zeros_like(self.wavelength_array)
-            self._cie_cb = np.zeros_like(self.wavelength_array)
-            #)
-            # get path to the cie data 
-            file_path = path + "data/cie_cmf.txt"
-            # now read Rh data into a numpy array
-            file_data = np.loadtxt(file_path)
-            # file_data[:,0] -> wavelengths in nm
-            # file_data[:,1] -> cr response function
-            # file_data[:,2] -> cg response function
-            # file_data[:,3] -> cb resposne function
+        Returns
+        -------
+        None
+        """
+        # initialize cie arrays?
+        self._cie_cr = np.zeros_like(self.wavelength_array)
+        self._cie_cg = np.zeros_like(self.wavelength_array)
+        self._cie_cb = np.zeros_like(self.wavelength_array)
+        #)
+        # get path to the cie data 
+        file_path = path + "data/cie_cmf.txt"
+        # now read Rh data into a numpy array
+        file_data = np.loadtxt(file_path)
+        # file_data[:,0] -> wavelengths in nm
+        # file_data[:,1] -> cr response function
+        # file_data[:,2] -> cg response function
+        # file_data[:,3] -> cb resposne function
 
-            _cr_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0] * 1e-9, file_data[:, 1], k=1
-            )
-            _cg_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0] * 1e-9, file_data[:, 2], k=1
-            )
-            _cb_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0] * 1e-9, file_data[:, 3], k=1
-            )
-            # values of data file at 500 nm
-            expected_values = np.array([0.0049, 0.3230, 0.2720])
-            spline_values = np.array([_cr_spline(500e-9), _cg_spline(500e-9), _cb_spline(500e-9)])
-            assert np.allclose(expected_values, spline_values) 
-            self._cie_cr[:] = _cr_spline(self.wavelength_array)
-            self._cie_cg[:] = _cg_spline(self.wavelength_array)
-            self._cie_cb[:] = _cb_spline(self.wavelength_array)
+        _cr_spline = InterpolatedUnivariateSpline(
+            file_data[:, 0] * 1e-9, file_data[:, 1], k=1
+        )
+        _cg_spline = InterpolatedUnivariateSpline(
+            file_data[:, 0] * 1e-9, file_data[:, 2], k=1
+        )
+        _cb_spline = InterpolatedUnivariateSpline(
+            file_data[:, 0] * 1e-9, file_data[:, 3], k=1
+        )
+        # values of data file at 500 nm
+        expected_values = np.array([0.0049, 0.3230, 0.2720])
+        spline_values = np.array([_cr_spline(500e-9), _cg_spline(500e-9), _cb_spline(500e-9)])
+        assert np.allclose(expected_values, spline_values) 
+        self._cie_cr[:] = _cr_spline(self.wavelength_array)
+        self._cie_cg[:] = _cg_spline(self.wavelength_array)
+        self._cie_cb[:] = _cb_spline(self.wavelength_array)
 
     def _read_AM(self):
-            """ Reads AM1.5 data and stores as attributes self._solar_spectrum
+        """ Reads AM1.5 data and returns an array of the AM1.5 data evaluated at each value of 
+            self.wavelength_array
 
-            Arguments
-            ----------
-            None
+        Arguments
+        ----------
+        None
 
-            References
-            ----------
-            add
+        References
+        ----------
+        add
 
-            Attributes
-            ----------
-            _solar_spectrum : 1 x wavelength array of floats
-                data corresponding to red cone response function in integrand of Eq. 29
-            Returns
-            -------
-            None
-            """
-           
-            # get path to the AM data 
-            file_path = path + "data/scaled_AM_1_5.txt"
-            # now read Rh data into a numpy array
-            file_data = np.loadtxt(file_path)
-            # file_data[:,0] -> wavelengths in m
-            # file_data[:,1] -> solar spectrum in W / m / m^2 / sr
+        Attributes
+        ----------
+        None
 
-            _solar_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
+        Returns
+        -------
+        1 x number_of_wavelengths array of floats
+            Data corresponding the AM1.5 spectrum evaluated at each value of self.wavelength_array
+            
+        """
+        
+        # get path to the AM data 
+        file_path = path + "data/scaled_AM_1_5.txt"
+        # now read Rh data into a numpy array
+        file_data = np.loadtxt(file_path)
+        # file_data[:,0] -> wavelengths in m
+        # file_data[:,1] -> solar spectrum in W / m / m^2 / sr
 
-            # values of data file at 615 nm
-            # 0.000000615000000       1325400000.0000000000000000000000
-            _expected_value = 1325400000.
-            _spline_value = _solar_spline(615e-9)
-            assert np.isclose(_expected_value, _spline_value) 
-            print("getting solar spectrum")
-            return _solar_spline(self.wavelength_array)
+        _solar_spline = InterpolatedUnivariateSpline(
+            file_data[:, 0], file_data[:, 1], k=1
+        )
 
+        # values of data file at 615 nm
+        # 0.000000615000000       1325400000.0000000000000000000000
+        _expected_value = 1325400000.
+        _spline_value = _solar_spline(615e-9)
+        assert np.isclose(_expected_value, _spline_value) 
+        print("getting solar spectrum")
+        return _solar_spline(self.wavelength_array)
+            
+    def _read_Atmospheric_Transmissivity(self):
+        """ Reads atmospherical transmissivity data and returns
+            an array of this data evaluated at each value of self.wavelength_array
+
+        Arguments
+        ----------
+        None
+
+        References
+        ----------
+        add
+
+        Attributes
+        ----------
+        None
+
+        Returns
+        -------
+        1 x number_of_wavelengths array of floats
+            atmospheric transmissivity evaluated at each value of self.wavelength_array
+        """
+        
+        # get path to the AM data 
+        file_path = path + "data/Atmospheric_transmissivity.txt"
+        # now read Rh data into a numpy array
+        file_data = np.loadtxt(file_path)
+        # file_data[:,0] -> wavelengths in m
+        # file_data[:,1] -> atmospheric transmissivity
+
+        # get indices of unique elements
+        idx = self._find_unique_ri_file_data(file_data[:,0])
+
+        _atrans_spline = InterpolatedUnivariateSpline(
+            file_data[idx, 0], file_data[idx, 1], k=1
+        )
+
+        # values of data file at 7.1034e-06 meters (7.1034 microns) -> T = 0.561289
+        _expected_value = 0.561289
+        _spline_value = _atrans_spline(7.1034e-6)
+        assert np.isclose(_expected_value, _spline_value) 
+        print(" getting atmospheric transmissivity")
+        return _atrans_spline(self.wavelength_array)
