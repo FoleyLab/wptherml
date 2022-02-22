@@ -136,6 +136,59 @@ def test_compute_spectrum():
         test3.emissivity_array[0], expected_result_55_degress_p_polarized[2], 5e-3
     )
 
+def test_compute_explicit_angle_spectrum():
+    """ test against a simple 230 nm Ag slab at lambda = 501 nm
+    
+    """
+    args = {  
+        'wavelength_list': [500e-9, 502e-9, 3],  
+        'material_list': ["Air", "Ag", "Air"],
+        'thickness_list': [0,  230e-9, 0],
+        'Temperature' : 500, 
+        'therml': True
+    }
+
+    sf = wpspecdev.SpectrumFactory()  
+    test = sf.spectrum_factory('Tmm', args)
+    
+    # hard-code in the RI values of Ag
+    # 500 nm
+    test._refractive_index_array[0,1] = 0.04998114+3.13267845j
+    # 501 nm
+    test._refractive_index_array[1,1] = 0.04997774+3.14242568j
+    # 502 nm
+    test._refractive_index_array[2,1] = 0.04997488+3.15210009j
+
+    # compute explicit-angle spectrum
+    test.compute_explicit_angle_spectrum()
+
+    # expected results from wptherml calculations with this Ag slab
+    _expected_r_p = np.array([0.98177278, 0.98137611, 0.97953671, 0.97496043, 0.96789884, 0.96979929, 0.991839])
+    _expected_r_s = np.array([0.98180453, 0.98219551, 0.98388276, 0.98740085, 0.99207765, 0.9964686,0.99930033])
+    _expected_t_p = np.array([1.75624700e-08, 1.75520517e-08, 1.77152966e-08, 1.92085994e-08, 2.30502233e-08, 1.72502686e-08, 1.21003041e-09])
+    _expected_t_s = np.array([1.75126607e-08, 1.63066111e-08, 1.19085368e-08, 5.89754096e-09, 1.89387786e-09, 3.36368599e-10, 1.28525918e-11])
+    _expected_e_p = np.array([0.0182272,  0.01862387, 0.02046328, 0.02503955, 0.03210114, 0.03020069, 0.008161 ])
+    _expected_e_s = np.array([0.01819546, 0.01780447, 0.01611723, 0.01259915, 0.00792235, 0.0035314, 0.00069967])
+
+    assert np.allclose(
+        test.reflectivity_array_p[:,1], _expected_r_p, 5e-3
+    )
+    assert np.allclose(
+        test.reflectivity_array_s[:,1], _expected_r_s, 5e-3
+    )
+    assert np.allclose(
+        test.transmissivity_array_p[:,1], _expected_t_p, 5e-3
+    )
+    assert np.allclose(
+        test.transmissivity_array_s[:,1], _expected_t_s, 5e-3
+    )
+    assert np.allclose(
+        test.emissivity_array_p[:,1], _expected_e_p, 5e-3
+    )
+    assert np.allclose(
+        test.emissivity_array_s[:,1], _expected_e_s, 5e-3
+    )
+
 
 def test_pm_grad():
     """
