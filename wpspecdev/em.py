@@ -323,7 +323,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # now set up the angular Gauss-Legendre grid
         a = 0
         b = np.pi/2.
-        self.x, self.theta_weights = np.polynomial.legendre.leggauss(self._number_of_angles)
+        self.x, self.theta_weights = np.polynomial.legendre.leggauss(self.number_of_angles)
         self.theta_vals = 0.5*(self.x + 1)*(b - a) + a
         self.theta_weights = self.theta_weights * 0.5 * (b-a)
 
