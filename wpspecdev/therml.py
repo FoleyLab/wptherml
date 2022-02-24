@@ -272,6 +272,7 @@ class Therml:
         
         """
         num_angles = len(theta_vals)
+        self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
 
         # loop over angles
         P_rad = 0.
@@ -289,12 +290,12 @@ class Therml:
         
         """
         num_angles = len(theta_vals)
-
+        self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
         P_atm = 0.
         for i in range(0, num_angles):
             # get the term that goes in the exponent of the atmospheric transmissivity
             _o_over_cos_t = 1 / np.cos(theta_vals[i])
-            _emissivity_atm = 1 - atmospheric_transmissivity ** _o_over_cos_t
+            _emissivity_atm = np.ones(len(atmospheric_transmissivity)) - atmospheric_transmissivity ** _o_over_cos_t
             _TE_atm = self.blackbody_spectrum * _emissivity_atm
             _absorbed_TE_spectrum = _TE_atm * 0.5 * (emissivity_array_p[i,:] + emissivity_array_s[i,:])
             _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
@@ -308,6 +309,7 @@ class Therml:
         """ Put a good docstring here! 
         
         """
+        self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
         # compute the absorbed solar spectrum
         _absorbed_solar_spectrum = solar_spectrum * 0.5 * (emissivity_array_p + emissivity_array_s)
         # integrate it!
