@@ -126,9 +126,9 @@ def test_compute_atmospheric_radiated_power():
     # call _compute_thermal_radiated_power( ) function 
     test.atmospheric_radiated_power = test._compute_atmospheric_radiated_power(test._atmospheric_transmissivity, test.emissivity_array_s, test.emissivity_array_p, test.theta_vals, test.theta_weights, test.wavelength_array)
 
-    expected_atmospheric_radiated_power = 21.97567463516981
-    pass 
-    #assert np.isclose(expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5)
+    expected_atmospheric_radiated_power = 21.973817620650525
+    #pass 
+    assert np.isclose(expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5)
 
 def test_compute_solar_radiated_power():
 
