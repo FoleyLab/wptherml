@@ -296,7 +296,7 @@ class Therml:
             # get the term that goes in the exponent of the atmospheric transmissivity
             _o_over_cos_t = 1 / np.cos(theta_vals[i])
             _emissivity_atm = np.ones(len(atmospheric_transmissivity)) - atmospheric_transmissivity ** _o_over_cos_t
-            _TE_atm = self.blackbody_spectrum * _emissivity_atm
+            _TE_atm = self.blackbody_spectrum * _emissivity_atm * np.cos(theta_vals[i])
             _absorbed_TE_spectrum = _TE_atm * 0.5 * (emissivity_array_p[i,:] + emissivity_array_s[i,:])
             _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
             P_atm += _absorbed_TE * np.sin(theta_vals[i]) * theta_weights[i]
