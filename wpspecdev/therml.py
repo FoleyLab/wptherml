@@ -43,6 +43,17 @@ class Therml:
             # default is ~InGaAsSb bandgap
             self.lambda_bandgap = 2254e-9
 
+        if "atmospheric temperature" in args:
+            self.atmospheric_temperature = args["atmospheric temperature"]
+        else:
+            self.atmospheric_temperature = 300
+        
+        if "solar angle" in args:
+            self.solar_angle = args["solar angle"]
+            self.solar_angle *= np.pi / 180
+        else:
+            self.solar_angle = 30 * np.pi / 180
+
     def _compute_therml_spectrum(self, wavelength_array, emissivity_array):
         """method to compute thermal emission spectrum of a structure
 
@@ -254,3 +265,53 @@ class Therml:
         Denominator = np.trapz(TE, wavelength_array)
 
         self.luminous_efficiency = Numerator / Denominator
+
+    def _compute_thermal_radiated_power(self, emissivity_array_s, emissivity_array_p, theta_vals, theta_weights, wavelength_array):
+        """ Put docstring here! 
+        
+        
+        """
+        num_angles = len(theta_vals)
+
+        # loop over angles
+        P_rad = 0.
+        for i in range(0, num_angles):
+            _TE = self.blackbody_spectrum * np.cos(theta_vals[i]) * 0.5 * (emissivity_array_p[i,:] + emissivity_array_s[i,:])
+            _TE_INT = np.trapz(_TE, wavelength_array)
+            P_rad += _TE_INT * np.sin(theta_vals[i]) * theta_weights[i]
+
+        P_rad *= np.pi * 2
+
+        return P_rad
+
+    def _compute_atmospheric_radiated_power(self, atmospheric_transmissivity, emissivity_array_s, emissivity_array_p, theta_vals, theta_weights, wavelength_array):
+        """ Put docstring here!
+        
+        """
+        num_angles = len(theta_vals)
+
+        P_atm = 0.
+        for i in range(0, num_angles):
+            # get the term that goes in the exponent of the atmospheric transmissivity
+            _o_over_cos_t = 1 / np.cos(theta_vals[i])
+            _emissivity_atm = 1 - atmospheric_transmissivity ** _o_over_cos_t
+            _TE_atm = self.blackbody_spectrum * _emissivity_atm
+            _absorbed_TE_spectrum = _TE_atm * 0.5 * (emissivity_array_p[i,:] + emissivity_array_s[i,:])
+            _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
+            P_atm += _absorbed_TE * np.sin(theta_vals[i]) * theta_weights[i]
+        P_atm *= 2 * np.pi 
+
+        return P_atm 
+
+
+    def _compute_solar_radiated_power(self, solar_spectrum, emissivity_array_s, emissivity_array_p, wavelength_array):
+        """ Put a good docstring here! 
+        
+        """
+        # compute the absorbed solar spectrum
+        _absorbed_solar_spectrum = solar_spectrum * 0.5 * (emissivity_array_p + emissivity_array_s)
+        # integrate it!
+        P_sun = np.trapz(_absorbed_solar_spectrum, wavelength_array)
+        return P_sun 
+
+
