@@ -81,6 +81,35 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
             print(" Your spectra have been computed! \N{fire} ")
 
+        # treat cooling specially because we need emissivity at lots of angles!
+        if "cooling" in args:
+            print("Hi I'm doing cooling!")
+            args = {k.lower(): v for k, v in args.items()}
+            self._parse_therml_input(args)
+            
+            # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
+            self.compute_explicit_angle_spectrum()
+
+            # call _compute_thermal_radiated_power( ) function
+            self.thermal_radiated_power = self._compute_thermal_radiated_power(self.emissivity_array_s, self.emissivity_array_p, self.theta_vals, self.theta_weights, self.wavelength_array)
+
+            # call _compute_atmospheric_radiated_power() function
+            self.atmospheric_radiated_power = self._compute_atmospheric_radiated_power(self._atmospheric_transmissivity, self.emissivity_array_s, self.emissivity_array_p, self.theta_vals, self.theta_weights, self.wavelength_array)
+
+            # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
+            self.incident_angle = self.solar_angle
+            self.polarization = 's'
+            self.compute_spectrum()
+            solar_absorptivity_s = self.emissivity_array
+            self.polarization = 'p'
+            self.compute_spectrum()
+            solar_absorptivity_p = self.emissivity_array
+            self.solar_radiated_power = self._compute_solar_radiated_power(self._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, self.wavelength_array)
+
+
+            # call _compute_solar_radiated_power() function
+            
+
         
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation

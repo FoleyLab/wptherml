@@ -86,12 +86,81 @@ def test_compute_luminous_efficiency():
     assert np.isclose(test.luminous_efficiency, 0.20350729803724107, 1e-2)
 
 def test_compute_thermal_radiated_power():
-    pass
+    test_args = {
+        "wavelength_list": [300e-9, 60000e-9, 5000],
+        "material_list": ["Air", "SiO2", "Air"],
+        "thickness_list": [0, 230e-9, 0],
+        "temperature": 300,
+        "cooling": True,
+    }
+    sf = wpspecdev.SpectrumFactory()  
+    test = sf.spectrum_factory('Tmm', test_args)
+    test._refractive_index_array[:,1] = 2.4+0.2j
+
+    # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
+    test.compute_explicit_angle_spectrum()
+
+    # call _compute_thermal_radiated_power( ) function
+    test.thermal_radiated_power = test._compute_thermal_radiated_power(test.emissivity_array_s,test.emissivity_array_p, test.theta_vals, test.theta_weights, test.wavelength_array)
+
+    expected_thermal_radiated_power = 40.44509251986298
+
+    assert np.isclose(expected_thermal_radiated_power, test.thermal_radiated_power, 1e-5)
 
 def test_compute_atmospheric_radiated_power():
-    pass
+    # define basic structure at 1500 K
+    test_args = {
+        "wavelength_list": [300e-9, 60000e-9, 5000],
+        "material_list": ["Air", "SiO2", "Air"],
+        "thickness_list": [0, 230e-9, 0],
+        "temperature": 300,
+        "cooling": True,
+    }
+    sf = wpspecdev.SpectrumFactory()
+    test = sf.spectrum_factory("Tmm", test_args)
+    test._refractive_index_array[:,1] = 2.4+0.2j
+
+    # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
+    test.compute_explicit_angle_spectrum()
+
+    # call _compute_thermal_radiated_power( ) function 
+    test.atmospheric_radiated_power = test._compute_atmospheric_radiated_power(test._atmospheric_transmissivity, test.emissivity_array_s, test.emissivity_array_p, test.theta_vals, test.theta_weights, test.wavelength_array)
+
+    expected_atmospheric_radiated_power = 21.97567463516981
+    pass 
+    #assert np.isclose(expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5)
 
 def test_compute_solar_radiated_power():
-    pass
+
+    # define basic structure at 1500 K
+    test_args = {
+        "wavelength_list": [300e-9, 60000e-9, 5000],
+        "material_list": ["Air", "SiO2", "Air"],
+        "thickness_list": [0, 230e-9, 0],
+        "temperature": 300,
+        "cooling": True,
+    }
+    sf = wpspecdev.SpectrumFactory()
+    test = sf.spectrum_factory("Tmm", test_args)
+    test._refractive_index_array[:,1] = 2.4+0.2j
+
+    # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
+    test.compute_explicit_angle_spectrum()
+
+    # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
+    test.incident_angle = test.solar_angle
+    test.polarization = 's'
+    test.compute_spectrum()
+    solar_absorptivity_s = test.emissivity_array
+    test.polarization = 'p'
+    test.compute_spectrum()
+    solar_absorptivity_p = test.emissivity_array
+    test.solar_radiated_power = test._compute_solar_radiated_power(test._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, test.wavelength_array)
+
+    _expected_solar_radiated_power = 426.9132402277394
+
+    np.isclose(_expected_solar_radiated_power, test.solar_radiated_power, 1e-5)
+
+
 
 
