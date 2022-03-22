@@ -1,3 +1,4 @@
+import wave
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
@@ -93,6 +94,53 @@ class Therml:
         )
         self.thermal_emission_array = self.blackbody_spectrum * emissivity_array
 
+    def _compute_therml_spectrum_gradient(self, wavelength_array, emissivity_gradient_array):
+        """method to compute thermal emission spectrum of a structure
+
+        Arguments
+        ---------
+            wavelength_array : numpy array of floats
+                the array of wavelengths across which thermal emission spectrum will be computed
+
+            emissivity_array : numpy array of floats
+                the array of emissivity spectrum for the structure that you will compute the thermal emission of
+
+        Attributes
+        ----------
+            blackbody_spectrum : numpy array of floats
+                Planck's blackbody spectrum for a given temperature
+
+            thermal_emission_array : numpy array of floats
+                thermal emission spectrum of structure for a given temperature
+
+        References
+        ----------
+            blackbody spectrum : Eq. (13) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+
+            thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+            with $\theta=0$
+        """
+        # speed of light in SI
+        c = 299792458
+        # plancks constant in SI
+        h = 6.62607004e-34
+        # boltzmanns constant in SI
+        kb = 1.38064852e-23
+
+        # get the dimension of the gradient vector
+        _ngr = len(emissivity_gradient_array[0,:])
+        # get the number of wavelengths
+        _nwl = len(wavelength_array)
+        # initialize the gradient array 
+        self.thermal_emission_gradient_array = np.zeros((_nwl, _ngr))
+
+        self.blackbody_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
+        self.blackbody_spectrum /= (
+            np.exp(h * c / (wavelength_array * kb * self.temperature)) - 1
+        )
+        for i in range(0,_ngr):
+            self.thermal_emission_gradient_array[:,i] = self.blackbody_spectrum * emissivity_gradient_array[:,i]
+
     def _compute_power_density(self, wavelength_array):
         """method to compute the power density from blackbody spectrum and thermal emission spectrum
 
@@ -126,6 +174,27 @@ class Therml:
         # Stefan-Boltzmann constant
         sig = 5.670374419e-8
         self.stefan_boltzmann_law = sig * self.temperature ** 4
+
+    def _compute_power_density_gradient(self, wavelength_array):
+        """method to compute the power density from blackbody spectrum and thermal emission spectrum
+
+        Attributes
+        ----------
+
+            power_density_gradient : float
+                gradient of total power density radiated by structure at a given temperature wrt layer thickness
+
+        References
+        ----------
+            ADD
+
+        """
+        _ngr = len(self.thermal_emission_gradient_array[0,:])
+        # integrate the thermal emission spectrum over wavelength using np.trapz
+        self.power_density_gradient = np.zeros(_ngr)
+
+        for i in range(0, _ngr):
+            self.power_density_gradient[i] = np.pi * np.trapz(self.thermal_emission_gradient_array[:,i], wavelength_array)
 
     def _compute_photopic_luminosity(self, wavelength_array):
         """computes the photopic luminosity function from a Gaussian fit
@@ -188,10 +257,32 @@ class Therml:
         # integrate the power density between 0 to lambda_bandgap
         # by feeding the slice of the power_density_array and wavelength_array
         # from 0:bg_idx to the trapz function
-        self.stpv_power_density = np.trapz(
+        self.stpv_power_density = np.pi * np.trapz(
             power_density_array[:bg_idx], wavelength_array[:bg_idx]
         )
-        # self.stpv_power_density = power_density_array_spline.integral(a, b)
+
+    def _compute_stpv_power_density_gradient(self, wavelength_array):
+        """method to compute the power density from blackbody spectrum and thermal emission spectrum
+
+        Attributes
+        ----------
+
+            power_density_gradient : float
+                gradient of total power density radiated by structure at a given temperature wrt layer thickness
+
+        References
+        ----------
+            ADD
+
+        """
+        _ngr = len(self.thermal_emission_gradient_array[0,:])
+        # integrate the thermal emission spectrum over wavelength using np.trapz
+        self.stpv_power_density_gradient = np.zeros(_ngr)
+        # compute the useful power density spectrum
+
+        for i in range(0, _ngr):
+            stpv_power_density_array_prime = self.thermal_emission_gradient_array[:,i] * wavelength_array / self.lambda_bandgap
+            self.stpv_power_density_gradient[i] = np.pi * np.trapz(stpv_power_density_array_prime, wavelength_array)
 
     def _compute_stpv_spectral_efficiency(self, wavelength_array):
         """method to compute the stpv spectral efficiency from the thermal emission spectrum of a structure
@@ -229,7 +320,44 @@ class Therml:
         self._compute_power_density(wavelength_array)
         self.stpv_spectral_efficiency = self.stpv_power_density / self.power_density
 
-        pass
+    def _compute_stpv_spectral_efficiency_gradient(self, wavelength_array):
+        """method to compute the gradient of the 
+           stpv spectral efficiency from the thermal emission spectrum of a structure
+
+        Arguments
+        ---------
+            wavelength_array : numpy array of floats
+                the wavelengths over which the thermal emission spectrum is known
+
+        Attributes
+        ----------
+
+        """
+        # get the number of elements in the gradient 
+        _ngr = len(self.thermal_emission_gradient_array[0,:])
+
+        # initialize the gradient array 
+        self.stpv_spectral_efficiency_gradient = np.zeros(_ngr)
+
+        # using the notation from Eq. (4) 
+        # from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+        self._compute_stpv_power_density(wavelength_array)
+        self._compute_power_density(wavelength_array) 
+
+        _P = self.power_density 
+        _rho = self.stpv_power_density 
+
+        # determine the index corresponding to lambda_bandgap in the wavelength_array
+        # which will be used to determine the appropriate slice to feed to np.trapz
+        _bg_idx = np.abs(wavelength_array - self.lambda_bandgap).argmin()
+
+
+        for i in range(0, _ngr):
+            _rho_prime_integrand = self.thermal_emission_gradient_array[:_bg_idx,i] * wavelength_array[:_bg_idx] / self.lambda_bandgap
+            _rho_prime = np.pi * np.trapz(_rho_prime_integrand, wavelength_array[:_bg_idx])
+            _P_prime = np.pi * np.trapz(self.thermal_emission_gradient_array[:,i], wavelength_array)
+            self.stpv_spectral_efficiency_gradient[i] = (_rho_prime * _P - _P_prime * _rho) / (_P * _P)
+
 
     def _compute_luminous_efficiency(self, wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
