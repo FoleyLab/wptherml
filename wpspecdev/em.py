@@ -254,6 +254,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             else:
                 self.material_SiO2(i)
 
+    
+
     def compute_spectrum(self):
         """computes the following attributes:
         Attributes
@@ -472,6 +474,22 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.transmissivity_gradient_array[j,i] = np.real((t_prime * np.conj(t) + t* np.conj(t_prime)) * _factor)
                 # derivative of \epsilon is - \partial R / \partial s -\partial T / \partial sß
                 self.emissivity_gradient_array[j,i] =  -self.transmissivity_gradient_array[j,i] - self.reflectivity_gradient_array[j,i]
+                
+    def compute_stpv(self):
+        """ compute the figures of merit for STPV applications, including """
+        self.compute_spectrum()
+        self._compute_therml_spectrum(self.wavelength_array, self.emissivity_array)
+        self._compute_power_density(self.wavelength_array)
+        self._compute_stpv_power_density(self.wavelength_array)
+        self._compute_stpv_spectral_efficiency(self.wavelength_array)
+
+    def compute_stpv_gradient(self):
+        self.compute_spectrum()
+        self.compute_spectrum_gradient()
+        self._compute_therml_spectrum_gradient(self.wavelength_array, self.emissivity_gradient_array)
+        self._compute_power_density_gradient(self.wavelength_array)
+        self._compute_stpv_power_density_gradient(self.wavelength_array)
+        self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
 
 
 
