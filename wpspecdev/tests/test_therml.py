@@ -47,7 +47,10 @@ def test_compute_stpv_power_density():
     """
     assert np.isclose(test.stpv_power_density, 3863945.0, 1e4)
 
-def test_compute_stpv_power_density_gradient():
+
+def test_compute_stpv_gradients():
+    """unit test for the computation of the gradients of stpv quantities
+    including the stpv_power_density and the spectral_efficiency"""
     test_args = {
         "wavelength_list": [400e-9, 7000e-9, 1000],
         "material_list": ["Air", "SiO2", "TiN", "Air"],
@@ -59,26 +62,50 @@ def test_compute_stpv_power_density_gradient():
     test = sf.spectrum_factory("Tmm", test_args)
     test.compute_stpv_gradient()
 
-    # get analytic gradient
+    # get analytic gradients
     _analytic_stpv_power_density_gradient = test.stpv_power_density_gradient[0]
+    _analytic_stpv_spectral_efficiency_gradient = (
+        test.stpv_spectral_efficiency_gradient[0]
+    )
 
     # define a displacement in thickness of SiO2
     _delta_d_sio2 = 0.1e-9
+    # take forward step and store quantities
     test.thickness_array[1] += _delta_d_sio2
     test.compute_spectrum()
     test.compute_stpv()
     _stpv_power_density_f = test.stpv_power_density
+    _stpv_spectral_efficiency_f = test.stpv_spectral_efficiency
+
+    # take backward step and store quantities
     test.thickness_array[1] -= 2 * _delta_d_sio2
     test.compute_spectrum()
     test.compute_stpv()
-    _stpv_power_density_b = test.stpv_power_density 
-    _numeric_gradient = (_stpv_power_density_f - _stpv_power_density_b) / (2 * _delta_d_sio2)
+    _stpv_power_density_b = test.stpv_power_density
+    _stpv_spectral_efficiency_b = test.stpv_spectral_efficiency
+
+    # compute gradients by centered fininte differences
+    _numeric_stpv_power_density_gradient = (
+        _stpv_power_density_f - _stpv_power_density_b
+    ) / (2 * _delta_d_sio2)
+    _numeric_stpv_spectral_efficiency_gradient = (
+        _stpv_spectral_efficiency_f - _stpv_spectral_efficiency_b
+    ) / (2 * _delta_d_sio2)
 
     # these gradients have big values so scale them relative to the numeric gradient
-    _scaled_analytic = _analytic_stpv_power_density_gradient / _numeric_gradient
-    _scaled_numeric = _numeric_gradient / _numeric_gradient 
+    _scaled_analytic_stpv_power_density_gradient = (
+        _analytic_stpv_power_density_gradient / _numeric_stpv_power_density_gradient
+    )
 
-    assert np.isclose(_scaled_analytic, _scaled_analytic, 1e-2)
+    # test stpv_power_density_gradient
+    assert np.isclose(_scaled_analytic_stpv_power_density_gradient, 1, 2e-2)
+    # test stpv_spectral_efficiency_gradient
+    assert np.isclose(
+        _numeric_stpv_spectral_efficiency_gradient,
+        _analytic_stpv_spectral_efficiency_gradient,
+        1e-2,
+    )
+
 
 def test_compute_stpv_efficiency():
     # define basic structure at 1500 K
@@ -117,6 +144,7 @@ def test_compute_luminous_efficiency():
     """
     assert np.isclose(test.luminous_efficiency, 0.20350729803724107, 1e-2)
 
+
 def test_compute_thermal_radiated_power():
     test_args = {
         "wavelength_list": [300e-9, 60000e-9, 5000],
@@ -125,19 +153,28 @@ def test_compute_thermal_radiated_power():
         "temperature": 300,
         "cooling": True,
     }
-    sf = wpspecdev.SpectrumFactory()  
-    test = sf.spectrum_factory('Tmm', test_args)
-    test._refractive_index_array[:,1] = 2.4+0.2j
+    sf = wpspecdev.SpectrumFactory()
+    test = sf.spectrum_factory("Tmm", test_args)
+    test._refractive_index_array[:, 1] = 2.4 + 0.2j
 
     # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
     test.compute_explicit_angle_spectrum()
 
     # call _compute_thermal_radiated_power( ) function
-    test.thermal_radiated_power = test._compute_thermal_radiated_power(test.emissivity_array_s,test.emissivity_array_p, test.theta_vals, test.theta_weights, test.wavelength_array)
+    test.thermal_radiated_power = test._compute_thermal_radiated_power(
+        test.emissivity_array_s,
+        test.emissivity_array_p,
+        test.theta_vals,
+        test.theta_weights,
+        test.wavelength_array,
+    )
 
     expected_thermal_radiated_power = 40.44509251986298
 
-    assert np.isclose(expected_thermal_radiated_power, test.thermal_radiated_power, 1e-5)
+    assert np.isclose(
+        expected_thermal_radiated_power, test.thermal_radiated_power, 1e-5
+    )
+
 
 def test_compute_atmospheric_radiated_power():
     # define basic structure at 1500 K
@@ -150,17 +187,27 @@ def test_compute_atmospheric_radiated_power():
     }
     sf = wpspecdev.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
-    test._refractive_index_array[:,1] = 2.4+0.2j
+    test._refractive_index_array[:, 1] = 2.4 + 0.2j
 
     # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
     test.compute_explicit_angle_spectrum()
 
-    # call _compute_thermal_radiated_power( ) function 
-    test.atmospheric_radiated_power = test._compute_atmospheric_radiated_power(test._atmospheric_transmissivity, test.emissivity_array_s, test.emissivity_array_p, test.theta_vals, test.theta_weights, test.wavelength_array)
+    # call _compute_thermal_radiated_power( ) function
+    test.atmospheric_radiated_power = test._compute_atmospheric_radiated_power(
+        test._atmospheric_transmissivity,
+        test.emissivity_array_s,
+        test.emissivity_array_p,
+        test.theta_vals,
+        test.theta_weights,
+        test.wavelength_array,
+    )
 
     expected_atmospheric_radiated_power = 21.973817620650525
-    #pass 
-    assert np.isclose(expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5)
+    # pass
+    assert np.isclose(
+        expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5
+    )
+
 
 def test_compute_solar_radiated_power():
 
@@ -174,25 +221,26 @@ def test_compute_solar_radiated_power():
     }
     sf = wpspecdev.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
-    test._refractive_index_array[:,1] = 2.4+0.2j
+    test._refractive_index_array[:, 1] = 2.4 + 0.2j
 
     # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
     test.compute_explicit_angle_spectrum()
 
     # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
     test.incident_angle = test.solar_angle
-    test.polarization = 's'
+    test.polarization = "s"
     test.compute_spectrum()
     solar_absorptivity_s = test.emissivity_array
-    test.polarization = 'p'
+    test.polarization = "p"
     test.compute_spectrum()
     solar_absorptivity_p = test.emissivity_array
-    test.solar_radiated_power = test._compute_solar_radiated_power(test._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, test.wavelength_array)
+    test.solar_radiated_power = test._compute_solar_radiated_power(
+        test._solar_spectrum,
+        solar_absorptivity_s,
+        solar_absorptivity_p,
+        test.wavelength_array,
+    )
 
     _expected_solar_radiated_power = 426.9132402277394
 
     np.isclose(_expected_solar_radiated_power, test.solar_radiated_power, 1e-5)
-
-
-
-
