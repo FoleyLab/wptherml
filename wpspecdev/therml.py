@@ -48,7 +48,7 @@ class Therml:
             self.atmospheric_temperature = args["atmospheric temperature"]
         else:
             self.atmospheric_temperature = 300
-        
+
         if "solar angle" in args:
             self.solar_angle = args["solar angle"]
             self.solar_angle *= np.pi / 180
@@ -94,7 +94,9 @@ class Therml:
         )
         self.thermal_emission_array = self.blackbody_spectrum * emissivity_array
 
-    def _compute_therml_spectrum_gradient(self, wavelength_array, emissivity_gradient_array):
+    def _compute_therml_spectrum_gradient(
+        self, wavelength_array, emissivity_gradient_array
+    ):
         """method to compute thermal emission spectrum of a structure
 
         Arguments
@@ -128,18 +130,20 @@ class Therml:
         kb = 1.38064852e-23
 
         # get the dimension of the gradient vector
-        _ngr = len(emissivity_gradient_array[0,:])
+        _ngr = len(emissivity_gradient_array[0, :])
         # get the number of wavelengths
         _nwl = len(wavelength_array)
-        # initialize the gradient array 
+        # initialize the gradient array
         self.thermal_emission_gradient_array = np.zeros((_nwl, _ngr))
 
         self.blackbody_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
         self.blackbody_spectrum /= (
             np.exp(h * c / (wavelength_array * kb * self.temperature)) - 1
         )
-        for i in range(0,_ngr):
-            self.thermal_emission_gradient_array[:,i] = self.blackbody_spectrum * emissivity_gradient_array[:,i]
+        for i in range(0, _ngr):
+            self.thermal_emission_gradient_array[:, i] = (
+                self.blackbody_spectrum * emissivity_gradient_array[:, i]
+            )
 
     def _compute_power_density(self, wavelength_array):
         """method to compute the power density from blackbody spectrum and thermal emission spectrum
@@ -176,13 +180,13 @@ class Therml:
         self.stefan_boltzmann_law = sig * self.temperature ** 4
 
     def _compute_power_density_gradient(self, wavelength_array):
-        """method to compute the gradient of the power density of a thermal emitter 
+        """method to compute the gradient of the power density of a thermal emitter
 
         Arguments
         ---------
             wavelength_array : numpy array of floats
-                the wavelengths over which the power density spectrum has been computed 
-                
+                the wavelengths over which the power density spectrum has been computed
+
         Attributes
         ----------
 
@@ -191,15 +195,17 @@ class Therml:
 
         References
         ----------
-            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018 
+            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
 
         """
-        _ngr = len(self.thermal_emission_gradient_array[0,:])
+        _ngr = len(self.thermal_emission_gradient_array[0, :])
         # integrate the thermal emission spectrum over wavelength using np.trapz
         self.power_density_gradient = np.zeros(_ngr)
 
         for i in range(0, _ngr):
-            self.power_density_gradient[i] = np.pi * np.trapz(self.thermal_emission_gradient_array[:,i], wavelength_array)
+            self.power_density_gradient[i] = np.pi * np.trapz(
+                self.thermal_emission_gradient_array[:, i], wavelength_array
+            )
 
     def _compute_photopic_luminosity(self, wavelength_array):
         """computes the photopic luminosity function from a Gaussian fit
@@ -271,7 +277,7 @@ class Therml:
         Arguments
         ---------
             wavelength_array : numpy array of floats
-                the wavelengths over which the power density spectrum has been computed 
+                the wavelengths over which the power density spectrum has been computed
 
         Attributes
         ----------
@@ -281,17 +287,23 @@ class Therml:
 
         References
         ----------
-            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018 
+            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
 
         """
-        _ngr = len(self.thermal_emission_gradient_array[0,:])
+        _ngr = len(self.thermal_emission_gradient_array[0, :])
         # integrate the thermal emission spectrum over wavelength using np.trapz
         self.stpv_power_density_gradient = np.zeros(_ngr)
         # compute the useful power density spectrum
 
         for i in range(0, _ngr):
-            stpv_power_density_array_prime = self.thermal_emission_gradient_array[:,i] * wavelength_array / self.lambda_bandgap
-            self.stpv_power_density_gradient[i] = np.pi * np.trapz(stpv_power_density_array_prime, wavelength_array)
+            stpv_power_density_array_prime = (
+                self.thermal_emission_gradient_array[:, i]
+                * wavelength_array
+                / self.lambda_bandgap
+            )
+            self.stpv_power_density_gradient[i] = np.pi * np.trapz(
+                stpv_power_density_array_prime, wavelength_array
+            )
 
     def _compute_stpv_spectral_efficiency(self, wavelength_array):
         """method to compute the stpv spectral efficiency from the thermal emission spectrum of a structure
@@ -330,7 +342,7 @@ class Therml:
         self.stpv_spectral_efficiency = self.stpv_power_density / self.power_density
 
     def _compute_stpv_spectral_efficiency_gradient(self, wavelength_array):
-        """method to compute the gradient of the 
+        """method to compute the gradient of the
            stpv spectral efficiency from the thermal emission spectrum of a structure
 
         Arguments
@@ -345,34 +357,42 @@ class Therml:
 
         References
         ----------
-            Equation (4) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018 
+            Equation (4) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
 
         """
-        # get the number of elements in the gradient 
-        _ngr = len(self.thermal_emission_gradient_array[0,:])
+        # get the number of elements in the gradient
+        _ngr = len(self.thermal_emission_gradient_array[0, :])
 
-        # initialize the gradient array 
+        # initialize the gradient array
         self.stpv_spectral_efficiency_gradient = np.zeros(_ngr)
 
-        # using the notation from Eq. (4) 
+        # using the notation from Eq. (4)
         # from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
         self._compute_stpv_power_density(wavelength_array)
-        self._compute_power_density(wavelength_array) 
+        self._compute_power_density(wavelength_array)
 
-        _P = self.power_density 
-        _rho = self.stpv_power_density 
+        _P = self.power_density
+        _rho = self.stpv_power_density
 
         # determine the index corresponding to lambda_bandgap in the wavelength_array
         # which will be used to determine the appropriate slice to feed to np.trapz
         _bg_idx = np.abs(wavelength_array - self.lambda_bandgap).argmin()
 
-
         for i in range(0, _ngr):
-            _rho_prime_integrand = self.thermal_emission_gradient_array[:_bg_idx,i] * wavelength_array[:_bg_idx] / self.lambda_bandgap
-            _rho_prime = np.pi * np.trapz(_rho_prime_integrand, wavelength_array[:_bg_idx])
-            _P_prime = np.pi * np.trapz(self.thermal_emission_gradient_array[:,i], wavelength_array)
-            self.stpv_spectral_efficiency_gradient[i] = (_rho_prime * _P - _P_prime * _rho) / (_P * _P)
-
+            _rho_prime_integrand = (
+                self.thermal_emission_gradient_array[:_bg_idx, i]
+                * wavelength_array[:_bg_idx]
+                / self.lambda_bandgap
+            )
+            _rho_prime = np.pi * np.trapz(
+                _rho_prime_integrand, wavelength_array[:_bg_idx]
+            )
+            _P_prime = np.pi * np.trapz(
+                self.thermal_emission_gradient_array[:, i], wavelength_array
+            )
+            self.stpv_spectral_efficiency_gradient[i] = (
+                _rho_prime * _P - _P_prime * _rho
+            ) / (_P * _P)
 
     def _compute_luminous_efficiency(self, wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
@@ -409,18 +429,27 @@ class Therml:
 
         self.luminous_efficiency = Numerator / Denominator
 
-    def _compute_thermal_radiated_power(self, emissivity_array_s, emissivity_array_p, theta_vals, theta_weights, wavelength_array):
-        """ Put docstring here! 
-        
-        
-        """
+    def _compute_thermal_radiated_power(
+        self,
+        emissivity_array_s,
+        emissivity_array_p,
+        theta_vals,
+        theta_weights,
+        wavelength_array,
+    ):
+        """Put docstring here!"""
         num_angles = len(theta_vals)
         self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
 
         # loop over angles
-        P_rad = 0.
+        P_rad = 0.0
         for i in range(0, num_angles):
-            _TE = self.blackbody_spectrum * np.cos(theta_vals[i]) * 0.5 * (emissivity_array_p[i,:] + emissivity_array_s[i,:])
+            _TE = (
+                self.blackbody_spectrum
+                * np.cos(theta_vals[i])
+                * 0.5
+                * (emissivity_array_p[i, :] + emissivity_array_s[i, :])
+            )
             _TE_INT = np.trapz(_TE, wavelength_array)
             P_rad += _TE_INT * np.sin(theta_vals[i]) * theta_weights[i]
 
@@ -428,35 +457,45 @@ class Therml:
 
         return P_rad
 
-    def _compute_atmospheric_radiated_power(self, atmospheric_transmissivity, emissivity_array_s, emissivity_array_p, theta_vals, theta_weights, wavelength_array):
-        """ Put docstring here!
-        
-        """
+    def _compute_atmospheric_radiated_power(
+        self,
+        atmospheric_transmissivity,
+        emissivity_array_s,
+        emissivity_array_p,
+        theta_vals,
+        theta_weights,
+        wavelength_array,
+    ):
+        """Put docstring here!"""
         num_angles = len(theta_vals)
         self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
-        P_atm = 0.
+        P_atm = 0.0
         for i in range(0, num_angles):
             # get the term that goes in the exponent of the atmospheric transmissivity
             _o_over_cos_t = 1 / np.cos(theta_vals[i])
-            _emissivity_atm = np.ones(len(atmospheric_transmissivity)) - atmospheric_transmissivity ** _o_over_cos_t
+            _emissivity_atm = (
+                np.ones(len(atmospheric_transmissivity))
+                - atmospheric_transmissivity ** _o_over_cos_t
+            )
             _TE_atm = self.blackbody_spectrum * _emissivity_atm * np.cos(theta_vals[i])
-            _absorbed_TE_spectrum = _TE_atm * 0.5 * (emissivity_array_p[i,:] + emissivity_array_s[i,:])
+            _absorbed_TE_spectrum = (
+                _TE_atm * 0.5 * (emissivity_array_p[i, :] + emissivity_array_s[i, :])
+            )
             _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
             P_atm += _absorbed_TE * np.sin(theta_vals[i]) * theta_weights[i]
-        P_atm *= 2 * np.pi 
+        P_atm *= 2 * np.pi
 
-        return P_atm 
+        return P_atm
 
-
-    def _compute_solar_radiated_power(self, solar_spectrum, emissivity_array_s, emissivity_array_p, wavelength_array):
-        """ Put a good docstring here! 
-        
-        """
+    def _compute_solar_radiated_power(
+        self, solar_spectrum, emissivity_array_s, emissivity_array_p, wavelength_array
+    ):
+        """Put a good docstring here!"""
         self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
         # compute the absorbed solar spectrum
-        _absorbed_solar_spectrum = solar_spectrum * 0.5 * (emissivity_array_p + emissivity_array_s)
+        _absorbed_solar_spectrum = (
+            solar_spectrum * 0.5 * (emissivity_array_p + emissivity_array_s)
+        )
         # integrate it!
         P_sun = np.trapz(_absorbed_solar_spectrum, wavelength_array)
-        return P_sun 
-
-
+        return P_sun
