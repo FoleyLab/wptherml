@@ -176,17 +176,22 @@ class Therml:
         self.stefan_boltzmann_law = sig * self.temperature ** 4
 
     def _compute_power_density_gradient(self, wavelength_array):
-        """method to compute the power density from blackbody spectrum and thermal emission spectrum
+        """method to compute the gradient of the power density of a thermal emitter 
 
+        Arguments
+        ---------
+            wavelength_array : numpy array of floats
+                the wavelengths over which the power density spectrum has been computed 
+                
         Attributes
         ----------
 
-            power_density_gradient : float
-                gradient of total power density radiated by structure at a given temperature wrt layer thickness
+            self.power_density_gradient : numpy array of floats (will be computed by this function)
+                the gradient vector related to the total power density wrt changes in thicknesses of each layer
 
         References
         ----------
-            ADD
+            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018 
 
         """
         _ngr = len(self.thermal_emission_gradient_array[0,:])
@@ -263,16 +268,20 @@ class Therml:
 
     def _compute_stpv_power_density_gradient(self, wavelength_array):
         """method to compute the power density from blackbody spectrum and thermal emission spectrum
+        Arguments
+        ---------
+            wavelength_array : numpy array of floats
+                the wavelengths over which the power density spectrum has been computed 
 
         Attributes
         ----------
 
-            power_density_gradient : float
-                gradient of total power density radiated by structure at a given temperature wrt layer thickness
+            self.stpv_power_density_gradient : numpy array of floats (will be computed by this function)
+                the gradient vector related to the stpv power density wrt changes in thicknesses of each layer
 
         References
         ----------
-            ADD
+            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018 
 
         """
         _ngr = len(self.thermal_emission_gradient_array[0,:])
@@ -331,6 +340,12 @@ class Therml:
 
         Attributes
         ----------
+            self.stpv_spectral_efficiency_gradient : numpy array of floats (will be computed by this function)
+                the gradient vector related to the spectral efficiency wrt changes in thicknesses of each layer
+
+        References
+        ----------
+            Equation (4) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018 
 
         """
         # get the number of elements in the gradient 
