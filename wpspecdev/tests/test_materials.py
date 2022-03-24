@@ -614,3 +614,33 @@ def test_material_pb():
     assert np.isclose(result_k_1, expected_k_1, 1e-3)
     assert np.isclose(result_n_2, expected_n_2, 1e-3)
     assert np.isclose(result_k_2, expected_k_2, 1e-3)
+
+
+def test_read_AM():
+
+    # create test multilayer for a wavelength array centered at 615 nm
+    material_test._create_test_multilayer(central_wavelength=615e-9)
+
+    # Now store the AM1.5 data centered at 615 nm to an array 
+    _AM_15_data = material_test._read_AM()
+
+    # this is the expected value of the AM1.5 spectrum at 615 nm
+    _expected_value = 1325400000
+
+    # test to see if the expected value is close to the read value
+    assert np.isclose(_AM_15_data[1], _expected_value, 1e-3)
+
+
+def test_read_atmospheric_transmissivity():
+
+    # create test multilayer for a wavelength array centered at 7.1034 microns 
+    material_test._create_test_multilayer(central_wavelength=7.1034e-6)
+
+    # Now store the AM1.5 data centered at 615 nm to an array 
+    _atmospheric_transmissivity = material_test._read_Atmospheric_Transmissivity()
+
+    # this is the expected value of the AM1.5 spectrum at 615 nm
+    _expected_value = 0.561289
+
+    # test to see if the expected value is close to the read value
+    assert np.isclose(_atmospheric_transmissivity[1], _expected_value, 1e-3)
