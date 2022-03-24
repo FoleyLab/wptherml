@@ -491,7 +491,6 @@ class Therml:
         self, solar_spectrum, emissivity_array_s, emissivity_array_p, wavelength_array
     ):
         """Put a good docstring here!"""
-        self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
         # compute the absorbed solar spectrum
         _absorbed_solar_spectrum = (
             solar_spectrum * 0.5 * (emissivity_array_p + emissivity_array_s)
@@ -499,3 +498,22 @@ class Therml:
         # integrate it!
         P_sun = np.trapz(_absorbed_solar_spectrum, wavelength_array)
         return P_sun
+
+    def _compute_solar_radiated_power_gradient(
+        self, solar_spectrum, emissivity_gradient_array_s, emissivity_gradient_array_p, wavelength_array
+    ):
+        """Put a good docstring here!"""
+        print("outter dimension of solar absorptivity gradient after passing")
+        print(len(emissivity_gradient_array_p[0,:]))
+        print("inner dimension of solar absoprtivity gradient after passing ")
+        print(len(emissivity_gradient_array_p[:,0]))
+        # get the dimension of the gradient vector
+        _ngr = len(emissivity_gradient_array_s[0,:])
+        _absorbed_solar_spectrum_gradient = np.zeros(_ngr)
+        for i in range(0, _ngr):
+            _absorbed_solar_spectrum_prime = (
+            solar_spectrum * 0.5 * (emissivity_gradient_array_p[:,i] + emissivity_gradient_array_s[:,i])
+            )
+            # integrate it!
+            _absorbed_solar_spectrum_gradient[i] = np.trapz(_absorbed_solar_spectrum_prime, wavelength_array)
+        return _absorbed_solar_spectrum_gradient
