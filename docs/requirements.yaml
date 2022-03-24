@@ -10,7 +10,6 @@ dependencies:
   - matplotlib
   - scipy
   - pytest
-  - sys
 
     # Pip-only installs
   - pip:
