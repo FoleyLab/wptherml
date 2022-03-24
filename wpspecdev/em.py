@@ -722,7 +722,86 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_stpv_power_density_gradient(self.wavelength_array)
         self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
 
+    def compute_cooling(self):
+        """ Method to compute the radiative cooling figures of merit
+        
+        Attributes
+        ----------
+        self.thermal_radiated_power : float
+            the thermal power radiated by a structure into the universe (P_rad)
+
+        self.atmospheric_radiated_power : float
+            the thermal power radiated by the atmosphere and absorbed by a structure (P_atm)
+
+        self.solar_radiated_power : float
+            the thermal power radiated by the sun and absorbed by a structure (P_sun)
+
+        self.cooling_power : float
+            P_rad - P_atm - P_sum ... if positive, the structure is net cooling if negative, it is net heating
+
+        Returns
+        -------
+        None
+        """
+        
+        # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
+        self.compute_explicit_angle_spectrum()
+
+        # call _compute_thermal_radiated_power( ) function
+        self.thermal_radiated_power = self._compute_thermal_radiated_power(
+            self.emissivity_array_s,
+            self.emissivity_array_p,
+            self.theta_vals,
+            self.theta_weights,
+            self.wavelength_array,
+        )
+
+        # call _compute_atmospheric_radiated_power() function
+        self.atmospheric_radiated_power = self._compute_atmospheric_radiated_power(
+            self._atmospheric_transmissivity,
+            self.emissivity_array_s,
+            self.emissivity_array_p,
+            self.theta_vals,
+            self.theta_weights,
+            self.wavelength_array,
+        )
+
+        # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
+        self.incident_angle = self.solar_angle
+        self.polarization = "s"
+        self.compute_spectrum()
+        solar_absorptivity_s = self.emissivity_array
+        self.polarization = "p"
+        self.compute_spectrum()
+        solar_absorptivity_p = self.emissivity_array
+        self.solar_radiated_power = self._compute_solar_radiated_power(
+            self._solar_spectrum,
+            solar_absorptivity_s,
+            solar_absorptivity_p,
+            self.wavelength_array,
+        )
+        self.cooling_power = self.thermal_radiated_power - self.solar_radiated_power - self.atmospheric_radiated_power
+
     def compute_cooling_gradient(self):
+
+        # get the gradient of the emissivity vs angle and wavelength
+        self.compute_explicit_angle_spectrum_gradient()
+        self.thermal_radiated_power_gradient = self._compute_thermal_radiated_power_gradient(
+            self.emissivity_gradient_array_s, 
+            self.emissivity_gradient_array_p, 
+            self.theta_vals, self.theta_weights, 
+            self.wavelength_array
+        )
+
+        self.atmospheric_radiated_power_gradient = self._compute_atmospheric_radiated_power_gradient(
+            self._atmospheric_transmissivity,
+            self.emissivity_gradient_array_s, 
+            self.emissivity_gradient_array_p, 
+            self.theta_vals, 
+            self.theta_weights, 
+            self.wavelength_array
+        )
+
         # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
         self.incident_angle = self.solar_angle
         self.polarization = "s"
