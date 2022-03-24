@@ -8,8 +8,9 @@ dependencies:
     # Package depends
   - numpy
   - matplotlib
-
-
+  - scipy
+  - pytest
+  - sys
 
     # Pip-only installs
   - pip:

@@ -1,4 +1,3 @@
-import wave
 import numpy as np
 from scipy.interpolate import UnivariateSpline
 
