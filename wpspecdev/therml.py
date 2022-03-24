@@ -475,7 +475,7 @@ class Therml:
         # instantiate P_rad_prime
         _emitted_thermal_spectrum_gradient = np.zeros(_ngr)
         for i in range(0, _ngr):
-            
+            _P_rad_prime = 0
             for j in range(0, _nth):
                 _TE = (
                     self.blackbody_spectrum
@@ -485,7 +485,7 @@ class Therml:
                     )
                 _TE_INT = np.trapz(_TE, wavelength_array)
                 
-                _P_rad_prime = 2 * np.pi * _TE_INT * np.sin(theta_vals[j]) * theta_weights[j]
+                _P_rad_prime += 2 * np.pi * _TE_INT * np.sin(theta_vals[j]) * theta_weights[j]
             _emitted_thermal_spectrum_gradient[i] = _P_rad_prime
 
         return _emitted_thermal_spectrum_gradient
@@ -556,6 +556,7 @@ class Therml:
         self.temperature = _T_temp
 
         for i in range(0, _ngr):
+            P_atm_prime = 0
             for j in range(0, _nth):
                 # get the term that goes in the exponent of the atmospheric transmissivity
                 _o_over_cos_t = 1 / np.cos(theta_vals[j])
@@ -568,7 +569,7 @@ class Therml:
                     _TE_atm * 0.5 * (emissivity_gradient_array_p[j, :, i] + emissivity_gradient_array_s[j, :, i])
                 )
                 _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
-                P_atm_prime = 2 * np.pi * _absorbed_TE * np.sin(theta_vals[j]) * theta_weights[j]
+                P_atm_prime += 2 * np.pi * _absorbed_TE * np.sin(theta_vals[j]) * theta_weights[j]
             _absorbed_atmospheric_radiation_gradient[i] = P_atm_prime
 
         return _absorbed_atmospheric_radiation_gradient
