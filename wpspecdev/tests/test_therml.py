@@ -145,7 +145,7 @@ def test_compute_luminous_efficiency():
     assert np.isclose(test.luminous_efficiency, 0.20350729803724107, 1e-2)
 
 
-def test_compute_thermal_radiated_power():
+def test_compute_cooling():
     test_args = {
         "wavelength_list": [300e-9, 60000e-9, 5000],
         "material_list": ["Air", "SiO2", "Air"],
@@ -157,101 +157,32 @@ def test_compute_thermal_radiated_power():
     test = sf.spectrum_factory("Tmm", test_args)
     test._refractive_index_array[:, 1] = 2.4 + 0.2j
 
-    # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
-    test.compute_explicit_angle_spectrum()
-
-    # call _compute_thermal_radiated_power( ) function
-    test.thermal_radiated_power = test._compute_thermal_radiated_power(
-        test.emissivity_array_s,
-        test.emissivity_array_p,
-        test.theta_vals,
-        test.theta_weights,
-        test.wavelength_array,
-    )
-
-    expected_thermal_radiated_power = 40.44509251986298
-
-    assert np.isclose(
-        expected_thermal_radiated_power, test.thermal_radiated_power, 1e-5
-    )
-
-
-def test_compute_atmospheric_radiated_power():
-    # define basic structure at 1500 K
-    test_args = {
-        "wavelength_list": [300e-9, 60000e-9, 5000],
-        "material_list": ["Air", "SiO2", "Air"],
-        "thickness_list": [0, 230e-9, 0],
-        "temperature": 300,
-        "cooling": True,
-    }
-    sf = wpspecdev.SpectrumFactory()
-    test = sf.spectrum_factory("Tmm", test_args)
-    test._refractive_index_array[:, 1] = 2.4 + 0.2j
-
-    # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
-    test.compute_explicit_angle_spectrum()
-
-    # call _compute_thermal_radiated_power( ) function
-    test.atmospheric_radiated_power = test._compute_atmospheric_radiated_power(
-        test._atmospheric_transmissivity,
-        test.emissivity_array_s,
-        test.emissivity_array_p,
-        test.theta_vals,
-        test.theta_weights,
-        test.wavelength_array,
-    )
-
-    expected_atmospheric_radiated_power = 21.973817620650525
-    # pass
-    assert np.isclose(
-        expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5
-    )
-
-
-def test_compute_solar_radiated_power():
-
-    # define basic structure at 1500 K
-    test_args = {
-        "wavelength_list": [300e-9, 60000e-9, 5000],
-        "material_list": ["Air", "SiO2", "Air"],
-        "thickness_list": [0, 230e-9, 0],
-        "temperature": 300,
-        "cooling": True,
-    }
-    sf = wpspecdev.SpectrumFactory()
-    test = sf.spectrum_factory("Tmm", test_args)
-    test._refractive_index_array[:, 1] = 2.4 + 0.2j
-
-    # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
-    test.compute_explicit_angle_spectrum()
-
-    # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
-    test.incident_angle = test.solar_angle
-    test.polarization = "s"
-    test.compute_spectrum()
-    solar_absorptivity_s = test.emissivity_array
-    test.polarization = "p"
-    test.compute_spectrum()
-    solar_absorptivity_p = test.emissivity_array
-    test.solar_radiated_power = test._compute_solar_radiated_power(
-        test._solar_spectrum,
-        solar_absorptivity_s,
-        solar_absorptivity_p,
-        test.wavelength_array,
-    )
-
+    _expected_thermal_radiated_power = 40.44509251986298
+    _expected_atmospheric_radiated_power = 21.973817620650525
     _expected_solar_radiated_power = 426.9132402277394
 
-    np.isclose(_expected_solar_radiated_power, test.solar_radiated_power, 1e-5)
+    test.compute_cooling()
 
-def test_compute_solar_radiated_power_gradient():
+    test.compute_explicit_angle_spectrum()
+
+    assert np.isclose(
+        _expected_thermal_radiated_power, test.thermal_radiated_power, 1e-5
+    )
+    assert np.isclose(
+        _expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5
+    )
+    assert np.isclose(
+        _expected_solar_radiated_power, test.solar_radiated_power, 1e-5
+    )
+
+
+def test_compute_cooling_gradient():
     """ FINISH THIS UNIT TEST"""
 
     # define basic structure at 1500 K
     test_args = {
-        "wavelength_list": [300e-9, 60000e-9, 5000],
-        "material_list": ["Air", "SiO2", "Air"],
+        "wavelength_list": [300e-9, 20000e-9, 5000],
+        "material_list": ["Air", "TiN", "Air"],
         "thickness_list": [0, 230e-9, 0],
         "temperature": 300,
         "cooling": True,
@@ -263,47 +194,36 @@ def test_compute_solar_radiated_power_gradient():
     test.compute_cooling_gradient()
 
     # define a displacement in thickness of SiO2
-    _delta_d_sio2 = 0.1e-9
+    _delta_d_sio2 = 1.0e-9
 
     test.incident_angle = test.solar_angle
     # get forward solar power
     test.thickness_array[1] += _delta_d_sio2
-    test.polarization = "s"
-    test.compute_spectrum()
-    _solar_absorptivity_s = test.emissivity_array
-    test.polarization = "p"
-    test.compute_spectrum()
-    _solar_absorptivity_p = test.emissivity_array
-    
-    test.solar_radiated_power = test._compute_solar_radiated_power(
-        test._solar_spectrum,
-        _solar_absorptivity_s,
-        _solar_absorptivity_p,
-        test.wavelength_array,
-    )
+    test.compute_cooling()
+
     _solar_power_f = test.solar_radiated_power
+    _emitted_power_f = test.thermal_radiated_power
+    _atmospheric_power_f = test.atmospheric_radiated_power
 
     # get backward solar power
     test.thickness_array[1] -= 2 * _delta_d_sio2
-    test.polarization = "s"
-    test.compute_spectrum()
-    _solar_absorptivity_s = test.emissivity_array
-    test.polarization = "p"
-    test.compute_spectrum()
-    _solar_absorptivity_p = test.emissivity_array
-    
-    test.solar_radiated_power = test._compute_solar_radiated_power(
-        test._solar_spectrum,
-        _solar_absorptivity_s,
-        _solar_absorptivity_p,
-        test.wavelength_array,
-    )
+    test.compute_cooling()
     _solar_power_b = test.solar_radiated_power
+    _emitted_power_b = test.thermal_radiated_power
+    _atmospheric_power_b = test.atmospheric_radiated_power
 
-    _numeric_solar_power_gradient = (_solar_power_f-_solar_power_b)/ 2 * _delta_d_sio2
+    _numeric_solar_power_gradient = (_solar_power_f-_solar_power_b)/ (2 * _delta_d_sio2)
+    _numeric_emitted_power_gradient = (_emitted_power_f-_emitted_power_b) / (2 * _delta_d_sio2)
+    _numeric_atmospheric_power_gradient = (_atmospheric_power_f-_atmospheric_power_b) / (2 * _delta_d_sio2)
 
     # normalize the gradients by the numeric gradient
-    _normalized_analytic_gradient = test.solar_radiated_power_gradient / _numeric_solar_power_gradient
+    _normalized_analytic_solar_power_gradient = test.solar_radiated_power_gradient / _numeric_solar_power_gradient
+    _normalized_analytic_emitted_power_gradient = test.thermal_radiated_power_gradient / _numeric_emitted_power_gradient
+    _normalized_analytic_atmospheric_power_gradient = test.atmospheric_radiated_power_gradient / _numeric_atmospheric_power_gradient
 
     # if the gradients are close, the normalized analytic gradient will be close to 1
-    np.isclose(_normalized_analytic_gradient[0], 1.0, 1e-2)
+    assert np.isclose(_normalized_analytic_solar_power_gradient[0], 1.0, 1e-3)
+    assert np.isclose(_normalized_analytic_emitted_power_gradient[0], 1.0, 1e-3)
+    assert np.isclose(_normalized_analytic_atmospheric_power_gradient[0], 1.0, 1e-3)
+    assert np.isclose(test.atmospheric_radiated_power_gradient, _numeric_atmospheric_power_gradient, 1e-2)
+
