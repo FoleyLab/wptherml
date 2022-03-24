@@ -398,24 +398,24 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the wavelengths over which the thermal emission spectrum is known
+        wavelength_array : numpy array of floats
+            the wavelengths over which the thermal emission spectrum is known
 
         Attributes
         ----------
 
-            thermal_emission_array : numpy array of floats (already assigned)
-                the thermal emission spectrum for each value of wavelength array for the stpv structure
+        thermal_emission_array : numpy array of floats (already assigned)
+            the thermal emission spectrum for each value of wavelength array for the stpv structure
 
-            photopic_luminosity_array : numpy array of floats (can be computed by calling self._compute_photopic_luminosity(wavelength_array))
-                photopic luminosity function values corresponding to wavelength_array
+        photopic_luminosity_array : numpy array of floats (can be computed by calling self._compute_photopic_luminosity(wavelength_array))
+            photopic luminosity function values corresponding to wavelength_array
 
-            luminous_efficiency : float (will be computed by this function)
-                the spectral efficiency of the incandescent source
+        luminous_efficiency : float (will be computed by this function)
+            the spectral efficiency of the incandescent source
 
         References
         ----------
-            Equation (27) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        Equation (27) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
         # self._compute_therml_spectrum(wavelength_array, emissivity_array)
@@ -438,7 +438,7 @@ class Therml:
     ):
         """Put docstring here!"""
         num_angles = len(theta_vals)
-        self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
+        self._compute_therml_spectrum(wavelength_array, emissivity_array_s[0,:])
 
         # loop over angles
         P_rad = 0.0
@@ -456,6 +456,40 @@ class Therml:
 
         return P_rad
 
+    def _compute_thermal_radiated_power_gradient(
+        self,
+        emissivity_gradient_array_s,
+        emissivity_gradient_array_p,
+        theta_vals,
+        theta_weights,
+        wavelength_array,
+    ):
+        """Put docstring here!"""
+        num_angles = len(theta_vals)
+        # we don't care about the emissivity - just calling this for the blackbody spectrum
+        self._compute_therml_spectrum(wavelength_array, emissivity_gradient_array_p[0,:,0])
+
+        _ngr = len(emissivity_gradient_array_s[0,0,:])
+        _nth = len(emissivity_gradient_array_s[:,0,0])
+        
+        # instantiate P_rad_prime
+        _emitted_thermal_spectrum_gradient = np.zeros(_ngr)
+        for i in range(0, _ngr):
+            
+            for j in range(0, _nth):
+                _TE = (
+                    self.blackbody_spectrum
+                    * np.cos(theta_vals[j])
+                    * 0.5
+                    * (emissivity_gradient_array_p[j, :, i] + emissivity_gradient_array_s[j, :, i])
+                    )
+                _TE_INT = np.trapz(_TE, wavelength_array)
+                
+                _P_rad_prime = 2 * np.pi * _TE_INT * np.sin(theta_vals[j]) * theta_weights[j]
+            _emitted_thermal_spectrum_gradient[i] = _P_rad_prime
+
+        return _emitted_thermal_spectrum_gradient
+
     def _compute_atmospheric_radiated_power(
         self,
         atmospheric_transmissivity,
@@ -467,7 +501,17 @@ class Therml:
     ):
         """Put docstring here!"""
         num_angles = len(theta_vals)
-        self._compute_therml_spectrum(wavelength_array, emissivity_array_s)
+
+        # make sure we are getting the blackbody spectrum of the atmosphere
+        # store the structure temperature
+        _T_temp = self.temperature
+        # update the structure temperature, which is the attribute that
+        # is used for computing the blackbody spectrum in _compute_therml_spectrum
+        self.temperature = self.atmospheric_temperature
+        self._compute_therml_spectrum(wavelength_array, emissivity_array_s[0,:])
+        # set the structure temperature back to _T_temp in case
+        # one wants to compute the thermal emission of the structure again!
+        self.temperature = _T_temp
         P_atm = 0.0
         for i in range(0, num_angles):
             # get the term that goes in the exponent of the atmospheric transmissivity
@@ -486,6 +530,49 @@ class Therml:
 
         return P_atm
 
+    def _compute_atmospheric_radiated_power_gradient(
+        self,
+        atmospheric_transmissivity,
+        emissivity_gradient_array_s,
+        emissivity_gradient_array_p,
+        theta_vals,
+        theta_weights,
+        wavelength_array,
+    ):
+        """Put docstring here!"""
+        _nth = len(theta_vals)
+        _ngr = len(emissivity_gradient_array_p[0,0,:])
+        _absorbed_atmospheric_radiation_gradient = np.zeros(_ngr)
+
+        # make sure we are getting the blackbody spectrum of the atmosphere
+        # store the structure temperature
+        _T_temp = self.temperature
+        # update the structure temperature, which is the attribute that
+        # is used for computing the blackbody spectrum in _compute_therml_spectrum
+        self.temperature = self.atmospheric_temperature
+        self._compute_therml_spectrum(wavelength_array, emissivity_gradient_array_p[0,:,0])
+        # set the structure temperature back to _T_temp in case
+        # one wants to compute the thermal emission of the structure again!
+        self.temperature = _T_temp
+
+        for i in range(0, _ngr):
+            for j in range(0, _nth):
+                # get the term that goes in the exponent of the atmospheric transmissivity
+                _o_over_cos_t = 1 / np.cos(theta_vals[j])
+                _emissivity_atm = (
+                    np.ones(len(atmospheric_transmissivity))
+                    - atmospheric_transmissivity ** _o_over_cos_t
+                )
+                _TE_atm = self.blackbody_spectrum * _emissivity_atm * np.cos(theta_vals[j])
+                _absorbed_TE_spectrum = (
+                    _TE_atm * 0.5 * (emissivity_gradient_array_p[j, :, i] + emissivity_gradient_array_s[j, :, i])
+                )
+                _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
+                P_atm_prime = 2 * np.pi * _absorbed_TE * np.sin(theta_vals[j]) * theta_weights[j]
+            _absorbed_atmospheric_radiation_gradient[i] = P_atm_prime
+
+        return _absorbed_atmospheric_radiation_gradient
+
     def _compute_solar_radiated_power(
         self, solar_spectrum, emissivity_array_s, emissivity_array_p, wavelength_array
     ):
@@ -502,10 +589,6 @@ class Therml:
         self, solar_spectrum, emissivity_gradient_array_s, emissivity_gradient_array_p, wavelength_array
     ):
         """Put a good docstring here!"""
-        print("outter dimension of solar absorptivity gradient after passing")
-        print(len(emissivity_gradient_array_p[0,:]))
-        print("inner dimension of solar absoprtivity gradient after passing ")
-        print(len(emissivity_gradient_array_p[:,0]))
         # get the dimension of the gradient vector
         _ngr = len(emissivity_gradient_array_s[0,:])
         _absorbed_solar_spectrum_gradient = np.zeros(_ngr)
