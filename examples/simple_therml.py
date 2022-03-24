@@ -1,34 +1,21 @@
 import wpspecdev
 from matplotlib import pyplot as plt
 import numpy as np
-args = {  
-'wavelength_list': [400e-9, 7000e-9, 4000],  
-'material_list': ["Air", "TiN", "Air"],
-'thickness_list': [0,  400e-9, 0],
-'TeMperature' : 5000, 
-'therml': True
-}  
+
+test_args = {
+    "wavelength_list": [300e-9, 6000e-9, 1000],
+    "Material_List": ["Air", "Al2O3", "SiO2", "TiO2", "SiO2", "Al2O3", "W", "Air"],
+    "Thickness_List": [0, 20e-9, 255e-9, 150e-9, 255e-9, 10e-9, 900e-9, 0],
+    "temperature": 1700,
+    "therml": True
+}
+
 
 sf = wpspecdev.SpectrumFactory()  
-test = sf.spectrum_factory('Tmm', args)
+test = sf.spectrum_factory('Tmm', test_args)
 
-print(test.blackbody_power_density)
-print(test.stefan_boltzmann_law)
-print(test.stpv_power_density)
-#idx = np.abs(test.wavelength_array-test.lambda_bandgap).argmin()
-#print(idx)
-
-#test._compute_stpv_power_density()
-
-#plt.plot(test.wavelength_array*1e9, test.q_abs, 'red')
-#plt.plot(test.wavelength_array*1e9, test.q_scat, 'blue')
-#plt.xlabel("Wavelength (nm)")
-#plt.ylabel(" efficiency")
-#plt.legend()
-#plt.show()
-
-
-#mt_5.compute_hamiltonian( )
-
+plt.plot(test.wavelength_array, test.thermal_emission_array, 'red')
+plt.plot(test.wavelength_array, test.blackbody_spectrum, 'black')
+plt.show()
 
 
