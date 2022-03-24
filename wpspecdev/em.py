@@ -812,10 +812,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.compute_spectrum()
         self.compute_spectrum_gradient()
         solar_absorptivity_p = self.emissivity_gradient_array
-        print("outter dimension of solar absorptivity gradient before passing")
-        print(len(solar_absorptivity_p[0,:]))
-        print("inner dimension of solar absoprtivity gradient before passing ")
-        print(len(solar_absorptivity_p[:,0]))
         
         self.solar_radiated_power_gradient = self._compute_solar_radiated_power_gradient(self._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, self.wavelength_array)
 
