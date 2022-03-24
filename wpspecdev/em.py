@@ -1,11 +1,12 @@
-from .spectrum_driver   import SpectrumDriver
-from .materials  import Materials
+from .spectrum_driver import SpectrumDriver
+from .materials import Materials
 from .therml import Therml
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
+
 
 class TmmDriver(SpectrumDriver, Materials, Therml):
     """Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
@@ -81,7 +82,51 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
             print(" Your spectra have been computed! \N{fire} ")
 
-        
+        # treat cooling specially because we need emissivity at lots of angles!
+        if "cooling" in args:
+            print("Hi I'm doing cooling!")
+            args = {k.lower(): v for k, v in args.items()}
+            self._parse_therml_input(args)
+
+            # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
+            self.compute_explicit_angle_spectrum()
+
+            # call _compute_thermal_radiated_power( ) function
+            self.thermal_radiated_power = self._compute_thermal_radiated_power(
+                self.emissivity_array_s,
+                self.emissivity_array_p,
+                self.theta_vals,
+                self.theta_weights,
+                self.wavelength_array,
+            )
+
+            # call _compute_atmospheric_radiated_power() function
+            self.atmospheric_radiated_power = self._compute_atmospheric_radiated_power(
+                self._atmospheric_transmissivity,
+                self.emissivity_array_s,
+                self.emissivity_array_p,
+                self.theta_vals,
+                self.theta_weights,
+                self.wavelength_array,
+            )
+
+            # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
+            self.incident_angle = self.solar_angle
+            self.polarization = "s"
+            self.compute_spectrum()
+            solar_absorptivity_s = self.emissivity_array
+            self.polarization = "p"
+            self.compute_spectrum()
+            solar_absorptivity_p = self.emissivity_array
+            self.solar_radiated_power = self._compute_solar_radiated_power(
+                self._solar_spectrum,
+                solar_absorptivity_s,
+                solar_absorptivity_p,
+                self.wavelength_array,
+            )
+
+            # call _compute_solar_radiated_power() function
+
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation
         Returns
@@ -131,17 +176,32 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # user can specify which layers to compute gradients with respect to
         # i.e. for a structure like ['Air', 'SiO2', 'Ag', 'TiO2', 'Air]
-        # the gradient list [1, 2] would take the gradients 
+        # the gradient list [1, 2] would take the gradients
         # with respect to layer 1 (top-most SiO2) and layer 2 (silver) only, while
         # leaving out layer 3 (TiO2)
         if "gradient_list" in args:
             self.gradient_list = np.array(args["gradient_list"])
         # default is all layers
         else:
-            self.gradient_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
+            self.gradient_list = np.linspace(
+                1, self.number_of_layers - 2, self.number_of_layers - 2, dtype=int
+            )
+
+        # if we specify a number of angles to compute the spectra over
+        # this only gets used if we need explicit inclusion of angle of incidence/emission
+        # for a given quantity
+        if "number_of_angles" in args:
+            self.number_of_angles = args["number_of_angles"]
+        else:
+            # this is a good default empirically if
+            # Gauss-Legendre quadrature is used for angular spectra
+            self.number_of_angles = 7
 
         # for now always get solar spectrum!
         self._solar_spectrum = self._read_AM()
+
+        # for now always get atmospheric transmissivity spectru
+        self._atmospheric_transmissivity = self._read_Atmospheric_Transmissivity()
 
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
@@ -247,9 +307,9 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 _ri, _k0, _kz, self.thickness_array
             )
 
-            #if self.gradient==True:
+            # if self.gradient==True:
             #    _tmg = self._compute_tm_grad(_ri, _k0, _kz, self.thickness_array)
-            
+
             # reflection amplitude
             _r = _tm[1, 0] / _tm[0, 0]
 
@@ -273,8 +333,132 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.emissivity_array[i] = (
                 1 - self.reflectivity_array[i] - self.transmissivity_array[i]
             )
-        #self.render_color("ambient color")
-            
+        # self.render_color("ambient color")
+
+    def compute_explicit_angle_spectrum(self):
+        """computes the following attributes:
+        Attributes
+        ----------
+            reflectivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+                the reflectivity spectrum vs wavelength and angle with s-polarization
+            reflectivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+                the reflectivity spectrum vs wavelength and angle with p-polarization
+
+            transmissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+                the transmissivity spectrum vs wavelength and angle with s-polarization
+            transmissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+                the transmissivity spectrum vs wavelength and angle with p-polarization
+
+            emissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+                the emissivity spectrum vs wavelength and angle with s-polarization
+            emissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+                the emissivity spectrum vs wavelength and angle with p-polarization
+        Returns
+        -------
+            None
+        """
+        # initialize the angle-dependent arrays
+        self.reflectivity_array_s = np.zeros(
+            (self.number_of_angles, self.number_of_wavelengths)
+        )
+        self.reflectivity_array_p = np.zeros(
+            (self.number_of_angles, self.number_of_wavelengths)
+        )
+
+        self.transmissivity_array_s = np.zeros(
+            (self.number_of_angles, self.number_of_wavelengths)
+        )
+        self.transmissivity_array_p = np.zeros(
+            (self.number_of_angles, self.number_of_wavelengths)
+        )
+
+        self.emissivity_array_s = np.zeros(
+            (self.number_of_angles, self.number_of_wavelengths)
+        )
+        self.emissivity_array_p = np.zeros(
+            (self.number_of_angles, self.number_of_wavelengths)
+        )
+
+        # now set up the angular Gauss-Legendre grid
+        a = 0
+        b = np.pi / 2.0
+        self.x, self.theta_weights = np.polynomial.legendre.leggauss(
+            self.number_of_angles
+        )
+        self.theta_vals = 0.5 * (self.x + 1) * (b - a) + a
+        self.theta_weights = self.theta_weights * 0.5 * (b - a)
+
+        # compute k0 which does not care about angle
+        self._compute_k0()
+
+        # loop over angles first
+        for i in range(0, self.number_of_angles):
+            self.incident_angle = self.theta_vals[i]
+            # compute kx and kz, which do depend on angle
+            self._compute_kx()
+            self._compute_kz()
+
+            for j in range(0, self.number_of_wavelengths):
+                _k0 = self._k0_array[j]
+                _ri = self._refractive_index_array[j, :]
+                _kz = self._kz_array[j, :]
+
+                # get transfer matrix, theta_array, and co_theta_array for current k0 value and 's' polarization
+                self.polarization = "s"
+                _tm_s, _theta_array_s, _cos_theta_array_s = self._compute_tm(
+                    _ri, _k0, _kz, self.thickness_array
+                )
+
+                # get transfer matrix, theta_array, and cos_theta_array for current k0 value and 'p' polarization
+                self.polarization = "p"
+                _tm_p, _theta_array_p, _cos_theta_array_p = self._compute_tm(
+                    _ri, _k0, _kz, self.thickness_array
+                )
+
+                # reflection amplitude
+                _r_s = _tm_s[1, 0] / _tm_s[0, 0]
+                _r_p = _tm_p[1, 0] / _tm_p[0, 0]
+
+                # transmission amplitude
+                _t_s = 1 / _tm_s[0, 0]
+                _t_p = 1 / _tm_p[0, 0]
+
+                # refraction angle and RI prefractor for computing transmission
+                _factor_s = (
+                    _ri[self.number_of_layers - 1]
+                    * _cos_theta_array_s[self.number_of_layers - 1]
+                    / (_ri[0] * _cos_theta_array_s[0])
+                )
+                _factor_p = (
+                    _ri[self.number_of_layers - 1]
+                    * _cos_theta_array_p[self.number_of_layers - 1]
+                    / (_ri[0] * _cos_theta_array_p[0])
+                )
+
+                # reflectivity
+                self.reflectivity_array_s[i, j] = np.real(_r_s * np.conj(_r_s))
+                self.reflectivity_array_p[i, j] = np.real(_r_p * np.conj(_r_p))
+
+                # transmissivity
+                self.transmissivity_array_s[i, j] = np.real(
+                    _t_s * np.conj(_t_s) * _factor_s
+                )
+                self.transmissivity_array_p[i, j] = np.real(
+                    _t_p * np.conj(_t_p) * _factor_p
+                )
+
+                # emissivity
+                self.emissivity_array_s[i, j] = (
+                    1
+                    - self.reflectivity_array_s[i, j]
+                    - self.transmissivity_array_s[i, j]
+                )
+                self.emissivity_array_p[i, j] = (
+                    1
+                    - self.reflectivity_array_p[i, j]
+                    - self.transmissivity_array_p[i, j]
+                )
+
     def compute_spectrum_gradient(self):
         """computes the following attributes:
         Attributes
@@ -289,7 +473,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         -------
             None
         """
-         
+
         # initialize gradient arrays
         # _nwl -> number of wavelengths
         _nwl = len(self.wavelength_array)
@@ -305,42 +489,251 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 _k0 = self._k0_array[j]
                 _ri = self._refractive_index_array[j, :]
                 _kz = self._kz_array[j, :]
-                
+
                 # get transfer matrix, theta_array, and co_theta_array for current k0 value
-                _tm, _theta_array, _cos_theta_array = self._compute_tm(_ri, _k0, _kz, self.thickness_array)
-                
+                _tm, _theta_array, _cos_theta_array = self._compute_tm(
+                    _ri, _k0, _kz, self.thickness_array
+                )
+
                 # get gradient of transfer matrix with respect to layer i
-                _tm_grad, _theta_array, _cos_theta_array = self._compute_tm_gradient(_ri, _k0, _kz, self.thickness_array, i+1)
+                _tm_grad, _theta_array, _cos_theta_array = self._compute_tm_gradient(
+                    _ri, _k0, _kz, self.thickness_array, i + 1
+                )
 
                 # Using equation (14) from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
                 # for the derivative of the reflection amplitude for wavelength j with respect to layer i
                 # from wptherml: r_prime = (M11*M21p[j] - M21*M11p[j])/(M11*M11)
-                r_prime = (_tm[0,0] * _tm_grad[1,0] - _tm[1,0] * _tm_grad[0,0]) / (_tm[0,0] ** 2)
+                r_prime = (_tm[0, 0] * _tm_grad[1, 0] - _tm[1, 0] * _tm_grad[0, 0]) / (
+                    _tm[0, 0] ** 2
+                )
                 # using equation (12) to get the reflection amplitude at wavelength j
-                r = _tm[1,0] / _tm[0,0]
+                r = _tm[1, 0] / _tm[0, 0]
 
                 # Using equation (10) to get the derivative of R at waveleength j with respect to layer i
-                self.reflectivity_gradient_array[j,i] = np.real(r_prime * np.conj(r) + r * np.conj(r_prime))
+                self.reflectivity_gradient_array[j, i] = np.real(
+                    r_prime * np.conj(r) + r * np.conj(r_prime)
+                )
 
                 # compute t_prime using equation (15)
-                t_prime = (- _tm_grad[0,0]/_tm[0,0]**2)
+                t_prime = -_tm_grad[0, 0] / _tm[0, 0] ** 2
 
                 # compute t using equation equation (13)
-                t = (1/_tm[0,0])
+                t = 1 / _tm[0, 0]
 
                 _factor = (
-                _ri[self.number_of_layers - 1]
-                * _cos_theta_array[self.number_of_layers - 1]
-                / (_ri[0] * _cos_theta_array[0])
-                ) 
+                    _ri[self.number_of_layers - 1]
+                    * _cos_theta_array[self.number_of_layers - 1]
+                    / (_ri[0] * _cos_theta_array[0])
+                )
 
                 # compute the derivative of T at wavelength j with respect to layer i using Eq. (11)
-                self.transmissivity_gradient_array[j,i] = np.real((t_prime * np.conj(t) + t* np.conj(t_prime)) * _factor)
+                self.transmissivity_gradient_array[j, i] = np.real(
+                    (t_prime * np.conj(t) + t * np.conj(t_prime)) * _factor
+                )
                 # derivative of \epsilon is - \partial R / \partial s -\partial T / \partial sß
-                self.emissivity_gradient_array[j,i] =  -self.transmissivity_gradient_array[j,i] - self.reflectivity_gradient_array[j,i]
+                self.emissivity_gradient_array[j, i] = (
+                    -self.transmissivity_gradient_array[j, i]
+                    - self.reflectivity_gradient_array[j, i]
+                )
 
+    def compute_explicit_angle_spectrum_gradient(self):
+        """computes the following attributes:
+        Attributes
+        ----------
+            reflectivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+                the gradient of the s-polarized reflectivity spectrum vs angle
 
+            reflectivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+                the gradient of the p-polarized reflectivity spectrum vs angle
 
+            transmissivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+                the grdient of the s-polarized transmissivity spectrum vs angle
+
+            transmissivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+                the grdient of the p-polarized transmissivity spectrum vs angle
+
+            emissivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+                the grdient of the s-polarized emissivity spectrum vs angle
+
+            emissivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+                the grdient of the p-polarized emissivity spectrum vs angle
+
+        Returns
+        -------
+            None
+        """
+        # initialize gradient arrays
+        # _nwl -> number of wavelengths
+        _nwl = len(self.wavelength_array)
+        # _ngr -> number of gradient dimensions
+        _ngr = len(self.gradient_list)
+        # _nth -> number of angles
+        _nth = self.number_of_angles
+
+        # jjf note - _nwl is going to be the longest axis in most cases
+        # should it be either the inner-most or outter-most dimension instead for
+        # performance reasons?
+        self.reflectivity_gradient_array_s = np.zeros((_nth, _nwl, _ngr))
+        self.reflectivity_gradient_array_p = np.zeros((_nth, _nwl, _ngr))
+
+        self.transmissivity_gradient_array_s = np.zeros((_nth, _nwl, _ngr))
+        self.transmissivity_gradient_array_p = np.zeros((_nth, _nwl, _ngr))
+
+        self.emissivity_gradient_array_s = np.zeros((_nth, _nwl, _ngr))
+        self.emissivity_gradient_array_p = np.zeros((_nth, _nwl, _ngr))
+
+        # compute k0 which does not care about angle
+        self._compute_k0()
+
+        # loop over angles first
+        for k in range(0, _nth):
+            self.incident_angle = self.theta_vals[k]
+            # compute kx and kz, which do depend on angle
+            self._compute_kx()
+            self._compute_kz()
+
+            for i in range(0, _ngr):
+                for j in range(0, _nwl):
+                    _k0 = self._k0_array[j]
+                    _ri = self._refractive_index_array[j, :]
+                    _kz = self._kz_array[j, :]
+
+                    # s-polarization first
+                    self.polarization = "s"
+                    # get transfer matrix, theta_array, and co_theta_array for current k0 value
+                    _tm, _theta_array, _cos_theta_array = self._compute_tm(
+                        _ri, _k0, _kz, self.thickness_array
+                    )
+
+                    # get gradient of transfer matrix with respect to layer i
+                    (
+                        _tm_grad,
+                        _theta_array,
+                        _cos_theta_array,
+                    ) = self._compute_tm_gradient(
+                        _ri, _k0, _kz, self.thickness_array, i + 1
+                    )
+
+                    # Using equation (14) from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+                    # for the derivative of the reflection amplitude for wavelength j with respect to layer i
+                    # from wptherml: r_prime = (M11*M21p[j] - M21*M11p[j])/(M11*M11)
+                    r_prime = (
+                        _tm[0, 0] * _tm_grad[1, 0] - _tm[1, 0] * _tm_grad[0, 0]
+                    ) / (_tm[0, 0] ** 2)
+                    # using equation (12) to get the reflection amplitude at wavelength j
+                    r = _tm[1, 0] / _tm[0, 0]
+
+                    # Using equation (10) to get the derivative of R at waveleength j with respect to layer i
+                    self.reflectivity_gradient_array_s[k, j, i] = np.real(
+                        r_prime * np.conj(r) + r * np.conj(r_prime)
+                    )
+
+                    # compute t_prime using equation (15)
+                    t_prime = -_tm_grad[0, 0] / _tm[0, 0] ** 2
+
+                    # compute t using equation equation (13)
+                    t = 1 / _tm[0, 0]
+
+                    _factor = (
+                        _ri[self.number_of_layers - 1]
+                        * _cos_theta_array[self.number_of_layers - 1]
+                        / (_ri[0] * _cos_theta_array[0])
+                    )
+
+                    # compute the derivative of T at wavelength j with respect to layer i using Eq. (11)
+                    self.transmissivity_gradient_array_s[k, j, i] = np.real(
+                        (t_prime * np.conj(t) + t * np.conj(t_prime)) * _factor
+                    )
+                    # derivative of \epsilon is - \partial R / \partial s -\partial T / \partial sß
+                    self.emissivity_gradient_array_s[k, j, i] = (
+                        -self.transmissivity_gradient_array_s[k, j, i]
+                        - self.reflectivity_gradient_array_s[k, j, i]
+                    )
+
+                    # p-polarization second
+                    self.polarization = "p"
+                    # get transfer matrix, theta_array, and co_theta_array for current k0 value
+                    _tm, _theta_array, _cos_theta_array = self._compute_tm(
+                        _ri, _k0, _kz, self.thickness_array
+                    )
+
+                    # get gradient of transfer matrix with respect to layer i
+                    (
+                        _tm_grad,
+                        _theta_array,
+                        _cos_theta_array,
+                    ) = self._compute_tm_gradient(
+                        _ri, _k0, _kz, self.thickness_array, i + 1
+                    )
+
+                    # Using equation (14) from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+                    # for the derivative of the reflection amplitude for wavelength j with respect to layer i
+                    # from wptherml: r_prime = (M11*M21p[j] - M21*M11p[j])/(M11*M11)
+                    r_prime = (
+                        _tm[0, 0] * _tm_grad[1, 0] - _tm[1, 0] * _tm_grad[0, 0]
+                    ) / (_tm[0, 0] ** 2)
+                    # using equation (12) to get the reflection amplitude at wavelength j
+                    r = _tm[1, 0] / _tm[0, 0]
+
+                    # Using equation (10) to get the derivative of R at waveleength j with respect to layer i
+                    self.reflectivity_gradient_array_p[k, j, i] = np.real(
+                        r_prime * np.conj(r) + r * np.conj(r_prime)
+                    )
+
+                    # compute t_prime using equation (15)
+                    t_prime = -_tm_grad[0, 0] / _tm[0, 0] ** 2
+
+                    # compute t using equation equation (13)
+                    t = 1 / _tm[0, 0]
+
+                    _factor = (
+                        _ri[self.number_of_layers - 1]
+                        * _cos_theta_array[self.number_of_layers - 1]
+                        / (_ri[0] * _cos_theta_array[0])
+                    )
+
+                    # compute the derivative of T at wavelength j with respect to layer i using Eq. (11)
+                    self.transmissivity_gradient_array_p[k, j, i] = np.real(
+                        (t_prime * np.conj(t) + t * np.conj(t_prime)) * _factor
+                    )
+                    # derivative of \epsilon is - \partial R / \partial s -\partial T / \partial sß
+                    self.emissivity_gradient_array_p[k, j, i] = (
+                        -self.transmissivity_gradient_array_p[k, j, i]
+                        - self.reflectivity_gradient_array_p[k, j, i]
+                    )
+
+    def compute_stpv(self):
+        """compute the figures of merit for STPV applications, including"""
+        self.compute_spectrum()
+        self._compute_therml_spectrum(self.wavelength_array, self.emissivity_array)
+        self._compute_power_density(self.wavelength_array)
+        self._compute_stpv_power_density(self.wavelength_array)
+        self._compute_stpv_spectral_efficiency(self.wavelength_array)
+
+    def compute_stpv_gradient(self):
+        self.compute_spectrum()
+        self.compute_spectrum_gradient()
+        self._compute_therml_spectrum_gradient(
+            self.wavelength_array, self.emissivity_gradient_array
+        )
+        self._compute_power_density_gradient(self.wavelength_array)
+        self._compute_stpv_power_density_gradient(self.wavelength_array)
+        self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
+
+    def compute_cooling_gradient(self):
+        # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
+        self.incident_angle = self.solar_angle
+        self.polarization = "s"
+        self.compute_spectrum()
+        self.compute_spectrum_gradient()
+        solar_absorptivity_s = self.emissivity_gradient_array
+        self.polarization = "p"
+        self.compute_spectrum()
+        self.compute_spectrum_gradient()
+        solar_absorptivity_p = self.emissivity_gradient_array
+        
+        self.solar_radiated_power_gradient = self._compute_solar_radiated_power_gradient(self._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, self.wavelength_array)
+        
     def _compute_kz(self):
         """computes the z-component of the wavevector in each layer of the stack
         Attributes
@@ -402,14 +795,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             refraction angles in each layer for the _k0 value
         _CTHETA : 1 x number_of_layers complex numpy array
             cosine of the refraction angles in each layer for the _k0 value
-        JJF Note: Basically the only difference between the calculation 
-        of the dM/dS_ln and M is that a single P matrix corresponding 
+        JJF Note: Basically the only difference between the calculation
+        of the dM/dS_ln and M is that a single P matrix corresponding
         to _ln is replaced by dP/DP_ln.  So, you can basically modify the
-        loop where _PM is computed to have a conditional that 
+        loop where _PM is computed to have a conditional that
         computes _PM by calling _compute_pm_gradient instead of _compute_pm
         when i == _ln
         """
-         
+
         _DM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
         _DIM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
         _PM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
@@ -433,10 +826,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             _DM[:, :, i], _DIM[:, :, i] = self._compute_dm(
                 _refractive_index[i], _CTHETA[i]
             )
-            if i==_ln:
-               _PM[:, :, i] = self._compute_pm_analytical_gradient(_kz[i], _PHIL[i])
+            if i == _ln:
+                _PM[:, :, i] = self._compute_pm_analytical_gradient(_kz[i], _PHIL[i])
             else:
-              _PM[:, :, i] = self._compute_pm(_PHIL[i])
+                _PM[:, :, i] = self._compute_pm(_PHIL[i])
 
             _tm_gradient = np.matmul(_tm_gradient, _DM[:, :, i])
             _tm_gradient = np.matmul(_tm_gradient, _PM[:, :, i])
@@ -453,7 +846,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _tm_gradient = np.matmul(_tm_gradient, _DM[:, :, self.number_of_layers - 1])
 
         return _tm_gradient, _THETA, _CTHETA
-
 
     def _compute_tm(self, _refractive_index, _k0, _kz, _d):
         """compute the transfer matrix for each wavelength
@@ -575,8 +967,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         return _pm
 
     def _compute_pm_analytical_gradient(self, kzl, phil):
-        """ compute the derivative of the P matrix with respect to layer thickness
-        
+        """compute the derivative of the P matrix with respect to layer thickness
+
         Arguments
         ---------
             kzl : complex float
@@ -585,62 +977,58 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 kzl * sl where sl is the thickness of layer l
         Reference
         ---------
-            Equation 18 of https://journals.aps.org/prresearch/pdf/10.1103/PhysRevResearch.2.013018 
+            Equation 18 of https://journals.aps.org/prresearch/pdf/10.1103/PhysRevResearch.2.013018
         Returns
         -------
             _pm_analytical_gradient : 2x2 numpy array of complex floats
                 the analytical derivative of the P matrix with respect to thickness of layer l
-        
+
         """
         _pm_analytical_gradient = np.zeros((2, 2), dtype=complex)
         _ci = 0 + 1j
         _a = -1 * _ci * phil
         _b = _ci * phil
 
-        _pm_analytical_gradient[0, 0] = - _ci * kzl * np.exp( _a )
-        _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp( _b )
-        
+        _pm_analytical_gradient[0, 0] = -_ci * kzl * np.exp(_a)
+        _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp(_b)
+
         return _pm_analytical_gradient
 
     def _compute_rgb(self, colorblindness="False"):
 
-        # get color response functions 
+        # get color response functions
         self._read_CIE()
-        #plt.plot(self.wavelength_array * 1e9, self.reflectivity_array, label="Reflectivity")
-        #plt.plot(self.wavelength_array * 1e9, self._cie_cr, label="CIE Red")
-        #plt.legend()
-        #plt.plot(self.wavelength_array, self._cie_cr * self.reflectivity_array)
-        #plt.show()
-
-        
-
+        # plt.plot(self.wavelength_array * 1e9, self.reflectivity_array, label="Reflectivity")
+        # plt.plot(self.wavelength_array * 1e9, self._cie_cr, label="CIE Red")
+        # plt.legend()
+        # plt.plot(self.wavelength_array, self._cie_cr * self.reflectivity_array)
+        # plt.show()
 
         # get X, Y, and Z from reflectivity spectrum and Cr, Cg, Cb response functions
         X = np.trapz(self._cie_cr * self.reflectivity_array, self.wavelength_array)
         Y = np.trapz(self._cie_cg * self.reflectivity_array, self.wavelength_array)
         Z = np.trapz(self._cie_cb * self.reflectivity_array, self.wavelength_array)
-        
+
         # zero out appropriate response if colorblindness is indicated
         # from here: https://www.color-blindness.com/types-of-color-blindness/
         # Tritanopia/Tritanomaly: Missing/malfunctioning S-cone (blue).
         # Deuteranopia/Deuteranomaly: Missing/malfunctioning M-cone (green).
         # Protanopia/Protanomaly: Missing/malfunctioning L-cone (red).
 
-        if colorblindness=="Tritanopia" or colorblindness=="Tritanomaly":
+        if colorblindness == "Tritanopia" or colorblindness == "Tritanomaly":
             Z = 0
-        if colorblindness=="Deuteranopia" or colorblindness=="Deuteranomaly":
+        if colorblindness == "Deuteranopia" or colorblindness == "Deuteranomaly":
             Y = 0
-        if colorblindness=="Protanopia" or colorblindness=="Protanomaly":
+        if colorblindness == "Protanopia" or colorblindness == "Protanomaly":
             X = 0
-        
-    
+
         # get total magnitude
-        tot = X+Y+Z
+        tot = X + Y + Z
 
         # get normalized values
-        x = X/tot
-        y = Y/tot
-        z = Z/tot
+        x = X / tot
+        y = Y / tot
+        z = Z / tot
 
         # should also be equal to z = 1 - x - y
         # array of xr, xg, xb, xw, ..., zr, zg, zb, zw
@@ -648,38 +1036,36 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         xrgbw = [0.670, 0.210, 0.150, 0.3127]
         yrgbw = [0.330, 0.710, 0.060, 0.3291]
         zrgbw = []
-        for i in range(0,len(xrgbw)):
-            zrgbw.append(1. - xrgbw[i] - yrgbw[i])
-
+        for i in range(0, len(xrgbw)):
+            zrgbw.append(1.0 - xrgbw[i] - yrgbw[i])
 
         ## rx = yg*zb - yb*zg
-        rx = yrgbw[1]*zrgbw[2] - yrgbw[2]*zrgbw[1]
+        rx = yrgbw[1] * zrgbw[2] - yrgbw[2] * zrgbw[1]
         ## ry = xb*zg - xg*zb
-        ry = xrgbw[2]*zrgbw[1] - xrgbw[1]*zrgbw[2]
+        ry = xrgbw[2] * zrgbw[1] - xrgbw[1] * zrgbw[2]
         ## rz = (xg * yb) - (xb * yg)
-        rz = xrgbw[1]*yrgbw[2] - xrgbw[2]*yrgbw[1]
+        rz = xrgbw[1] * yrgbw[2] - xrgbw[2] * yrgbw[1]
         ## gx = (yb * zr) - (yr * zb)
-        gx = yrgbw[2]*zrgbw[0] - yrgbw[0]*zrgbw[2]
+        gx = yrgbw[2] * zrgbw[0] - yrgbw[0] * zrgbw[2]
         ## gy = (xr * zb) - (xb * zr)
-        gy = xrgbw[0]*zrgbw[2] - xrgbw[2]*zrgbw[0]
+        gy = xrgbw[0] * zrgbw[2] - xrgbw[2] * zrgbw[0]
         ## gz = (xb * yr) - (xr * yb)
-        gz = xrgbw[2]*yrgbw[0] - xrgbw[0]*yrgbw[2]
+        gz = xrgbw[2] * yrgbw[0] - xrgbw[0] * yrgbw[2]
         ## bx = (yr * zg) - (yg * zr)
-        bx = yrgbw[0]*zrgbw[1] - yrgbw[1]*zrgbw[0]
+        bx = yrgbw[0] * zrgbw[1] - yrgbw[1] * zrgbw[0]
         ## by = (xg * zr) - (xr * zg)
-        by = xrgbw[1]*zrgbw[0] - xrgbw[0]*zrgbw[1]
+        by = xrgbw[1] * zrgbw[0] - xrgbw[0] * zrgbw[1]
         ## bz = (xr * yg) - (xg * yr)
-        bz = xrgbw[0]*yrgbw[1] - xrgbw[1]*yrgbw[0]
-
+        bz = xrgbw[0] * yrgbw[1] - xrgbw[1] * yrgbw[0]
 
         ## rw = ((rx * xw) + (ry * yw) + (rz * zw)) / yw;
-        rw = (rx * xrgbw[3] + ry * yrgbw[3] + rz * zrgbw[3])/yrgbw[3]
+        rw = (rx * xrgbw[3] + ry * yrgbw[3] + rz * zrgbw[3]) / yrgbw[3]
         ## gw = ((gx * xw) + (gy * yw) + (gz * zw)) / yw;
-        gw = (gx * xrgbw[3] + gy * yrgbw[3] + gz * zrgbw[3])/yrgbw[3]
+        gw = (gx * xrgbw[3] + gy * yrgbw[3] + gz * zrgbw[3]) / yrgbw[3]
         ## bw = ((bx * xw) + (by * yw) + (bz * zw)) / yw;
-        bw = (bx * xrgbw[3] + by * yrgbw[3] + bz * zrgbw[3])/yrgbw[3]
+        bw = (bx * xrgbw[3] + by * yrgbw[3] + bz * zrgbw[3]) / yrgbw[3]
 
-        ## /* xyz -> rgb matrix, correctly scaled to white. */    
+        ## /* xyz -> rgb matrix, correctly scaled to white. */
         rx = rx / rw
         ry = ry / rw
         rz = rz / rw
@@ -689,7 +1075,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         bx = bx / bw
         by = by / bw
         bz = bz / bw
-
 
         ## /* rgb of the desired point */
         r = (rx * x) + (ry * y) + (rz * z)
@@ -703,7 +1088,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # are there negative values?
         w = np.amin(rgblist)
-        if w<0:
+        if w < 0:
             rgblist[0] = rgblist[0] - w
             rgblist[1] = rgblist[1] - w
             rgblist[2] = rgblist[2] - w
@@ -711,12 +1096,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # scale things so that max has value of 1
         mag = np.amax(rgblist)
 
+        rgblist[0] = rgblist[0] / mag
+        rgblist[1] = rgblist[1] / mag
+        rgblist[2] = rgblist[2] / mag
 
-        rgblist[0] = rgblist[0]/mag
-        rgblist[1] = rgblist[1]/mag
-        rgblist[2] = rgblist[2]/mag
-
-        #rgb = {'r': rgblist[0]/mag, 'g': rgblist[1]/mag, 'b': rgblist[2]/mag }
+        # rgb = {'r': rgblist[0]/mag, 'g': rgblist[1]/mag, 'b': rgblist[2]/mag }
 
         return rgblist
 
@@ -728,22 +1112,22 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # Calculate the black body spectrum and the HTML hex RGB colour string
         cierbg = self._compute_rgb(colorblindness)
-        #cierbg = [1.,0.427,0.713]
+        # cierbg = [1.,0.427,0.713]
         # Place and label a circle with the colour of a black body at temperature T
-        x, y = 0., 0.
-        circle = Circle(xy=(x, y*1.2), radius=0.4, fc=cierbg)
+        x, y = 0.0, 0.0
+        circle = Circle(xy=(x, y * 1.2), radius=0.4, fc=cierbg)
         ax.add_patch(circle)
-        ax.annotate(string, xy=(x, y*1.2-0.5), va='center',
-                    ha='center', color=cierbg)
+        ax.annotate(
+            string, xy=(x, y * 1.2 - 0.5), va="center", ha="center", color=cierbg
+        )
 
         # Set the limits and background colour; remove the ticks
         ax.set_xlim(-1, 1)
         ax.set_ylim(-1, 1)
         ax.set_xticks([])
         ax.set_yticks([])
-        ax.set_facecolor('k')
-        #ax.set_axis_bgcolor('k')
+        ax.set_facecolor("k")
+        # ax.set_axis_bgcolor('k')
         # Make sure our circles are circular!
         ax.set_aspect("equal")
         plt.show()
-
