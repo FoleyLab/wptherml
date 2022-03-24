@@ -9,48 +9,50 @@ import matplotlib.cm as cmx
 
 
 class TmmDriver(SpectrumDriver, Materials, Therml):
-    """Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
+    """Collects methods for computing the reflectivity, absorptivity/emissivity, and transmissivity
+       of multilayer structures using the Transfer Matrix Method.
+
     Attributes
     ----------
-        number_of_layers : int
-            the number of layers in the multilayer
-        number_of_wavelengths : int
-            the number of wavelengths in the wavelength_array
-        thickness_array : 1 x number_of_layers numpy array of floats
-            the thickness of each layer
-        material_array : 1 x number_of_layers numpy array of str
-            the materia of each layer
-        wavelength_array : numpy array of floats
-            the array of wavelengths in meters over which you will compute the spectra
-        incident_angle : float
-            the incident angle of light relative to the normal to the multilayer (0 = normal incidence!)
-        polarization : str
-            indicates if incident light is 's' or 'p' polarized
-        reflectivity_array : 1 x number_of_wavelengths numpy array of floats
-            the reflection spectrum
-        transmissivity_array : 1 x number_of_wavelengths numpy array of floats
-            the transmission spectrum
-        emissivity_array : 1 x number_of_wavelengths numpy array of floats
-            the absorptivity / emissivity spectrum
-        _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
-            the array of refractive index values corresponding to wavelength_array
-        _tm : 2 x 2 x number_of_wavelengths numpy array of complex floats
-            the transfer matrix for each wavelength
-        _kz_array : 1 x number_lf_layers x number_of_wavelengths numpy array of complex floats
-            the z-component of the wavevector in each layer of the multilayer for each wavelength
-        _k0_array : 1 x number_of_wavelengths numpy array of floats
-            the wavevector magnitude in the incident layer for each wavelength
-        _kx_array : 1 x number_of_wavelengths numpy array of floats
-            the x-component of the wavevector for each wavelength (conserved throughout layers)
-        _pm : 2 x 2 x (number_of_layers-2) x number_of_wavelengths numpy array of complex floats
-            the P matrix for each of the finite-thickness layers for each wavelength
-        _dm : 2 x 2 x number_of_layers x number_of_wavelengths numpy array of complex floats
-            the D matrix for each of the layers for each wavelength
-        _dim : 2 x 2 x number_of_layers x number_of_wavelengts numpy array of complex floats
-            the inverse of the D matrix for each of the layers for each wavelength
+    number_of_layers : int
+        the number of layers in the multilayer
+    number_of_wavelengths : int
+        the number of wavelengths in the wavelength_array
+    thickness_array : 1 x number_of_layers numpy array of floats
+        the thickness of each layer
+    material_array : 1 x number_of_layers numpy array of str
+        the materia of each layer
+    wavelength_array : numpy array of floats
+        the array of wavelengths in meters over which you will compute the spectra
+    incident_angle : float
+        the incident angle of light relative to the normal to the multilayer (0 = normal incidence!)
+    polarization : str
+        indicates if incident light is 's' or 'p' polarized
+    reflectivity_array : 1 x number_of_wavelengths numpy array of floats
+        the reflection spectrum
+    transmissivity_array : 1 x number_of_wavelengths numpy array of floats
+        the transmission spectrum
+    emissivity_array : 1 x number_of_wavelengths numpy array of floats
+        the absorptivity / emissivity spectrum
+    _refractive_index_array : number_of_layers x number_of_wavelengths numpy array of complex floats
+        the array of refractive index values corresponding to wavelength_array
+    _tm : 2 x 2 x number_of_wavelengths numpy array of complex floats
+        the transfer matrix for each wavelength
+    _kz_array : 1 x number_lf_layers x number_of_wavelengths numpy array of complex floats
+        the z-component of the wavevector in each layer of the multilayer for each wavelength
+    _k0_array : 1 x number_of_wavelengths numpy array of floats
+        the wavevector magnitude in the incident layer for each wavelength
+    _kx_array : 1 x number_of_wavelengths numpy array of floats
+        the x-component of the wavevector for each wavelength (conserved throughout layers)
+    _pm : 2 x 2 x (number_of_layers-2) x number_of_wavelengths numpy array of complex floats
+        the P matrix for each of the finite-thickness layers for each wavelength
+    _dm : 2 x 2 x number_of_layers x number_of_wavelengths numpy array of complex floats
+        the D matrix for each of the layers for each wavelength
+    _dim : 2 x 2 x number_of_layers x number_of_wavelengts numpy array of complex floats
+        the inverse of the D matrix for each of the layers for each wavelength
     Returns
     -------
-        None
+    None
     """
 
     def __init__(self, args):
@@ -276,15 +278,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         """computes the following attributes:
         Attributes
         ----------
-            reflectivity_array : 1 x number_of_wavelengths numpy array of floats
-                the reflectivity spectrum
-            transmissivity_array : 1 x number_of_wavelengths numpy array of floats
-                the transmissivity spectrum
-            emissivity_array : 1 x number_of_wavelengths numpy array of floats
-                the absorptivity / emissivity spectrum
+        reflectivity_array : 1 x number_of_wavelengths numpy array of floats
+            the reflectivity spectrum
+        transmissivity_array : 1 x number_of_wavelengths numpy array of floats
+            the transmissivity spectrum
+        emissivity_array : 1 x number_of_wavelengths numpy array of floats
+            the absorptivity / emissivity spectrum
         Returns
         -------
-            None
+        None
         """
 
         # with all of these formed, you can now call _compute_tm()
@@ -339,23 +341,23 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         """computes the following attributes:
         Attributes
         ----------
-            reflectivity_array_s : N_deg x number_of_wavelengths numpy array of floats
-                the reflectivity spectrum vs wavelength and angle with s-polarization
-            reflectivity_array_p : N_deg x number_of_wavelengths numpy array of floats
-                the reflectivity spectrum vs wavelength and angle with p-polarization
+        reflectivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+            the reflectivity spectrum vs wavelength and angle with s-polarization
+        reflectivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+            the reflectivity spectrum vs wavelength and angle with p-polarization
 
-            transmissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
-                the transmissivity spectrum vs wavelength and angle with s-polarization
-            transmissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
-                the transmissivity spectrum vs wavelength and angle with p-polarization
+        transmissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+            the transmissivity spectrum vs wavelength and angle with s-polarization
+        transmissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+            the transmissivity spectrum vs wavelength and angle with p-polarization
 
-            emissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
-                the emissivity spectrum vs wavelength and angle with s-polarization
-            emissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
-                the emissivity spectrum vs wavelength and angle with p-polarization
+        emissivity_array_s : N_deg x number_of_wavelengths numpy array of floats
+            the emissivity spectrum vs wavelength and angle with s-polarization
+        emissivity_array_p : N_deg x number_of_wavelengths numpy array of floats
+            the emissivity spectrum vs wavelength and angle with p-polarization
         Returns
         -------
-            None
+        None
         """
         # initialize the angle-dependent arrays
         self.reflectivity_array_s = np.zeros(
@@ -463,15 +465,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         """computes the following attributes:
         Attributes
         ----------
-            reflectivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
-                the reflectivity spectrum
-            transmissivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
-                the transmissivity spectrum
-            emissivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
-                the absorptivity / emissivity spectrum
+        reflectivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
+            the reflectivity spectrum
+        transmissivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
+            the transmissivity spectrum
+        emissivity_gradient_array : number_of_wavelengths x len(gradient_list) numpy array of floats
+            the absorptivity / emissivity spectrum
         Returns
         -------
-            None
+        None
         """
 
         # initialize gradient arrays
@@ -540,27 +542,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         """computes the following attributes:
         Attributes
         ----------
-            reflectivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
-                the gradient of the s-polarized reflectivity spectrum vs angle
+        reflectivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+            the gradient of the s-polarized reflectivity spectrum vs angle
 
-            reflectivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
-                the gradient of the p-polarized reflectivity spectrum vs angle
+        reflectivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+            the gradient of the p-polarized reflectivity spectrum vs angle
 
-            transmissivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
-                the grdient of the s-polarized transmissivity spectrum vs angle
+        transmissivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+            the grdient of the s-polarized transmissivity spectrum vs angle
 
-            transmissivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
-                the grdient of the p-polarized transmissivity spectrum vs angle
+        transmissivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+            the grdient of the p-polarized transmissivity spectrum vs angle
 
-            emissivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
-                the grdient of the s-polarized emissivity spectrum vs angle
+        emissivity_gradient_array_s : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+            the grdient of the s-polarized emissivity spectrum vs angle
 
-            emissivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
-                the grdient of the p-polarized emissivity spectrum vs angle
+        emissivity_gradient_array_p : N_deg x number_of_wavelengths x len(gradient_list) numpy array of floats
+            the grdient of the p-polarized emissivity spectrum vs angle
 
         Returns
         -------
-            None
+        None
         """
         # initialize gradient arrays
         # _nwl -> number of wavelengths
@@ -731,9 +733,13 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.compute_spectrum()
         self.compute_spectrum_gradient()
         solar_absorptivity_p = self.emissivity_gradient_array
+        print("outter dimension of solar absorptivity gradient before passing")
+        print(len(solar_absorptivity_p[0,:]))
+        print("inner dimension of solar absoprtivity gradient before passing ")
+        print(len(solar_absorptivity_p[:,0]))
         
         self.solar_radiated_power_gradient = self._compute_solar_radiated_power_gradient(self._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, self.wavelength_array)
-        
+
     def _compute_kz(self):
         """computes the z-component of the wavevector in each layer of the stack
         Attributes
