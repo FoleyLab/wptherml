@@ -28,3 +28,7 @@ test.compute_stpv()
 test.compute_stpv_gradient()
 print(test.power_density_gradient)
 print(test.stpv_spectral_efficiency_gradient)
+
+test.compute_cooling_gradient()
+print("printing the radiated solar power gradient")
+print(test.solar_radiated_power_gradient)

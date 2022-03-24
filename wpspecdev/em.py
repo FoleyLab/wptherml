@@ -720,6 +720,20 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_stpv_power_density_gradient(self.wavelength_array)
         self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
 
+    def compute_cooling_gradient(self):
+        # need to get one more set of \epsilon_s(\lambda, solar_angle) and \epsilon_p(\lamnda, solar_angle)
+        self.incident_angle = self.solar_angle
+        self.polarization = "s"
+        self.compute_spectrum()
+        self.compute_spectrum_gradient()
+        solar_absorptivity_s = self.emissivity_gradient_array
+        self.polarization = "p"
+        self.compute_spectrum()
+        self.compute_spectrum_gradient()
+        solar_absorptivity_p = self.emissivity_gradient_array
+        
+        self.solar_radiated_power_gradient = self._compute_solar_radiated_power_gradient(self._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, self.wavelength_array)
+        
     def _compute_kz(self):
         """computes the z-component of the wavevector in each layer of the stack
         Attributes

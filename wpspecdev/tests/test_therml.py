@@ -244,3 +244,66 @@ def test_compute_solar_radiated_power():
     _expected_solar_radiated_power = 426.9132402277394
 
     np.isclose(_expected_solar_radiated_power, test.solar_radiated_power, 1e-5)
+
+def test_compute_solar_radiated_power_gradient():
+    """ FINISH THIS UNIT TEST"""
+
+    # define basic structure at 1500 K
+    test_args = {
+        "wavelength_list": [300e-9, 60000e-9, 5000],
+        "material_list": ["Air", "SiO2", "Air"],
+        "thickness_list": [0, 230e-9, 0],
+        "temperature": 300,
+        "cooling": True,
+    }
+    sf = wpspecdev.SpectrumFactory()
+    test = sf.spectrum_factory("Tmm", test_args)
+
+    # get analytic gradient of the absorbed solar power
+    test.compute_cooling_gradient()
+
+    # define a displacement in thickness of SiO2
+    _delta_d_sio2 = 0.1e-9
+
+    test.incident_angle = test.solar_angle
+    # get forward solar power
+    test.thickness_array[1] += _delta_d_sio2
+    test.polarization = "s"
+    test.compute_spectrum()
+    _solar_absorptivity_s = test.emissivity_array
+    test.polarization = "p"
+    test.compute_spectrum()
+    _solar_absorptivity_p = test.emissivity_array
+    
+    test.solar_radiated_power = test._compute_solar_radiated_power(
+        test._solar_spectrum,
+        _solar_absorptivity_s,
+        _solar_absorptivity_p,
+        test.wavelength_array,
+    )
+    _solar_power_f = test.solar_radiated_power
+
+    # get backward solar power
+    test.thickness_array[1] -= 2 * _delta_d_sio2
+    test.polarization = "s"
+    test.compute_spectrum()
+    _solar_absorptivity_s = test.emissivity_array
+    test.polarization = "p"
+    test.compute_spectrum()
+    _solar_absorptivity_p = test.emissivity_array
+    
+    test.solar_radiated_power = test._compute_solar_radiated_power(
+        test._solar_spectrum,
+        _solar_absorptivity_s,
+        _solar_absorptivity_p,
+        test.wavelength_array,
+    )
+    _solar_power_b = test.solar_radiated_power
+
+    _numeric_solar_power_gradient = (_solar_power_f-_solar_power_b)/ 2 * _delta_d_sio2
+
+    # normalize the gradients by the numeric gradient
+    _normalized_analytic_gradient = test.solar_radiated_power_gradient / _numeric_solar_power_gradient
+
+    # if the gradients are close, the normalized analytic gradient will be close to 1
+    np.isclose(_normalized_analytic_gradient[0], 1.0, 1e-2)
