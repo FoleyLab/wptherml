@@ -4,7 +4,7 @@ from scipy.interpolate import UnivariateSpline
 
 
 class Therml:
-    """Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
+    """Collects methods for the computation of thermal radiative figures of merit
 
     Attributes
     ----------
