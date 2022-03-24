@@ -10,6 +10,7 @@ Welcome to wpspecdev's documentation!
    :maxdepth: 2
    :caption: Contents:
 
+   quickstart
    getting_started
    api
 
