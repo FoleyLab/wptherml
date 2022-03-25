@@ -7,7 +7,49 @@ class Therml:
 
     Attributes
     ----------
+    self.temperture : float
+        temperature of the structure in Kelvin
 
+    self.atmospheric_temperature : float
+        temperature of the atmosphere in Kelvin
+
+    self.lambda_bandgap : float
+        bandgap wavelength of the target PV for PV or STPV in meters
+
+    self.solar_angle : float
+        angle of the incident solar spectrum in radians
+
+    self.blackbody_spectrum : numpy array of floats
+        Planck's blackbody spectrum for a given temperature
+
+    self.thermal_emission_array : numpy array of floats
+        thermal emission spectrum of structure for a given temperature
+
+    self.blackbody_power_density : float
+        total power density radiated into a hemisphere of a blackbody at a given temperature
+
+    self.power_density : float
+        total power density radiated by structure at a given temperature
+    
+    self.power_density_gradient : numpy array of floats (will be computed by this function)
+        the gradient vector related to the total power density wrt changes in thicknesses of each layer
+    
+    self.photopic_luminosity_array : numpy array of floats
+        the array of photopic luminosity values corresponding to each value of wavelength_array
+
+    self.stpv_power_density : float (will be computed by this function)
+        useful (sub-bandgap) power density radiated into a hemisphere
+    
+    self.stpv_power_density_gradient : numpy array of floats (will be computed by this function)
+        the gradient vector related to the stpv power density wrt changes in thicknesses of each layer
+
+    self.stpv_spectral_efficiency : float (will be computed by this function)
+        spectral efficiency of an stpv emitter
+
+    self.stpv_spectral_efficiency_gradient : numpy array of floats (will be computed by this function)
+        the gradient vector related to the spectral efficiency wrt changes in thicknesses of each layer
+
+    
     Returns
     -------
         None
@@ -59,26 +101,26 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the array of wavelengths across which thermal emission spectrum will be computed
+        wavelength_array : numpy array of floats
+            the array of wavelengths across which thermal emission spectrum will be computed
 
-            emissivity_array : numpy array of floats
-                the array of emissivity spectrum for the structure that you will compute the thermal emission of
+        emissivity_array : numpy array of floats
+            the array of emissivity spectrum for the structure that you will compute the thermal emission of
 
         Attributes
         ----------
-            blackbody_spectrum : numpy array of floats
-                Planck's blackbody spectrum for a given temperature
+        blackbody_spectrum : numpy array of floats
+            Planck's blackbody spectrum for a given temperature
 
-            thermal_emission_array : numpy array of floats
-                thermal emission spectrum of structure for a given temperature
+        thermal_emission_array : numpy array of floats
+            thermal emission spectrum of structure for a given temperature
 
         References
         ----------
-            blackbody spectrum : Eq. (13) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        blackbody spectrum : Eq. (13) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
-            thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
-            with $\theta=0$
+        thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        with $\theta=0$
         """
         # speed of light in SI
         c = 299792458
@@ -100,26 +142,26 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the array of wavelengths across which thermal emission spectrum will be computed
+        wavelength_array : numpy array of floats
+            the array of wavelengths across which thermal emission spectrum will be computed
 
-            emissivity_array : numpy array of floats
-                the array of emissivity spectrum for the structure that you will compute the thermal emission of
+        emissivity_array : numpy array of floats
+            the array of emissivity spectrum for the structure that you will compute the thermal emission of
 
         Attributes
         ----------
-            blackbody_spectrum : numpy array of floats
-                Planck's blackbody spectrum for a given temperature
+        blackbody_spectrum : numpy array of floats
+            Planck's blackbody spectrum for a given temperature
 
-            thermal_emission_array : numpy array of floats
-                thermal emission spectrum of structure for a given temperature
+        thermal_emission_array : numpy array of floats
+            thermal emission spectrum of structure for a given temperature
 
         References
         ----------
-            blackbody spectrum : Eq. (13) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        blackbody spectrum : Eq. (13) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
-            thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
-            with $\theta=0$
+        thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        with $\theta=0$
         """
         # speed of light in SI
         c = 299792458
@@ -149,15 +191,15 @@ class Therml:
 
         Attributes
         ----------
-            blackbody_power_density : float
-                total power density radiated into a hemisphere of a blackbody at a given temperature
+        self.blackbody_power_density : float
+            total power density radiated into a hemisphere of a blackbody at a given temperature
 
-            power_density : float
-                total power density radiated by structure at a given temperature
+        self.power_density : float
+            total power density radiated by structure at a given temperature
 
         References
         ----------
-            Equation (15) and (16) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        Equation (15) and (16) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
 
@@ -183,18 +225,18 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the wavelengths over which the power density spectrum has been computed
+        wavelength_array : numpy array of floats
+            the wavelengths over which the power density spectrum has been computed
 
         Attributes
         ----------
 
-            self.power_density_gradient : numpy array of floats (will be computed by this function)
-                the gradient vector related to the total power density wrt changes in thicknesses of each layer
+        self.power_density_gradient : numpy array of floats (will be computed by this function)
+            the gradient vector related to the total power density wrt changes in thicknesses of each layer
 
         References
         ----------
-            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+        Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
 
         """
         _ngr = len(self.thermal_emission_gradient_array[0, :])
@@ -211,17 +253,17 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the array of wavelengths over which you will compute the photopic luminosity
+        wavelength_array : numpy array of floats
+            the array of wavelengths over which you will compute the photopic luminosity
 
         Attributes
         ----------
-            photopic_luminosity_array : numpy array of floats
-                the array of photopic luminosity values corresponding to each value of wavelength_array
+        self.photopic_luminosity_array : numpy array of floats
+            the array of photopic luminosity values corresponding to each value of wavelength_array
 
         References
         ----------
-            Data taken from http://www.cvrl.org/database/data/lum/linCIE2008v2e_5.htm
+        Data taken from http://www.cvrl.org/database/data/lum/linCIE2008v2e_5.htm
         """
         a = 1.02433
         b = 2.59462e14
@@ -234,25 +276,25 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the wavelengths over which the thermal emission spectrum is known
+        wavelength_array : numpy array of floats
+            the wavelengths over which the thermal emission spectrum is known
 
         Attributes
         ----------
 
-            thermal_emission_array : numpy array of floats (already assigned)
-                the thermal emission spectrum for each value of wavelength array for the stpv structure
+        thermal_emission_array : numpy array of floats (already assigned)
+            the thermal emission spectrum for each value of wavelength array for the stpv structure
 
-            lambda_bandgap : float (already assigned)
-                the bandgap wavelength -> upper limit on the integral for the stpv_power_density
+        lambda_bandgap : float (already assigned)
+            the bandgap wavelength -> upper limit on the integral for the stpv_power_density
 
-            stpv_power_density : float (will be computed by this function)
-                useful (sub-bandgap) power density radiated into a hemisphere
+        stpv_power_density : float (will be computed by this function)
+            useful (sub-bandgap) power density radiated into a hemisphere
 
 
         References
         ----------
-            Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
         # compute the useful power density spectrum
@@ -275,18 +317,17 @@ class Therml:
         """method to compute the power density from blackbody spectrum and thermal emission spectrum
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the wavelengths over which the power density spectrum has been computed
+        wavelength_array : numpy array of floats
+            the wavelengths over which the power density spectrum has been computed
 
         Attributes
         ----------
-
-            self.stpv_power_density_gradient : numpy array of floats (will be computed by this function)
-                the gradient vector related to the stpv power density wrt changes in thicknesses of each layer
+        self.stpv_power_density_gradient : numpy array of floats (will be computed by this function)
+            the gradient vector related to the stpv power density wrt changes in thicknesses of each layer
 
         References
         ----------
-            Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+        Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
 
         """
         _ngr = len(self.thermal_emission_gradient_array[0, :])
@@ -309,30 +350,30 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the wavelengths over which the thermal emission spectrum is known
+        wavelength_array : numpy array of floats
+            the wavelengths over which the thermal emission spectrum is known
 
         Attributes
         ----------
 
-            thermal_emission_array : numpy array of floats (already assigned)
-                the thermal emission spectrum for each value of wavelength array for the stpv structure
+        thermal_emission_array : numpy array of floats (already assigned)
+            the thermal emission spectrum for each value of wavelength array for the stpv structure
 
-            lambda_bandgap : float (already assigned)
-                the bandgap wavelength -> upper limit on the integral for the stpv_power_density
+        lambda_bandgap : float (already assigned)
+            the bandgap wavelength -> upper limit on the integral for the stpv_power_density
 
-            stpv_power_density : float (will be computed by this function)
-                useful (sub-bandgap) power density radiated into a hemisphere
+        stpv_power_density : float (will be computed by this function)
+            useful (sub-bandgap) power density radiated into a hemisphere
 
-            power_density : float (will be computed by this function)
-                total power density radiated into a hemisphere
+        power_density : float (will be computed by this function)
+            total power density radiated into a hemisphere
 
-            stpv_spectral_efficiency : float (will be computed by this function)
-                spectral efficiency of an stpv emitter
+        stpv_spectral_efficiency : float (will be computed by this function)
+            spectral efficiency of an stpv emitter
 
         References
         ----------
-            Equation (18) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
+        Equation (18) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         """
 
@@ -346,17 +387,17 @@ class Therml:
 
         Arguments
         ---------
-            wavelength_array : numpy array of floats
-                the wavelengths over which the thermal emission spectrum is known
+        wavelength_array : numpy array of floats
+            the wavelengths over which the thermal emission spectrum is known
 
         Attributes
         ----------
-            self.stpv_spectral_efficiency_gradient : numpy array of floats (will be computed by this function)
-                the gradient vector related to the spectral efficiency wrt changes in thicknesses of each layer
+        self.stpv_spectral_efficiency_gradient : numpy array of floats (will be computed by this function)
+            the gradient vector related to the spectral efficiency wrt changes in thicknesses of each layer
 
         References
         ----------
-            Equation (4) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+        Equation (4) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
 
         """
         # get the number of elements in the gradient
@@ -404,13 +445,13 @@ class Therml:
         Attributes
         ----------
 
-        thermal_emission_array : numpy array of floats (already assigned)
+        self.thermal_emission_array : numpy array of floats (already assigned)
             the thermal emission spectrum for each value of wavelength array for the stpv structure
 
-        photopic_luminosity_array : numpy array of floats (can be computed by calling self._compute_photopic_luminosity(wavelength_array))
+        self.photopic_luminosity_array : numpy array of floats (can be computed by calling self._compute_photopic_luminosity(wavelength_array))
             photopic luminosity function values corresponding to wavelength_array
 
-        luminous_efficiency : float (will be computed by this function)
+        self.luminous_efficiency : float (will be computed by this function)
             the spectral efficiency of the incandescent source
 
         References
