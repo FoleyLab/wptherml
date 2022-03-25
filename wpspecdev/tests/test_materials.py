@@ -10,6 +10,40 @@ import sys
 
 material_test = wpspecdev.Materials()
 
+def test_material_from_file():
+    """tests material_from_file method using filenames for the SiO2 and TiN files, 
+       specifically "SiO2_ir.txt" using tabulated n and k at lambda=636 nm of 6.359999999E-7 1.45693 0.00000
+       and "TiN_ellipsometry_data.txt" using tabulated n and k at lambda=1106 nm of 1.106906906906907e-06 2.175019337515494 5.175973473259225
+    """
+
+    _expected_sio2_n = 1.45693
+    _expected_sio2_k = 0.00000
+
+    _expected_tin_n = 2.175019337515494 
+    _expected_tin_k = 5.175973473259225
+
+    # instance for SiO2 test
+    material_test._create_test_multilayer(central_wavelength=636e-9)
+    material_test.material_from_file(1, "SiO2_ir.txt")
+    
+    _result_sio2_n = np.real(material_test._refractive_index_array[1, 1])
+    _result_sio2_k = np.imag(material_test._refractive_index_array[1, 1])
+
+    # instance for TiN test
+    material_test._create_test_multilayer(central_wavelength=1.106906906906907e-06)
+    # define central layer as TiN
+    material_test.material_from_file(1, "TiN_ellipsometry_data.txt")
+
+    _result_tin_n = np.real(material_test._refractive_index_array[1, 1])
+    _result_tin_k = np.imag(material_test._refractive_index_array[1, 1])
+
+    assert np.isclose(_result_sio2_n, _expected_sio2_n, 1e-3)
+    assert np.isclose(_result_sio2_k, _expected_sio2_k, 1e-3)
+    assert np.isclose(_result_tin_n, _expected_tin_n, 1e-3)
+    assert np.isclose(_result_tin_k, _expected_tin_k, 1e-3)
+
+
+
 
 def test_material_sio2():
     """tests material_sio2 method using tabulated n and k at lambda=636 nm
@@ -22,6 +56,8 @@ def test_material_sio2():
     material_test._create_test_multilayer(central_wavelength=636e-9)
     # define central layer as siO2
     material_test.material_SiO2(1)
+
+
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
     result_k = np.imag(material_test._refractive_index_array[1, 1])

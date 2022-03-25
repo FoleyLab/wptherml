@@ -82,11 +82,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self._compute_stpv_spectral_efficiency(self.wavelength_array)
             self._compute_luminous_efficiency(self.wavelength_array)
 
-            print(" Your spectra have been computed! \N{fire} ")
+            print(" Your therml spectra have been computed! \N{fire} ")
 
         # treat cooling specially because we need emissivity at lots of angles!
         if "cooling" in args:
-            print("Hi I'm doing cooling!")
             args = {k.lower(): v for k, v in args.items()}
             self._parse_therml_input(args)
 
@@ -225,6 +224,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             # to avoid any conflicts with variation in cases
             # given by the user
             _lm = self.material_array[i].lower()
+            # keep the original string too in case it is a file name
+            _original_string = self.material_array[i]
 
             # check all possible values of the material string
             # and set material as appropriate.
@@ -270,9 +271,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_TiO2(i)
             elif _lm == "w":
                 self.material_W(i)
-            # default is SiO2
+            # if we don't match one of these strings, then we assume the user has passed
+            # a filename
             else:
-                self.material_SiO2(i)
+                self.material_from_file(i, _original_string)
 
     def compute_spectrum(self):
         """computes the following attributes:
