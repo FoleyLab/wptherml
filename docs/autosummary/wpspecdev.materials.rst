@@ -33,6 +33,7 @@
       ~Materials.material_TiN
       ~Materials.material_TiO2
       ~Materials.material_W
+      ~Materials.material_from_file
       ~Materials.material_polystyrene
       ~Materials.material_static_refractive_index
    

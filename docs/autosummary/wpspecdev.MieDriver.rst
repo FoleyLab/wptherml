@@ -35,6 +35,7 @@
       ~MieDriver.material_TiN
       ~MieDriver.material_TiO2
       ~MieDriver.material_W
+      ~MieDriver.material_from_file
       ~MieDriver.material_polystyrene
       ~MieDriver.material_static_refractive_index
       ~MieDriver.parse_input

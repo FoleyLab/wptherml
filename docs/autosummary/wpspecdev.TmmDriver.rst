@@ -41,6 +41,7 @@
       ~TmmDriver.material_TiN
       ~TmmDriver.material_TiO2
       ~TmmDriver.material_W
+      ~TmmDriver.material_from_file
       ~TmmDriver.material_polystyrene
       ~TmmDriver.material_static_refractive_index
       ~TmmDriver.parse_input
