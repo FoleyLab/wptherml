@@ -7,7 +7,8 @@ To do a developmental install, type
 
 Dependencies
 **************
-You need to install `numpy`
+You need to install `numpy`, `scipy`, `sys`.
+We recommend `matplotlib`, `jupyter`, and `pytest`.
 
 Subheader
 -------------------
