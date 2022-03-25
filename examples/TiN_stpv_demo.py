@@ -5,20 +5,15 @@ from matplotlib import pyplot as plt
 import numpy as np
 
 #test_args = {
-#    "wavelength_list": [300e-9, 6000e-9, 1000],
-#    "Material_List": ["Air", "TiN", "Air"],
-#    "Thickness_List" : [0, 400e-9, 0],
-#    "temperature": 1700,
-#    "therml": True, 
-#    "cooling": True,
-#}
+### Define structure!
 test_args = {
-    "wavelength_list": [300e-9, 60000e-9, 5000],
-    "material_list": ["Air", "TiN", "Air"],
-    "thickness_list": [0, 230e-9, 0],
-    "temperature": 300,
-    "cooling": True,
+
+        'Material_List': ['Air', 'SiO2', 'HfO2', 'SiO2', 'HfO2', 'SiO2', 'HfO2', 'SiO2', 'Ag', 'Air'],
+        'Thickness_List': [0, 230e-9, 485e-9, 688e-9, 13e-9, 73e-9, 34e-9, 54e-9, 200e-9, 0],
+        'Lambda_List': [300e-9, 20000e-9, 1000],
+        'Cooling': True
 }
+     
 sf = wpspecdev.SpectrumFactory()  
 test = sf.spectrum_factory('Tmm', test_args)
 
@@ -27,16 +22,18 @@ test = sf.spectrum_factory('Tmm', test_args)
 #print(test.stpv_power_density)
 #print(test.stpv_spectral_efficiency)
 
-#plt.plot(test.wavelength_array, test.thermal_emission_array, 'red')
-#plt.plot(test.wavelength_array, test.blackbody_spectrum, 'black')
-#plt.show()
+plt.plot(test.wavelength_array, test.thermal_emission_array, 'red')
+plt.plot(test.wavelength_array, test.blackbody_spectrum, 'black')
+plt.plot(test.wavelength_array, test._solar_spectrum, 'blue')
+plt.plot(test.wavelength_array, test._atmospheric_transmissivity, 'cyan')
+plt.show()
 
 #test.compute_stpv()
 #test.compute_stpv_gradient()
 #print(test.power_density_gradient)
 #print(test.stpv_spectral_efficiency_gradient)
 
-test.compute_cooling_gradient()
+#test.compute_cooling_gradient()
 print("printing the radiated solar power gradient")
 print(test.solar_radiated_power_gradient)
 
