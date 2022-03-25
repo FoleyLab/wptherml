@@ -12,6 +12,6 @@ Data for distances
 
     wpspecdev.MieDriver
 
-    wpspecdev.therml
+    wpspecdev.Therml
 
-    wpspecdev.materials
+    wpspecdev.Materials
