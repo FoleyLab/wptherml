@@ -39,7 +39,6 @@ test = sf.spectrum_factory('Tmm', test_args)
 test.compute_cooling_gradient()
 print("printing the radiated solar power gradient")
 print(test.solar_radiated_power_gradient)
-<<<<<<< HEAD
 
 # define a displacement in thickness of SiO2
 _delta_d_sio2 = 1e-9
@@ -82,5 +81,3 @@ print("PRINTING ANALYTIC INFO")
 print("P_sun'",test.solar_radiated_power_gradient)
 print("P_rad'",test.thermal_radiated_power_gradient )
 print("P_atm'",test.atmospheric_radiated_power_gradient)
-=======
->>>>>>> c511dc19dd6330ca907db47f82ccff8d78d5ede5

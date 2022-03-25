@@ -1,29 +1,22 @@
-﻿wpspecdev.therml
+﻿wpspecdev.Therml
 ================
 
-.. automodule:: wpspecdev.therml
+.. currentmodule:: wpspecdev
+
+.. autoclass:: Therml
 
    
-   
-   
+   .. automethod:: __init__
 
    
-   
-   
-
-   
-   
-   .. rubric:: Classes
+   .. rubric:: Methods
 
    .. autosummary::
    
-      Therml
+      ~Therml.__init__
    
    
 
    
    
    
-
-
-

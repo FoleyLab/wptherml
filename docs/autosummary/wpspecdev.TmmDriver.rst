@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~TmmDriver.__init__
+      ~TmmDriver.compute_cooling
       ~TmmDriver.compute_cooling_gradient
       ~TmmDriver.compute_explicit_angle_spectrum
       ~TmmDriver.compute_explicit_angle_spectrum_gradient
