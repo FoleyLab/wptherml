@@ -7,6 +7,7 @@ wpspecdev
 [![Open Source Love](https://firstcontributions.github.io/open-source-badges/badges/open-source-v1/open-source.svg)](https://github.com/firstcontributions/open-source-badges)
 [![Github Downloads All Releases](https://img.shields.io/github/downloads/FoleyLab/wpspecdev/total)](https://github.com/FoleyLab/wpspecdev/releases)
 [![Release to PyPI](https://github.com/FoleyLab/wpspecdev/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/FoleyLab/wpspecdev/actions/workflows/release.yml)
+[![Documentation Status](https://readthedocs.org/projects/wpspecdev/badge/?version=latest)](https://wpspecdev.readthedocs.io/en/latest/?badge=latest)
 
 A python package for modeling light-matter interactions in nanoscale and molecular materials!
 
