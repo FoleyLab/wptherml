@@ -54,7 +54,6 @@ class Materials:
             # skip over redundant values
             if new_wl_val<=wl_val:
                 wl_val = new_wl_val
-                print("skipping element",i)
             else:
                 unique_index_array.append(i)
                 wl_val = new_wl_val
@@ -68,6 +67,25 @@ class Materials:
         self._refractive_index_array[:, layer_number] = (
             np.ones(len(self.wavelength_array), dtype=complex) * 1.33
         )
+
+    def insert_layer(self, layer_number):
+        """ insert an air layer between layer_number-1 and layer_number
+            e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
+            and you issue insert_layer(1), the new structure will be 
+            Air/Air/SiO2/HfO2/Ag/Air
+            if you issue insert_layer(2), the new structure will be
+            Air/SiO2/Air/HfO2/Ag/Air
+        
+        """
+        _nwl = len(self._refractive_index_array[:,0])
+        _nl = len(self._refractive_index_array[0,:])
+        _temp_ri_array = np.copy(self._refractive_index_array)
+        _new_ri_array = np.zeros((_nwl, _nl+1), dtype=complex)
+        _new_air_layer = np.ones(_nwl, dtype=complex) * 1.0
+        _new_ri_array[:,:layer_number] = _temp_ri_array[:,:layer_number]
+        _new_ri_array[:,layer_number] = _new_air_layer
+        _new_ri_array[:,layer_number+1:] = _temp_ri_array[:,layer_number:]
+        self._refractive_index_array = np.copy(_new_ri_array)
 
     def material_Air(self, layer_number):
         """ defines the refractive index layer of layer_number to be air 
@@ -114,12 +132,18 @@ class Materials:
             # file_path[:,0] -> wavelengths in meters
             # file_path[:,1] -> real part of the refractive index
             # file_path[:,2] -> imaginary part of the refractive index
-            n_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 1], k=1
-            )
-            k_spline = InterpolatedUnivariateSpline(
-                file_data[:, 0], file_data[:, 2], k=1
-            )
+            # now read Ag data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+
+            # sometimes there are duplicate wavelength, n, and k entries 
+            # in a data set; we want only the unique elements
+            idx = self._find_unique_ri_file_data(file_data[:,0])
+
+            n_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 1], k=1)
+            k_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 2], k=1)
 
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
@@ -980,7 +1004,6 @@ class Materials:
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Si_Shkondin.txt"
 
-            print("read from ", file_path)
             # now read Si data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -1067,7 +1090,6 @@ class Materials:
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Re_Palik.txt"
 
-            print("read from ", file_path)
             # now read Re data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -1150,7 +1172,6 @@ class Materials:
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Ag_Yang.txt"
 
-            print("read from ", file_path)
             # now read Ag data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -1347,7 +1368,6 @@ class Materials:
         _expected_value = 1325400000.
         _spline_value = _solar_spline(615e-9)
         assert np.isclose(_expected_value, _spline_value) 
-        print("getting solar spectrum")
         return _solar_spline(self.wavelength_array)
             
     def _read_Atmospheric_Transmissivity(self):
@@ -1390,5 +1410,4 @@ class Materials:
         _expected_value = 0.561289
         _spline_value = _atrans_spline(7.1034e-6)
         assert np.isclose(_expected_value, _spline_value) 
-        print(" getting atmospheric transmissivity")
         return _atrans_spline(self.wavelength_array)

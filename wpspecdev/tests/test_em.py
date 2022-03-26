@@ -10,6 +10,76 @@ import sys
 
 sf = wpspecdev.SpectrumFactory()
 
+def test_insert_layer():
+    test_1_args = {
+        "wavelength_list": [501e-9, 501e-9, 1],
+        "material_list": [
+            "Air",
+            "TiO2",
+            "SiO2",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 100e-9, 0],
+    }
+
+    test_2_args = {
+        "wavelength_list": [501e-9, 501e-9, 1],
+        "material_list": [
+            "Air",
+            "TiO2",
+            "SiO2",
+            "Ag",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 100e-9, 5e-9, 0],
+    }
+
+    test1 = sf.spectrum_factory("Tmm", test_1_args)
+    test2 = sf.spectrum_factory("Tmm", test_2_args)
+
+    test1.insert_layer(3, 5e-9)
+    test1.material_Ag(3)
+    test1.compute_spectrum()
+
+    assert np.allclose(test1.reflectivity_array, test2.reflectivity_array)
+    assert np.allclose(test1.transmissivity_array, test2.transmissivity_array)
+    assert np.allclose(test1.emissivity_array, test2.emissivity_array)
+
+
+def test_remove_layer():
+    test_1_args = {
+        "wavelength_list": [501e-9, 501e-9, 1],
+        "material_list": [
+            "Air",
+            "TiO2",
+            "SiO2",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 100e-9, 0],
+    }
+
+    test_2_args = {
+        "wavelength_list": [501e-9, 501e-9, 1],
+        "material_list": [
+            "Air",
+            "TiO2",
+            "SiO2",
+            "Ag",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 100e-9, 5e-9, 0],
+    }
+
+    test1 = sf.spectrum_factory("Tmm", test_1_args)
+    test2 = sf.spectrum_factory("Tmm", test_2_args)
+
+    test2.remove_layer(3)
+    test2.compute_spectrum()
+
+    assert np.allclose(test1.reflectivity_array, test2.reflectivity_array)
+    assert np.allclose(test1.transmissivity_array, test2.transmissivity_array)
+    assert np.allclose(test1.emissivity_array, test2.emissivity_array)
+
 
 def test_compute_spectrum():
     """tests public method in TmmDriver compute_spectrum()
