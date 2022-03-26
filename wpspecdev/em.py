@@ -91,9 +91,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
             # get \epsilon_s(\lambda, \theta) and \epsilon_s(\lambda, \theta) for thermal radiation
             self.compute_explicit_angle_spectrum()
+            print(" Your angle-dependent spectra have been computed! \N{smiling face with sunglasses} ")
 
             # call _compute_thermal_radiated_power( ) function
-            self.thermal_radiated_power = self._compute_thermal_radiated_power(
+            self.radiative_cooling_power = self._compute_thermal_radiated_power(
                 self.emissivity_array_s,
                 self.emissivity_array_p,
                 self.theta_vals,
@@ -102,7 +103,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             )
 
             # call _compute_atmospheric_radiated_power() function
-            self.atmospheric_radiated_power = self._compute_atmospheric_radiated_power(
+            self.atmospheric_warming_power = self._compute_atmospheric_radiated_power(
                 self._atmospheric_transmissivity,
                 self.emissivity_array_s,
                 self.emissivity_array_p,
@@ -119,12 +120,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.polarization = "p"
             self.compute_spectrum()
             solar_absorptivity_p = self.emissivity_array
-            self.solar_radiated_power = self._compute_solar_radiated_power(
+            self.solar_warming_power = self._compute_solar_radiated_power(
                 self._solar_spectrum,
                 solar_absorptivity_s,
                 solar_absorptivity_p,
                 self.wavelength_array,
             )
+            self.net_cooling_power = self.radiative_cooling_power - self.atmospheric_warming_power - self.solar_warming_power
+            print(" Your radiative cooling quantities have been computed! \N{smiling face with sunglasses} ")
 
             # call _compute_solar_radiated_power() function
 
@@ -275,6 +278,66 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             # a filename
             else:
                 self.material_from_file(i, _original_string)
+
+
+    def remove_layer(self, layer_number):
+        """ remove layer number layer_number from your stack.
+            e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
+            and you issue remove_layer(2), the new structrure will be
+            Air/SiO2/Ag/Air       
+        """
+        self.number_of_layers -= 1
+        _nwl = len(self._refractive_index_array[:,0])
+        _nl = len(self._refractive_index_array[0,:])
+        _temp_ri_array = np.copy(self._refractive_index_array)
+        _temp_thickness_array = np.copy(self.thickness_array)
+
+        _new_ri_array = np.zeros((_nwl, _nl-1), dtype=complex)
+        _new_thickness_array = np.zeros(_nl-1)
+
+        _new_ri_array[:, :layer_number] = _temp_ri_array[:, :layer_number]
+        _new_thickness_array[:layer_number] = _temp_thickness_array[:layer_number]
+
+        _new_ri_array[:, layer_number:] = _temp_ri_array[:, layer_number+1:]
+        _new_thickness_array[layer_number:] = _temp_thickness_array[layer_number+1:]
+
+        self._refractive_index_array = np.copy(_new_ri_array)
+        self.thickness_array = np.copy(_new_thickness_array)
+
+
+
+    def insert_layer(self, layer_number, layer_thickness):
+        """ insert an air layer between layer_number-1 and layer_number
+            e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
+            and you issue insert_layer(1), the new structure will be 
+            Air/Air/SiO2/HfO2/Ag/Air
+            if you issue insert_layer(2), the new structure will be
+            Air/SiO2/Air/HfO2/Ag/Air
+        
+        """
+        self.number_of_layers += 1
+        _nwl = len(self._refractive_index_array[:,0])
+        _nl = len(self._refractive_index_array[0,:])
+        _temp_ri_array = np.copy(self._refractive_index_array)
+        _temp_thickness_array = np.copy(self.thickness_array)
+
+        _new_ri_array = np.zeros((_nwl, _nl+1), dtype=complex)
+        _new_thickness_array = np.zeros(_nl+1)
+        _new_air_layer = np.ones(_nwl, dtype=complex) * 1.0
+
+        _new_ri_array[:,:layer_number] = _temp_ri_array[:,:layer_number]
+        _new_thickness_array[:layer_number] = _temp_thickness_array[:layer_number]
+
+        _new_ri_array[:,layer_number] = _new_air_layer
+        _new_thickness_array[layer_number] = layer_thickness
+
+        _new_ri_array[:,layer_number+1:] = _temp_ri_array[:,layer_number:]
+        _new_thickness_array[layer_number+1:] = _temp_thickness_array[layer_number:]
+
+        self._refractive_index_array = np.copy(_new_ri_array)
+        self.thickness_array = np.copy(_new_thickness_array)
+        print(" A ",layer_thickness," m air layer has been inserted into layer numbe ",layer_number)
+        print(" Use the `material_X(",layer_number,") command to define the material of this new layer!")
 
     def compute_spectrum(self):
         """computes the following attributes:
@@ -729,16 +792,16 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         
         Attributes
         ----------
-        self.thermal_radiated_power : float
+        self.radiative_cooling_power : float
             the thermal power radiated by a structure into the universe (P_rad)
 
-        self.atmospheric_radiated_power : float
+        self.atmospheric_warming_power : float
             the thermal power radiated by the atmosphere and absorbed by a structure (P_atm)
 
-        self.solar_radiated_power : float
+        self.solar_warming_power : float
             the thermal power radiated by the sun and absorbed by a structure (P_sun)
 
-        self.cooling_power : float
+        self.net_cooling_power : float
             P_rad - P_atm - P_sum ... if positive, the structure is net cooling if negative, it is net heating
 
         Returns
@@ -750,7 +813,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.compute_explicit_angle_spectrum()
 
         # call _compute_thermal_radiated_power( ) function
-        self.thermal_radiated_power = self._compute_thermal_radiated_power(
+        self.radiative_cooling_power = self._compute_thermal_radiated_power(
             self.emissivity_array_s,
             self.emissivity_array_p,
             self.theta_vals,
@@ -759,7 +822,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         )
 
         # call _compute_atmospheric_radiated_power() function
-        self.atmospheric_radiated_power = self._compute_atmospheric_radiated_power(
+        self.atmospheric_warming_power = self._compute_atmospheric_radiated_power(
             self._atmospheric_transmissivity,
             self.emissivity_array_s,
             self.emissivity_array_p,
@@ -776,26 +839,26 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.polarization = "p"
         self.compute_spectrum()
         solar_absorptivity_p = self.emissivity_array
-        self.solar_radiated_power = self._compute_solar_radiated_power(
+        self.solar_warming_power = self._compute_solar_radiated_power(
             self._solar_spectrum,
             solar_absorptivity_s,
             solar_absorptivity_p,
             self.wavelength_array,
         )
-        self.cooling_power = self.thermal_radiated_power - self.solar_radiated_power - self.atmospheric_radiated_power
+        self.net_cooling_power = self.radiative_cooling_power - self.solar_warming_power - self.atmospheric_warming_power
 
     def compute_cooling_gradient(self):
 
         # get the gradient of the emissivity vs angle and wavelength
         self.compute_explicit_angle_spectrum_gradient()
-        self.thermal_radiated_power_gradient = self._compute_thermal_radiated_power_gradient(
+        self.radiative_cooling_power_gradient = self._compute_thermal_radiated_power_gradient(
             self.emissivity_gradient_array_s, 
             self.emissivity_gradient_array_p, 
             self.theta_vals, self.theta_weights, 
             self.wavelength_array
         )
 
-        self.atmospheric_radiated_power_gradient = self._compute_atmospheric_radiated_power_gradient(
+        self.atmospheric_warming_power_gradient = self._compute_atmospheric_radiated_power_gradient(
             self._atmospheric_transmissivity,
             self.emissivity_gradient_array_s, 
             self.emissivity_gradient_array_p, 
@@ -815,7 +878,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.compute_spectrum_gradient()
         solar_absorptivity_p = self.emissivity_gradient_array
         
-        self.solar_radiated_power_gradient = self._compute_solar_radiated_power_gradient(self._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, self.wavelength_array)
+        self.solar_warming_power_gradient = self._compute_solar_radiated_power_gradient(self._solar_spectrum, solar_absorptivity_s, solar_absorptivity_p, self.wavelength_array)
+        self.net_cooling_power_gradient = self.radiative_cooling_power_gradient - self.solar_warming_power_gradient - self.atmospheric_warming_power_gradient
 
     def _compute_kz(self):
         """computes the z-component of the wavevector in each layer of the stack

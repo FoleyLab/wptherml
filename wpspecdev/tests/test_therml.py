@@ -157,22 +157,22 @@ def test_compute_cooling():
     test = sf.spectrum_factory("Tmm", test_args)
     test._refractive_index_array[:, 1] = 2.4 + 0.2j
 
-    _expected_thermal_radiated_power = 40.44509251986298
-    _expected_atmospheric_radiated_power = 21.973817620650525
-    _expected_solar_radiated_power = 426.9132402277394
+    _expected_radiative_cooling_power = 40.44509251986298
+    _expected_atmospheric_warming_power = 21.973817620650525
+    _expected_solar_warming_power = 426.9132402277394
 
     test.compute_cooling()
 
     test.compute_explicit_angle_spectrum()
 
     assert np.isclose(
-        _expected_thermal_radiated_power, test.thermal_radiated_power, 1e-5
+        _expected_radiative_cooling_power, test.radiative_cooling_power, 1e-5
     )
     assert np.isclose(
-        _expected_atmospheric_radiated_power, test.atmospheric_radiated_power, 1e-5
+        _expected_atmospheric_warming_power, test.atmospheric_warming_power, 1e-5
     )
     assert np.isclose(
-        _expected_solar_radiated_power, test.solar_radiated_power, 1e-5
+        _expected_solar_warming_power, test.solar_warming_power, 1e-5
     )
 
 
@@ -201,29 +201,29 @@ def test_compute_cooling_gradient():
     test.thickness_array[1] += _delta_d_sio2
     test.compute_cooling()
 
-    _solar_power_f = test.solar_radiated_power
-    _emitted_power_f = test.thermal_radiated_power
-    _atmospheric_power_f = test.atmospheric_radiated_power
+    _solar_power_f = test.solar_warming_power
+    _emitted_power_f = test.radiative_cooling_power
+    _atmospheric_power_f = test.atmospheric_warming_power
 
     # get backward solar power
     test.thickness_array[1] -= 2 * _delta_d_sio2
     test.compute_cooling()
-    _solar_power_b = test.solar_radiated_power
-    _emitted_power_b = test.thermal_radiated_power
-    _atmospheric_power_b = test.atmospheric_radiated_power
+    _solar_power_b = test.solar_warming_power
+    _emitted_power_b = test.radiative_cooling_power
+    _atmospheric_power_b = test.atmospheric_warming_power
 
-    _numeric_solar_power_gradient = (_solar_power_f-_solar_power_b)/ (2 * _delta_d_sio2)
-    _numeric_emitted_power_gradient = (_emitted_power_f-_emitted_power_b) / (2 * _delta_d_sio2)
-    _numeric_atmospheric_power_gradient = (_atmospheric_power_f-_atmospheric_power_b) / (2 * _delta_d_sio2)
+    _numeric_solar_warming_power_gradient = (_solar_power_f-_solar_power_b)/ (2 * _delta_d_sio2)
+    _numeric_radiative_cooling_power_gradient = (_emitted_power_f-_emitted_power_b) / (2 * _delta_d_sio2)
+    _numeric_atmospheric_warming_power_gradient = (_atmospheric_power_f-_atmospheric_power_b) / (2 * _delta_d_sio2)
 
     # normalize the gradients by the numeric gradient
-    _normalized_analytic_solar_power_gradient = test.solar_radiated_power_gradient / _numeric_solar_power_gradient
-    _normalized_analytic_emitted_power_gradient = test.thermal_radiated_power_gradient / _numeric_emitted_power_gradient
-    _normalized_analytic_atmospheric_power_gradient = test.atmospheric_radiated_power_gradient / _numeric_atmospheric_power_gradient
+    _normalized_analytic_solar_power_gradient = test.solar_warming_power_gradient / _numeric_solar_warming_power_gradient
+    _normalized_analytic_emitted_power_gradient = test.radiative_cooling_power_gradient / _numeric_radiative_cooling_power_gradient
+    _normalized_analytic_atmospheric_power_gradient = test.atmospheric_warming_power_gradient / _numeric_atmospheric_warming_power_gradient
 
     # if the gradients are close, the normalized analytic gradient will be close to 1
     assert np.isclose(_normalized_analytic_solar_power_gradient[0], 1.0, 1e-3)
     assert np.isclose(_normalized_analytic_emitted_power_gradient[0], 1.0, 1e-3)
     assert np.isclose(_normalized_analytic_atmospheric_power_gradient[0], 1.0, 1e-3)
-    assert np.isclose(test.atmospheric_radiated_power_gradient, _numeric_atmospheric_power_gradient, 1e-2)
+    assert np.isclose(test.atmospheric_warming_power_gradient[0], _numeric_atmospheric_warming_power_gradient, 1e-2)
 
