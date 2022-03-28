@@ -477,7 +477,21 @@ class Therml:
         theta_weights,
         wavelength_array,
     ):
-        """Put docstring here!"""
+        """Method to compute the power radiated by the cooling structure
+        
+        Attributes
+        ----------
+        None
+
+        Returns
+        -------
+        P_rad
+
+        References
+        ----------
+        See Eq. (2) of https://www.nature.com/articles/nature13883
+        """
+        
         num_angles = len(theta_vals)
         self._compute_therml_spectrum(wavelength_array, emissivity_array_s[0,:])
 
@@ -505,7 +519,21 @@ class Therml:
         theta_weights,
         wavelength_array,
     ):
-        """Put docstring here!"""
+        """Method to compute the gradient of the power radiated by the cooling structure
+        
+        Attributes
+        ----------
+        None
+
+        Returns
+        -------
+        _emitted_thermal_spectrum_gradient
+
+        References
+        ----------
+        See Eq. (2) of https://www.nature.com/articles/nature13883
+        
+        """
         num_angles = len(theta_vals)
         # we don't care about the emissivity - just calling this for the blackbody spectrum
         self._compute_therml_spectrum(wavelength_array, emissivity_gradient_array_p[0,:,0])
@@ -540,7 +568,21 @@ class Therml:
         theta_weights,
         wavelength_array,
     ):
-        """Put docstring here!"""
+        """Method to compute the power radiated by the atmosphere and absorbed by cooling structure
+        
+        Attributes
+        ----------
+        None
+
+        Returns
+        -------
+        P_atm
+
+        References
+        ----------
+        See Eq. (3) of https://www.nature.com/articles/nature13883
+        
+        """
         num_angles = len(theta_vals)
 
         # make sure we are getting the blackbody spectrum of the atmosphere
@@ -580,7 +622,17 @@ class Therml:
         theta_weights,
         wavelength_array,
     ):
-        """Put docstring here!"""
+        """  Method to compute the gradient of the power radiated by the atmosphere and absorbed by the cooling structure
+
+        Attribute
+        ---------
+        None
+
+        Returns
+        -------
+        _absorbed_solar_spectrum_gradient
+        """
+
         _nth = len(theta_vals)
         _ngr = len(emissivity_gradient_array_p[0,0,:])
         _absorbed_atmospheric_radiation_gradient = np.zeros(_ngr)
@@ -618,7 +670,20 @@ class Therml:
     def _compute_solar_radiated_power(
         self, solar_spectrum, emissivity_array_s, emissivity_array_p, wavelength_array
     ):
-        """Put a good docstring here!"""
+        """Method to compute the solar power absorbed by the cooling structure
+        
+        Attributes
+        ----------
+        None
+
+        Returns
+        -------
+        P_sun
+
+        References
+        ----------
+        See Eq. (4) of https://www.nature.com/articles/nature13883
+        """
         # compute the absorbed solar spectrum
         _absorbed_solar_spectrum = (
             solar_spectrum * 0.5 * (emissivity_array_p + emissivity_array_s)
@@ -630,7 +695,20 @@ class Therml:
     def _compute_solar_radiated_power_gradient(
         self, solar_spectrum, emissivity_gradient_array_s, emissivity_gradient_array_p, wavelength_array
     ):
-        """Put a good docstring here!"""
+        """Method to compute the gradient of the solar power absorbed by the cooling structure
+        
+        Attributes
+        ----------
+        None
+
+        Returns
+        -------
+        _absorbed_solar_spectrum_gradient
+
+        References
+        ----------
+        See Eq. (4) of https://www.nature.com/articles/nature13883
+        """
         # get the dimension of the gradient vector
         _ngr = len(emissivity_gradient_array_s[0,:])
         _absorbed_solar_spectrum_gradient = np.zeros(_ngr)
