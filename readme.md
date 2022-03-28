@@ -11,6 +11,11 @@ wpspecdev
 
 A python package for modeling light-matter interactions in nanoscale and molecular materials!
 
+
+### [Quickstart](https://wpspecdev.readthedocs.io/en/latest/quickstart.html)
+
+### [Examples](https://github.com/FoleyLab/wpspecdev/tree/main/examples)
+
 ### Copyright
 Copyright (c) 2021, Foley Lab, William Paterson University
 
