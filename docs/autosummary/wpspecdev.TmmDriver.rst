@@ -22,6 +22,7 @@
       ~TmmDriver.compute_spectrum_gradient
       ~TmmDriver.compute_stpv
       ~TmmDriver.compute_stpv_gradient
+      ~TmmDriver.insert_layer
       ~TmmDriver.material_Ag
       ~TmmDriver.material_Air
       ~TmmDriver.material_Al
@@ -45,6 +46,7 @@
       ~TmmDriver.material_polystyrene
       ~TmmDriver.material_static_refractive_index
       ~TmmDriver.parse_input
+      ~TmmDriver.remove_layer
       ~TmmDriver.render_color
       ~TmmDriver.set_refractive_index_array
    

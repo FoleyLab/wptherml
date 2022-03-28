@@ -14,6 +14,7 @@
    .. autosummary::
    
       ~Materials.__init__
+      ~Materials.insert_layer
       ~Materials.material_Ag
       ~Materials.material_Air
       ~Materials.material_Al
