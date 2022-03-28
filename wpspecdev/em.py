@@ -162,12 +162,12 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # need to throw some exceptions if len(self.thickness_array)!=len(self.material_array)
         if "thickness_list" in args:
-            self.thickness_array = args["thickness_list"]
+            self.thickness_array = np.array(args["thickness_list"])
         # default structure
         else:
             print("  Thickness array not specified!")
             print("  Proceeding with default structure - optically thick W! ")
-            self.thickness_array = [0, 900e-9, 0]
+            self.thickness_array = np.array([0, 900e-9, 0]) 
 
         if "material_list" in args:
             self.material_array = args["material_list"]

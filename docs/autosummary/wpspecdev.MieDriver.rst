@@ -16,6 +16,7 @@
       ~MieDriver.__init__
       ~MieDriver.compute_hamiltonian
       ~MieDriver.compute_spectrum
+      ~MieDriver.insert_layer
       ~MieDriver.material_Ag
       ~MieDriver.material_Air
       ~MieDriver.material_Al
