@@ -304,7 +304,6 @@ class Materials:
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Ta2O5_Bright.txt"
 
-            print("read from ", file_path)
             # now read Ta2O5 data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -566,7 +565,6 @@ class Materials:
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/Au_IR.txt"
 
-            print("read from ", file_path)
             # now read Au data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -830,7 +828,6 @@ class Materials:
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/AlN_Kischkat.txt"
 
-            print("read from ", file_path)
             # now read AlN data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -917,7 +914,6 @@ class Materials:
                 elif wavelength_range == "ir" or wavelength_range == "long":
                     file_path = path + "data/W_Ordal.txt"
 
-            print("read from ", file_path)
             # now read W data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters
@@ -1255,7 +1251,6 @@ class Materials:
                     elif wavelength_range == "ir" or wavelength_range == "long":
                         file_path = path + "data/Pb_Ordal.txt"
 
-                print("read from ", file_path)
                 # now read Pb data into a numpy array
                 file_data = np.loadtxt(file_path)
                 # file_path[:,0] -> wavelengths in meters
