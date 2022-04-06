@@ -41,7 +41,7 @@ for layered isotropic media.  WPTherml was conceived and developed by the [Foley
 of Materials for Harnessing Heat", J. F. Varner, N. Eldabagh, D. Volta, R. Eldabagh, J. J. Foley IV, *Journal of Open Research Software*, **7**, 28 (2019).  The open-access software papaer can be accessed [here](https://openresearchsoftware.metajnl.com/articles/10.5334/jors.271/)!
 
 More details of the Transfer Matrix equations, along will the full mathematical formulation currently implemented in WPTherml, can be found in
-the [documentation](https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf).
+the [documentation](https://github.com/FoleyLab/wpspecdev/blob/main/docs/Equations.pdf).
 
 ## Quick Start
 - WPTherml is written in Python 3 and requires the numpy, scipy, and matplotlib packages.  Current installation of the Anaconda Python 3 package should provide all you need
