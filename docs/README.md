@@ -23,8 +23,12 @@ A configuration file for [Read The Docs](https://readthedocs.org/) (readthedocs.
 If you would like to use Read The Docs with `autodoc` (included automatically) and your package has dependencies, you will need to include those dependencies in your documentation yaml file (`docs/requirements.yaml`).
 
 # Original Release of WPTherml
+Version 2.0.0 of WPTherml features several syntax changes in addition to new features and restructuring of the underlying code.  
+Users desiring version 1.0.0 may still install the original release using pip as follows:
 
-Pioneering the design of materials for harnessing heat.
+`pip install wptherml==1.0.0`
+
+Basic usage of version 1.0.0 is described below.
 
 ## Overview
 WPTherml stands for **W**illiam **P**aterson University's tool for **Th**ermal **E**nergy and **R**adiation management with **M**ulti **L**ayer nanostructures.
