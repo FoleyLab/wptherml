@@ -43,66 +43,67 @@ class Materials:
             unique_index_array : array of ints
                 the array of the indices of the unique elements of the
                 refractive index file
-        
+
         """
-        
+
         wl_val = wl_array[0]
         unique_index_array = [0]
-        
+
         for i in range(1, len(wl_array)):
             new_wl_val = wl_array[i]
             # skip over redundant values
-            if new_wl_val<=wl_val:
+            if new_wl_val <= wl_val:
                 wl_val = new_wl_val
             else:
                 unique_index_array.append(i)
                 wl_val = new_wl_val
-                
+
         return unique_index_array
 
     def material_H2O(self, layer_number):
-        """ defines the refractive index layer of layer_number to be water 
-            assuming static refractive index of n = 1.33 + 0j 
+        """defines the refractive index layer of layer_number to be water
+        assuming static refractive index of n = 1.33 + 0j
         """
         self._refractive_index_array[:, layer_number] = (
             np.ones(len(self.wavelength_array), dtype=complex) * 1.33
         )
 
     def insert_layer(self, layer_number):
-        """ insert an air layer between layer_number-1 and layer_number
-            e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
-            and you issue insert_layer(1), the new structure will be 
-            Air/Air/SiO2/HfO2/Ag/Air
-            if you issue insert_layer(2), the new structure will be
-            Air/SiO2/Air/HfO2/Ag/Air
-        
+        """insert an air layer between layer_number-1 and layer_number
+        e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
+        and you issue insert_layer(1), the new structure will be
+        Air/Air/SiO2/HfO2/Ag/Air
+        if you issue insert_layer(2), the new structure will be
+        Air/SiO2/Air/HfO2/Ag/Air
+
         """
-        _nwl = len(self._refractive_index_array[:,0])
-        _nl = len(self._refractive_index_array[0,:])
+        _nwl = len(self._refractive_index_array[:, 0])
+        _nl = len(self._refractive_index_array[0, :])
         _temp_ri_array = np.copy(self._refractive_index_array)
-        _new_ri_array = np.zeros((_nwl, _nl+1), dtype=complex)
+        _new_ri_array = np.zeros((_nwl, _nl + 1), dtype=complex)
         _new_air_layer = np.ones(_nwl, dtype=complex) * 1.0
-        _new_ri_array[:,:layer_number] = _temp_ri_array[:,:layer_number]
-        _new_ri_array[:,layer_number] = _new_air_layer
-        _new_ri_array[:,layer_number+1:] = _temp_ri_array[:,layer_number:]
+        _new_ri_array[:, :layer_number] = _temp_ri_array[:, :layer_number]
+        _new_ri_array[:, layer_number] = _new_air_layer
+        _new_ri_array[:, layer_number + 1 :] = _temp_ri_array[:, layer_number:]
         self._refractive_index_array = np.copy(_new_ri_array)
 
     def material_Air(self, layer_number):
-        """ defines the refractive index layer of layer_number to be air 
-            assuming static refractive index of n = 1.0 + 0j 
+        """defines the refractive index layer of layer_number to be air
+        assuming static refractive index of n = 1.0 + 0j
         """
         self._refractive_index_array[:, layer_number] = (
             np.ones(len(self.wavelength_array), dtype=complex) * 1.0
         )
+
     def material_from_file(self, layer_number, file_name):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be 
+            """defines the refractive index of layer layer_number to be
                from a test file with name "file_name" where the text file is ordered:
                column 1: wavelength in meters, increasing order
                column 2: real part of refractive index corresponding to wavelengths in col 1
                column 3: imaginary part of refractive index corresponding to wavelengths in col 1
-               the file is expected to be in the directory $wpspecdir/wpspecdev/data
-               where $wpspecdir is the full path to the directory where you have wpspecdev installed
+               the file is expected to be in the directory $wpspecdir/wptherml/data
+               where $wpspecdir is the full path to the directory where you have wptherml installed
 
             Arguments
             ----------
@@ -138,12 +139,16 @@ class Materials:
             # file_path[:,1] -> real part of the refractive index
             # file_path[:,2] -> imaginary part of the refractive index
 
-            # sometimes there are duplicate wavelength, n, and k entries 
+            # sometimes there are duplicate wavelength, n, and k entries
             # in a data set; we want only the unique elements
-            idx = self._find_unique_ri_file_data(file_data[:,0])
+            idx = self._find_unique_ri_file_data(file_data[:, 0])
 
-            n_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 1], k=1)
-            k_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 2], k=1)
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[idx, 0], file_data[idx, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[idx, 0], file_data[idx, 2], k=1
+            )
 
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
@@ -494,7 +499,6 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
-
 
     def material_Au(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
@@ -1102,7 +1106,6 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-
     def material_Ag(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Ag
@@ -1174,101 +1177,104 @@ class Materials:
             # file_path[:,1] -> real part of the refractive index
             # file_path[:,2] -> imaginary part of the refractive index
 
-            # sometimes there are duplicate wavelength, n, and k entries 
+            # sometimes there are duplicate wavelength, n, and k entries
             # in a data set; we want only the unique elements
-            idx = self._find_unique_ri_file_data(file_data[:,0])
+            idx = self._find_unique_ri_file_data(file_data[:, 0])
 
-            n_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 1], k=1)
-            k_spline = InterpolatedUnivariateSpline(file_data[idx,0], file_data[idx, 2], k=1)
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[idx, 0], file_data[idx, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[idx, 0], file_data[idx, 2], k=1
+            )
 
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
-
     def material_Pb(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-                """defines the refractive index of layer layer_number to be Pb
-                Arguments
-                ----------
-                layer_number : int
-                specifies the layer of the stack that will be modelled as Pb
-                wavelength_range (optional) : str
-                specifies wavelength regime that is desired for modelling the material
-                Attributes
-                ----------
-                _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
-                Returns
-                -------
-                None
-                Examples
-                --------
-                >>> material_pb(1, wavelength_range="visible") -> layer 1 will be Pb from the Werner data set good from visible to 2.47 microns
-                >>> material_pb(2, wavelength_range="ir") -> layer 2 will be Pb from the ordal data set good until 667 microns
-                """
+            """defines the refractive index of layer layer_number to be Pb
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as Pb
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+            Returns
+            -------
+            None
+            Examples
+            --------
+            >>> material_pb(1, wavelength_range="visible") -> layer 1 will be Pb from the Werner data set good from visible to 2.47 microns
+            >>> material_pb(2, wavelength_range="ir") -> layer 2 will be Pb from the ordal data set good until 667 microns
+            """
 
-                # dictionary specific to W with wavelength range information corresponding to different
-                # data sets
-                data1 = {
-                    "file": "data/Pb_Werner.txt",
-                    "lower_wavelength": 1.758600000E-08,
-                    "upper_wavelength": 2.479684000E-06,
-                }
-                data2 = {
-                    "file": "data/Pb_Ordal.txt",
-                    "lower_wavelength": 0.00000066700000,
-                    "upper_wavelength": 0.00066700000000,
-                }
+            # dictionary specific to W with wavelength range information corresponding to different
+            # data sets
+            data1 = {
+                "file": "data/Pb_Werner.txt",
+                "lower_wavelength": 1.758600000e-08,
+                "upper_wavelength": 2.479684000e-06,
+            }
+            data2 = {
+                "file": "data/Pb_Ordal.txt",
+                "lower_wavelength": 0.00000066700000,
+                "upper_wavelength": 0.00066700000000,
+            }
 
-                shortest_wavelength = self.wavelength_array[0]
-                longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
+            shortest_wavelength = self.wavelength_array[0]
+            longest_wavelength = self.wavelength_array[self.number_of_wavelengths - 1]
 
+            if (
+                shortest_wavelength >= data1["lower_wavelength"]
+                and longest_wavelength <= data1["upper_wavelength"]
+            ):
+                file_path = path + data1["file"]
+
+            elif (
+                shortest_wavelength >= data2["lower_wavelength"]
+                and longest_wavelength <= data2["upper_wavelength"]
+            ):
+                file_path = path + data2["file"]
+
+            else:
+                file_path = path + data1["file"]
+
+            if override == "false":
+                # make sure the wavelength_range string is all  lowercase
+                wavelength_range = wavelength_range.lower()
                 if (
-                    shortest_wavelength >= data1["lower_wavelength"]
-                    and longest_wavelength <= data1["upper_wavelength"]
+                    wavelength_range == "visible"
+                    or wavelength_range == "short"
+                    or wavelength_range == "vis"
                 ):
-                    file_path = path + data1["file"]
+                    file_path = path + "data/Pb_Werner.txt"
 
-                elif (
-                    shortest_wavelength >= data2["lower_wavelength"]
-                    and longest_wavelength <= data2["upper_wavelength"]
-                ):
-                    file_path = path + data2["file"]
+                elif wavelength_range == "ir" or wavelength_range == "long":
+                    file_path = path + "data/Pb_Ordal.txt"
 
-                else:
-                    file_path = path + data1["file"]
+            # now read Pb data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
 
-                if override == "false":
-                    # make sure the wavelength_range string is all  lowercase
-                    wavelength_range = wavelength_range.lower()
-                    if (
-                        wavelength_range == "visible"
-                        or wavelength_range == "short"
-                        or wavelength_range == "vis"
-                    ):
-                        file_path = path + "data/Pb_Werner.txt"
-
-                    elif wavelength_range == "ir" or wavelength_range == "long":
-                        file_path = path + "data/Pb_Ordal.txt"
-
-                # now read Pb data into a numpy array
-                file_data = np.loadtxt(file_path)
-                # file_path[:,0] -> wavelengths in meters
-                # file_path[:,1] -> real part of the refractive index
-                # file_path[:,2] -> imaginary part of the refractive index
-                n_spline = InterpolatedUnivariateSpline(
-                    file_data[:, 0], file_data[:, 1], k=1
-                )
-                k_spline = InterpolatedUnivariateSpline(
-                    file_data[:, 0], file_data[:, 2], k=1
-                )
-
-                self._refractive_index_array[:, layer_number] = n_spline(
-                    self.wavelength_array
-                ) + 1j * k_spline(self.wavelength_array)
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
 
     def _read_CIE(self):
-        """ Reads CIE data and stores as attributes self.cie_cr, self.cie_cg, self.cie_cb
+        """Reads CIE data and stores as attributes self.cie_cr, self.cie_cg, self.cie_cb
 
         Arguments
         ----------
@@ -1276,7 +1282,7 @@ class Materials:
 
         References
         ----------
-        Equations 29-32 of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf 
+        Equations 29-32 of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
 
         Attributes
         ----------
@@ -1297,8 +1303,8 @@ class Materials:
         self._cie_cr = np.zeros_like(self.wavelength_array)
         self._cie_cg = np.zeros_like(self.wavelength_array)
         self._cie_cb = np.zeros_like(self.wavelength_array)
-        #)
-        # get path to the cie data 
+        # )
+        # get path to the cie data
         file_path = path + "data/cie_cmf.txt"
         # now read Rh data into a numpy array
         file_data = np.loadtxt(file_path)
@@ -1318,14 +1324,16 @@ class Materials:
         )
         # values of data file at 500 nm
         expected_values = np.array([0.0049, 0.3230, 0.2720])
-        spline_values = np.array([_cr_spline(500e-9), _cg_spline(500e-9), _cb_spline(500e-9)])
-        assert np.allclose(expected_values, spline_values) 
+        spline_values = np.array(
+            [_cr_spline(500e-9), _cg_spline(500e-9), _cb_spline(500e-9)]
+        )
+        assert np.allclose(expected_values, spline_values)
         self._cie_cr[:] = _cr_spline(self.wavelength_array)
         self._cie_cg[:] = _cg_spline(self.wavelength_array)
         self._cie_cb[:] = _cb_spline(self.wavelength_array)
 
     def _read_AM(self):
-        """ Reads AM1.5 data and returns an array of the AM1.5 data evaluated at each value of 
+        """Reads AM1.5 data and returns an array of the AM1.5 data evaluated at each value of
             self.wavelength_array
 
         Arguments
@@ -1344,10 +1352,10 @@ class Materials:
         -------
         1 x number_of_wavelengths array of floats
             Data corresponding the AM1.5 spectrum evaluated at each value of self.wavelength_array
-            
+
         """
-        
-        # get path to the AM data 
+
+        # get path to the AM data
         file_path = path + "data/scaled_AM_1_5.txt"
         # now read Rh data into a numpy array
         file_data = np.loadtxt(file_path)
@@ -1360,13 +1368,13 @@ class Materials:
 
         # values of data file at 615 nm
         # 0.000000615000000       1325400000.0000000000000000000000
-        _expected_value = 1325400000.
+        _expected_value = 1325400000.0
         _spline_value = _solar_spline(615e-9)
-        assert np.isclose(_expected_value, _spline_value) 
+        assert np.isclose(_expected_value, _spline_value)
         return _solar_spline(self.wavelength_array)
-            
+
     def _read_Atmospheric_Transmissivity(self):
-        """ Reads atmospherical transmissivity data and returns
+        """Reads atmospherical transmissivity data and returns
             an array of this data evaluated at each value of self.wavelength_array
 
         Arguments
@@ -1386,8 +1394,8 @@ class Materials:
         1 x number_of_wavelengths array of floats
             atmospheric transmissivity evaluated at each value of self.wavelength_array
         """
-        
-        # get path to the AM data 
+
+        # get path to the AM data
         file_path = path + "data/Atmospheric_transmissivity.txt"
         # now read Rh data into a numpy array
         file_data = np.loadtxt(file_path)
@@ -1395,7 +1403,7 @@ class Materials:
         # file_data[:,1] -> atmospheric transmissivity
 
         # get indices of unique elements
-        idx = self._find_unique_ri_file_data(file_data[:,0])
+        idx = self._find_unique_ri_file_data(file_data[:, 0])
 
         _atrans_spline = InterpolatedUnivariateSpline(
             file_data[idx, 0], file_data[idx, 1], k=1
@@ -1404,5 +1412,5 @@ class Materials:
         # values of data file at 7.1034e-06 meters (7.1034 microns) -> T = 0.561289
         _expected_value = 0.561289
         _spline_value = _atrans_spline(7.1034e-6)
-        assert np.isclose(_expected_value, _spline_value) 
+        assert np.isclose(_expected_value, _spline_value)
         return _atrans_spline(self.wavelength_array)
