@@ -3,12 +3,12 @@ Unit tests for the Materials class
 """
 
 # Import package, test suite, and other packages as needed
-import wpspecdev
+import wptherml
 import numpy as np
 import pytest
 import sys
 
-material_test = wpspecdev.Materials()
+material_test = wptherml.Materials()
 
 def test_material_from_file():
     """tests material_from_file method using filenames for the SiO2 and TiN files, 

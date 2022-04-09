@@ -3,12 +3,12 @@ Unit and regression test for the wpspec package.
 """
 
 # Import package, test suite, and other packages as needed
-import wpspecdev
+import wptherml
 import numpy as np
 import pytest
 import sys
 
 
-def test_wpspecdev_imported():
+def test_wptherml_imported():
     """Sample test, will always pass so long as import statement worked"""
-    assert "wpspecdev" in sys.modules
+    assert "wptherml" in sys.modules

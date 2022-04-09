@@ -101,8 +101,8 @@ class Materials:
                column 1: wavelength in meters, increasing order
                column 2: real part of refractive index corresponding to wavelengths in col 1
                column 3: imaginary part of refractive index corresponding to wavelengths in col 1
-               the file is expected to be in the directory $wpspecdir/wpspecdev/data
-               where $wpspecdir is the full path to the directory where you have wpspecdev installed
+               the file is expected to be in the directory $wpspecdir/wptherml/data
+               where $wpspecdir is the full path to the directory where you have wptherml installed
 
             Arguments
             ----------

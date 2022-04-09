@@ -1,5 +1,5 @@
 """
-wpspecdev
+wptherml
 A python package for modeling light-matter interactions!
 """
 
