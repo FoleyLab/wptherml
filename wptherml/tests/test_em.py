@@ -3,12 +3,13 @@ Unit and regression test for the wpspec package.
 """
 
 # Import package, test suite, and other packages as needed
-import wpspecdev
+import wptherml
 import numpy as np
 import pytest
 import sys
 
-sf = wpspecdev.SpectrumFactory()
+sf = wptherml.SpectrumFactory()
+
 
 def test_insert_layer():
     test_1_args = {
@@ -217,7 +218,7 @@ def test_compute_explicit_angle_spectrum():
         "therml": True,
     }
 
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", args)
 
     # hard-code in the RI values of Ag
