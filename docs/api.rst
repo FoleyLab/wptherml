@@ -6,12 +6,12 @@ Data for distances
 .. autosummary::
     :toctree: autosummary
 
-    wpspecdev.spectrum_driver
+    wptherml.spectrum_driver
 
-    wpspecdev.TmmDriver
+    wptherml.TmmDriver
 
-    wpspecdev.MieDriver
+    wptherml.MieDriver
 
-    wpspecdev.Therml
+    wptherml.Therml
 
-    wpspecdev.Materials
+    wptherml.Materials

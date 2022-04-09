@@ -3,7 +3,7 @@ Unit and regression test for the wpspec package.
 """
 
 # Import package, test suite, and other packages as needed
-import wpspecdev
+import wptherml
 import numpy as np
 import pytest
 import sys
@@ -17,7 +17,7 @@ def test_compute_power_density():
         "temperature": 1500,
         "therml": True,
     }
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
 
     """will test _compute_power_density method to
@@ -38,7 +38,7 @@ def test_compute_stpv_power_density():
         "temperature": 5000,
         "therml": True,
     }
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
     """will test _compute_stpv_power_density method to
     see if the power density computed by integration
@@ -58,7 +58,7 @@ def test_compute_stpv_gradients():
         "temperature": 5000,
         "therml": True,
     }
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
     test.compute_stpv_gradient()
 
@@ -116,7 +116,7 @@ def test_compute_stpv_efficiency():
         "temperature": 1700,
         "therml": True,
     }
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
     """will test _compute_stpv_power_density method to
     see if the power density computed by integration
@@ -135,7 +135,7 @@ def test_compute_luminous_efficiency():
         "temperature": 5000,
         "therml": True,
     }
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
     """will test _compute_stpv_power_density method to
     see if the power density computed by integration
@@ -153,7 +153,7 @@ def test_compute_cooling():
         "temperature": 300,
         "cooling": True,
     }
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
     test._refractive_index_array[:, 1] = 2.4 + 0.2j
 
@@ -171,13 +171,11 @@ def test_compute_cooling():
     assert np.isclose(
         _expected_atmospheric_warming_power, test.atmospheric_warming_power, 1e-5
     )
-    assert np.isclose(
-        _expected_solar_warming_power, test.solar_warming_power, 1e-5
-    )
+    assert np.isclose(_expected_solar_warming_power, test.solar_warming_power, 1e-5)
 
 
 def test_compute_cooling_gradient():
-    """ FINISH THIS UNIT TEST"""
+    """FINISH THIS UNIT TEST"""
 
     # define basic structure at 1500 K
     test_args = {
@@ -187,7 +185,7 @@ def test_compute_cooling_gradient():
         "temperature": 300,
         "cooling": True,
     }
-    sf = wpspecdev.SpectrumFactory()
+    sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
 
     # get analytic gradient of the absorbed solar power
@@ -212,18 +210,35 @@ def test_compute_cooling_gradient():
     _emitted_power_b = test.radiative_cooling_power
     _atmospheric_power_b = test.atmospheric_warming_power
 
-    _numeric_solar_warming_power_gradient = (_solar_power_f-_solar_power_b)/ (2 * _delta_d_sio2)
-    _numeric_radiative_cooling_power_gradient = (_emitted_power_f-_emitted_power_b) / (2 * _delta_d_sio2)
-    _numeric_atmospheric_warming_power_gradient = (_atmospheric_power_f-_atmospheric_power_b) / (2 * _delta_d_sio2)
+    _numeric_solar_warming_power_gradient = (_solar_power_f - _solar_power_b) / (
+        2 * _delta_d_sio2
+    )
+    _numeric_radiative_cooling_power_gradient = (
+        _emitted_power_f - _emitted_power_b
+    ) / (2 * _delta_d_sio2)
+    _numeric_atmospheric_warming_power_gradient = (
+        _atmospheric_power_f - _atmospheric_power_b
+    ) / (2 * _delta_d_sio2)
 
     # normalize the gradients by the numeric gradient
-    _normalized_analytic_solar_power_gradient = test.solar_warming_power_gradient / _numeric_solar_warming_power_gradient
-    _normalized_analytic_emitted_power_gradient = test.radiative_cooling_power_gradient / _numeric_radiative_cooling_power_gradient
-    _normalized_analytic_atmospheric_power_gradient = test.atmospheric_warming_power_gradient / _numeric_atmospheric_warming_power_gradient
+    _normalized_analytic_solar_power_gradient = (
+        test.solar_warming_power_gradient / _numeric_solar_warming_power_gradient
+    )
+    _normalized_analytic_emitted_power_gradient = (
+        test.radiative_cooling_power_gradient
+        / _numeric_radiative_cooling_power_gradient
+    )
+    _normalized_analytic_atmospheric_power_gradient = (
+        test.atmospheric_warming_power_gradient
+        / _numeric_atmospheric_warming_power_gradient
+    )
 
     # if the gradients are close, the normalized analytic gradient will be close to 1
     assert np.isclose(_normalized_analytic_solar_power_gradient[0], 1.0, 1e-3)
     assert np.isclose(_normalized_analytic_emitted_power_gradient[0], 1.0, 1e-3)
     assert np.isclose(_normalized_analytic_atmospheric_power_gradient[0], 1.0, 1e-3)
-    assert np.isclose(test.atmospheric_warming_power_gradient[0], _numeric_atmospheric_warming_power_gradient, 1e-2)
-
+    assert np.isclose(
+        test.atmospheric_warming_power_gradient[0],
+        _numeric_atmospheric_warming_power_gradient,
+        1e-2,
+    )

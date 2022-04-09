@@ -3,29 +3,30 @@ Unit tests for the Materials class
 """
 
 # Import package, test suite, and other packages as needed
-import wpspecdev
+import wptherml
 import numpy as np
 import pytest
 import sys
 
-material_test = wpspecdev.Materials()
+material_test = wptherml.Materials()
+
 
 def test_material_from_file():
-    """tests material_from_file method using filenames for the SiO2 and TiN files, 
-       specifically "SiO2_ir.txt" using tabulated n and k at lambda=636 nm of 6.359999999E-7 1.45693 0.00000
-       and "TiN_ellipsometry_data.txt" using tabulated n and k at lambda=1106 nm of 1.106906906906907e-06 2.175019337515494 5.175973473259225
+    """tests material_from_file method using filenames for the SiO2 and TiN files,
+    specifically "SiO2_ir.txt" using tabulated n and k at lambda=636 nm of 6.359999999E-7 1.45693 0.00000
+    and "TiN_ellipsometry_data.txt" using tabulated n and k at lambda=1106 nm of 1.106906906906907e-06 2.175019337515494 5.175973473259225
     """
 
     _expected_sio2_n = 1.45693
     _expected_sio2_k = 0.00000
 
-    _expected_tin_n = 2.175019337515494 
+    _expected_tin_n = 2.175019337515494
     _expected_tin_k = 5.175973473259225
 
     # instance for SiO2 test
     material_test._create_test_multilayer(central_wavelength=636e-9)
     material_test.material_from_file(1, "SiO2_ir.txt")
-    
+
     _result_sio2_n = np.real(material_test._refractive_index_array[1, 1])
     _result_sio2_k = np.imag(material_test._refractive_index_array[1, 1])
 
@@ -43,8 +44,6 @@ def test_material_from_file():
     assert np.isclose(_result_tin_k, _expected_tin_k, 1e-3)
 
 
-
-
 def test_material_sio2():
     """tests material_sio2 method using tabulated n and k at lambda=636 nm
     6.359999999E-7 1.45693 0.00000"""
@@ -57,8 +56,6 @@ def test_material_sio2():
     # define central layer as siO2
     material_test.material_SiO2(1)
 
-
-
     result_n = np.real(material_test._refractive_index_array[1, 1])
     result_k = np.imag(material_test._refractive_index_array[1, 1])
 
@@ -66,10 +63,8 @@ def test_material_sio2():
     assert np.isclose(result_k, expected_k, 1e-3)
 
 
-
 def test_material_h2o():
-    """tests material_H2O method using the fact that n = 1.33 + 0j for all lambda
-    """
+    """tests material_H2O method using the fact that n = 1.33 + 0j for all lambda"""
 
     expected_n = 1.33
     expected_k = 0.00000
@@ -84,6 +79,7 @@ def test_material_h2o():
 
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
+
 
 def test_material_tio2():
     """tests material_tio2 method using tabulated n and k at lambda=664 nm
@@ -606,11 +602,11 @@ def test_material_pb():
     """Dictionaries from material_Pb"""
     data1 = {
         "file": "data/Pb_Werner.txt",
-        "lower_wavelength": 1.758600000E-08,
-        "upper_wavelength": 2.479684000E-06,
-        "test_wavelength": 3.262700000E-08,
-        "test_n": 9.903000000E-01,
-        "test_k": 2.206000000E-01,
+        "lower_wavelength": 1.758600000e-08,
+        "upper_wavelength": 2.479684000e-06,
+        "test_wavelength": 3.262700000e-08,
+        "test_n": 9.903000000e-01,
+        "test_k": 2.206000000e-01,
     }
 
     data2 = {
@@ -657,7 +653,7 @@ def test_read_AM():
     # create test multilayer for a wavelength array centered at 615 nm
     material_test._create_test_multilayer(central_wavelength=615e-9)
 
-    # Now store the AM1.5 data centered at 615 nm to an array 
+    # Now store the AM1.5 data centered at 615 nm to an array
     _AM_15_data = material_test._read_AM()
 
     # this is the expected value of the AM1.5 spectrum at 615 nm
@@ -669,10 +665,10 @@ def test_read_AM():
 
 def test_read_atmospheric_transmissivity():
 
-    # create test multilayer for a wavelength array centered at 7.1034 microns 
+    # create test multilayer for a wavelength array centered at 7.1034 microns
     material_test._create_test_multilayer(central_wavelength=7.1034e-6)
 
-    # Now store the AM1.5 data centered at 615 nm to an array 
+    # Now store the AM1.5 data centered at 615 nm to an array
     _atmospheric_transmissivity = material_test._read_Atmospheric_Transmissivity()
 
     # this is the expected value of the AM1.5 spectrum at 615 nm
