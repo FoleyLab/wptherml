@@ -1,7 +1,7 @@
-﻿wpspecdev.Therml
-================
+﻿wptherml.Therml
+===============
 
-.. currentmodule:: wpspecdev
+.. currentmodule:: wptherml
 
 .. autoclass:: Therml
 

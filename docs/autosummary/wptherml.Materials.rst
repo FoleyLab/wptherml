@@ -1,7 +1,7 @@
-﻿wpspecdev.Materials
-===================
+﻿wptherml.Materials
+==================
 
-.. currentmodule:: wpspecdev
+.. currentmodule:: wptherml
 
 .. autoclass:: Materials
 

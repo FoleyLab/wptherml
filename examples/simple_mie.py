@@ -1,4 +1,4 @@
-import wpspecdev
+import wptherml
 from matplotlib import pyplot as plt
 args = {  
 'wavelength_list': [200e-9, 1100e-9, 500],  
@@ -7,7 +7,7 @@ args = {
 'radius': 200e-9  
 }  
 
-sf = wpspecdev.SpectrumFactory()  
+sf = wptherml.SpectrumFactory()  
 test = sf.spectrum_factory('Mie', args)
 
 plt.plot(test.wavelength_array*1e9, test.q_abs, 'red')
@@ -17,8 +17,6 @@ plt.ylabel(" efficiency")
 plt.legend()
 plt.show()
 
-
-#mt_5.compute_hamiltonian( )
 
 
 

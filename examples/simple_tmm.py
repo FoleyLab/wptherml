@@ -1,4 +1,4 @@
-import wpspecdev
+import wptherml
 from matplotlib import pyplot as plt
 import numpy as np
 #test_1_args = {
@@ -21,7 +21,7 @@ test_args = {
     ],
     "thickness_list": [0, 200e-9, 10e-9, 0],
 }
-sf = wpspecdev.SpectrumFactory()  
+sf = wptherml.SpectrumFactory()  
 # create instance of class
 ts = sf.spectrum_factory("Tmm", test_args)
 plt.plot(ts.wavelength_array, ts.reflectivity_array)
@@ -36,7 +36,6 @@ plt.show()
 
  # Protanopia Deuteranopia Tritanopia
 #print(test.reflectivity_array[0])
-#mt_5.compute_hamiltonian( )
 
 
 

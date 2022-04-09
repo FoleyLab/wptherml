@@ -1,7 +1,7 @@
-﻿wpspecdev.TmmDriver
-===================
+﻿wptherml.TmmDriver
+==================
 
-.. currentmodule:: wpspecdev
+.. currentmodule:: wptherml
 
 .. autoclass:: TmmDriver
 
