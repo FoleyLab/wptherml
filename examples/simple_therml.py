@@ -1,4 +1,4 @@
-import wpspecdev
+import wptherml
 from matplotlib import pyplot as plt
 import numpy as np
 
@@ -11,7 +11,7 @@ test_args = {
 }
 
 
-sf = wpspecdev.SpectrumFactory()  
+sf = wptherml.SpectrumFactory()  
 test = sf.spectrum_factory('Tmm', test_args)
 
 plt.plot(test.wavelength_array, test.thermal_emission_array, 'red')

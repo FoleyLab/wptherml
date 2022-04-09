@@ -1,7 +1,7 @@
-﻿wpspecdev.spectrum\_driver
-==========================
+﻿wptherml.spectrum\_driver
+=========================
 
-.. automodule:: wpspecdev.spectrum_driver
+.. automodule:: wptherml.spectrum_driver
 
    
    
