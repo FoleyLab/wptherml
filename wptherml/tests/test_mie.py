@@ -3,7 +3,7 @@ Unit and regression test for the wpspec package.
 """
 
 # Import package, test suite, and other packages as needed
-import wpspecdev
+import wptherml
 import numpy as np
 import pytest
 import sys
@@ -13,7 +13,7 @@ import sys
     case of a r = 100e-9 m spehere made of glass with ri = 1.5+0j
     in air with ri = 1.0+0j
 """
-sf = wpspecdev.SpectrumFactory()
+sf = wptherml.SpectrumFactory()
 testargs = {
     "radius": 100e-9,
     "wavelength_list": [500e-9, 500e-9, 1],
@@ -29,7 +29,7 @@ mietest._compute_n_array(mietest._size_factor_array[0])
 
 
 def test_compute_mie_coefficients():
-    # sf = wpspecdev.SpectrumFactory()
+    # sf = wptherml.SpectrumFactory()
     # mt = sf.spectrum_factory('Mie', r)
     # mt._compute_mie_coeffients(ri, mu, x)
 
