@@ -1,7 +1,7 @@
-﻿wpspecdev.MieDriver
-===================
+﻿wptherml.MieDriver
+==================
 
-.. currentmodule:: wpspecdev
+.. currentmodule:: wptherml
 
 .. autoclass:: MieDriver
 
