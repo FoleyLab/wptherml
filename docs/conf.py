@@ -17,12 +17,12 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('..'))
 
-import wpspecdev
+import wptherml
 
 
 # -- Project information -----------------------------------------------------
 
-project = 'wpspecdev'
+project = 'wptherml'
 copyright = ("2021, Foley Lab. Project structure based on the "
              "Computational Molecular Science Python Cookiecutter version 1.5")
 author = 'Foley Lab'
@@ -117,7 +117,7 @@ html_static_path = ['_static']
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'wpspecdevdoc'
+htmlhelp_basename = 'wpthermldoc'
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -144,8 +144,8 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'wpspecdev.tex', 'wpspecdev Documentation',
-     'wpspecdev', 'manual'),
+    (master_doc, 'wptherml.tex', 'wptherml Documentation',
+     'wptherml', 'manual'),
 ]
 
 
@@ -154,7 +154,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'wpspecdev', 'wpspecdev Documentation',
+    (master_doc, 'wptherml', 'wptherml Documentation',
      [author], 1)
 ]
 
@@ -165,8 +165,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'wpspecdev', 'wpspecdev Documentation',
-     author, 'wpspecdev', 'A python package for modeling light-matter interactions!',
+    (master_doc, 'wptherml', 'wptherml Documentation',
+     author, 'wptherml', 'A python package for modeling light-matter interactions!',
      'Miscellaneous'),
 ]
 
