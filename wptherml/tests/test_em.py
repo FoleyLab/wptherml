@@ -10,6 +10,7 @@ import sys
 
 sf = wptherml.SpectrumFactory()
 
+
 def test_insert_layer():
     test_1_args = {
         "wavelength_list": [501e-9, 501e-9, 1],

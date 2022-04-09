@@ -171,13 +171,11 @@ def test_compute_cooling():
     assert np.isclose(
         _expected_atmospheric_warming_power, test.atmospheric_warming_power, 1e-5
     )
-    assert np.isclose(
-        _expected_solar_warming_power, test.solar_warming_power, 1e-5
-    )
+    assert np.isclose(_expected_solar_warming_power, test.solar_warming_power, 1e-5)
 
 
 def test_compute_cooling_gradient():
-    """ FINISH THIS UNIT TEST"""
+    """FINISH THIS UNIT TEST"""
 
     # define basic structure at 1500 K
     test_args = {
@@ -212,18 +210,35 @@ def test_compute_cooling_gradient():
     _emitted_power_b = test.radiative_cooling_power
     _atmospheric_power_b = test.atmospheric_warming_power
 
-    _numeric_solar_warming_power_gradient = (_solar_power_f-_solar_power_b)/ (2 * _delta_d_sio2)
-    _numeric_radiative_cooling_power_gradient = (_emitted_power_f-_emitted_power_b) / (2 * _delta_d_sio2)
-    _numeric_atmospheric_warming_power_gradient = (_atmospheric_power_f-_atmospheric_power_b) / (2 * _delta_d_sio2)
+    _numeric_solar_warming_power_gradient = (_solar_power_f - _solar_power_b) / (
+        2 * _delta_d_sio2
+    )
+    _numeric_radiative_cooling_power_gradient = (
+        _emitted_power_f - _emitted_power_b
+    ) / (2 * _delta_d_sio2)
+    _numeric_atmospheric_warming_power_gradient = (
+        _atmospheric_power_f - _atmospheric_power_b
+    ) / (2 * _delta_d_sio2)
 
     # normalize the gradients by the numeric gradient
-    _normalized_analytic_solar_power_gradient = test.solar_warming_power_gradient / _numeric_solar_warming_power_gradient
-    _normalized_analytic_emitted_power_gradient = test.radiative_cooling_power_gradient / _numeric_radiative_cooling_power_gradient
-    _normalized_analytic_atmospheric_power_gradient = test.atmospheric_warming_power_gradient / _numeric_atmospheric_warming_power_gradient
+    _normalized_analytic_solar_power_gradient = (
+        test.solar_warming_power_gradient / _numeric_solar_warming_power_gradient
+    )
+    _normalized_analytic_emitted_power_gradient = (
+        test.radiative_cooling_power_gradient
+        / _numeric_radiative_cooling_power_gradient
+    )
+    _normalized_analytic_atmospheric_power_gradient = (
+        test.atmospheric_warming_power_gradient
+        / _numeric_atmospheric_warming_power_gradient
+    )
 
     # if the gradients are close, the normalized analytic gradient will be close to 1
     assert np.isclose(_normalized_analytic_solar_power_gradient[0], 1.0, 1e-3)
     assert np.isclose(_normalized_analytic_emitted_power_gradient[0], 1.0, 1e-3)
     assert np.isclose(_normalized_analytic_atmospheric_power_gradient[0], 1.0, 1e-3)
-    assert np.isclose(test.atmospheric_warming_power_gradient[0], _numeric_atmospheric_warming_power_gradient, 1e-2)
-
+    assert np.isclose(
+        test.atmospheric_warming_power_gradient[0],
+        _numeric_atmospheric_warming_power_gradient,
+        1e-2,
+    )
