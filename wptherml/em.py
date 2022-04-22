@@ -818,7 +818,23 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
 
     def compute_pv_stpv(self):
-        pass 
+        # reverse stack and get thermal emission spectrum of the stack INTO the active layer
+        self.reverse_stack()
+        self.compute_spectrum()
+        self._compute_therml_spectrum()
+        self._compute_pv_stpv_power_density(self.wavelength_array)
+        # reverse stack again and add active layer and get absorbed power into the structure
+        self.reverse_stack()
+
+        # get terminal layer number
+        _ln = len(self.thickness_array)-1
+        # insert thick active layer as the bottom-most layer
+        self.insert_layer(_ln, 1000e-9)
+        # make sure the active layer has RI of 2D perovskite
+        self.material_2D_HOIP(_ln)
+        self.compute_spectrum()
+        # 
+
 
 
     def compute_cooling(self):
