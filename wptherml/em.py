@@ -287,6 +287,22 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             else:
                 self.material_from_file(i, _original_string)
 
+    def reverse_stack(self):
+        """reverse the order of the stack
+        e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
+        and you issue reverse_stack, the new structrure will be
+        Air/Ag/HfO2/SiO2/Air
+        """
+        # store temporary versions of the RI array and thickness array
+        _ri = self._refractive_index_array
+        _ta = self.thickness_array
+
+        # use np.flip to reverse the arrays
+        self._refractive_index_array = np.flip(_ri, axis=1)
+        self.thickness_array = np.flip(_ta)
+
+
+
     def remove_layer(self, layer_number):
         """remove layer number layer_number from your stack.
         e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
@@ -800,6 +816,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_power_density_gradient(self.wavelength_array)
         self._compute_stpv_power_density_gradient(self.wavelength_array)
         self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
+
+    def compute_pv_stpv(self):
+        pass 
+
 
     def compute_cooling(self):
         """Method to compute the radiative cooling figures of merit

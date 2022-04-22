@@ -186,6 +186,22 @@ class Therml:
                 self.blackbody_spectrum * emissivity_gradient_array[:, i]
             )
 
+    def _compute_pv_stpv_power_density(self, wavelength_array):
+        """ method to compute the radiated power density of a PV-STPV structure specifically 
+            in the 0.3 - 0.5 eV range (~2450-4150 nm range) 
+            
+        """
+        # set lower- and upper limits on wavelength for integration
+        _lambda_min = 2450e-9
+        _lambda_max = 4150e-9
+
+        # get the index associated with these upper- and lower-wavelengths
+        _min_idx = np.abs(wavelength_array - _lambda_min).argmin()
+        _max_idx = np.abs(wavelength_array - _lambda_max).argmin()
+
+        # integrate the thermal emission spectrum over wavelength range using np.trapz
+        self.pv_stpv_exciton_splitting_power = np.pi * np.trapz(self.thermal_emission_array[_min_idx:_max_idx], wavelength_array[_min_idx:_max_idx])
+
     def _compute_power_density(self, wavelength_array):
         """method to compute the power density from blackbody spectrum and thermal emission spectrum
 
@@ -433,6 +449,35 @@ class Therml:
             self.stpv_spectral_efficiency_gradient[i] = (
                 _rho_prime * _P - _P_prime * _rho
             ) / (_P * _P)
+
+    def _compute_pv_short_circuit_current(self, wavelength_array, absorptivity_array, spectral_response, solar_spectrum):
+        """method to approximate the short circuit current of a PV cell
+        
+        Arguments
+        ---------
+        wavelength_array : numpy array of floats
+            the wavelengths over which the absorptivity of the structure is known
+
+        absorptivity_array : numpy array of floats
+            the absorptivity / emissivity spectrum of the PV structure
+
+        spectral_response : numpy array of floats
+            the mapping between power in  (W) / current out (Amps) of the active layer
+
+        solar_spectrum : numpy array of floats
+            the solar spectrum incident on the PV structure
+
+        Attributes
+        ----------
+        self.short_circuit_current : float
+            the short circuit current in Amps / m^2 of the surface
+
+        Returns
+        -------
+        None
+        
+        """
+        self._compute_pv_short_circuit_current = np.trapz(absorptivity_array * spectral_response * solar_spectrum, wavelength_array)
 
     def _compute_luminous_efficiency(self, wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
