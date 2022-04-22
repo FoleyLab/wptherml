@@ -16,3 +16,4 @@
 |Platinum/Pt | Pt_txt | A. D. Rakić, A. B. Djurišic, J. M. Elazar, and M. L. Majewski. Optical properties of metallic films for vertical-cavity optoelectronic devices, Appl. Opt. 37, 5271-5283 (1998) | TBD |
 |Lead/Pb | Pb_Werner.txt | W. S. M. Werner, K. Glantschnig, C. Ambrosch-Draxl. Optical constants and inelastic electron-scattering data for 17 elemental metals, J. Phys Chem Ref. Data 38, 1013-1092 (2009) | TBD |
 |Rhenium/Re| Re_txt | E. D. Palik, "Handbook of optical constants of solids" (Academic Press, 1998) | TBD |
+|2D Hybrid organic-inorganic perovskite | 2D_HOIP.txt | Song et al. "Determinatino of dielectric functions and exciton oscillator strength of two-dimensional hybrid perovskites", ACS Materials Lett. 2021, 3, 1, 148–159 | 0.371-1.69 µm |
