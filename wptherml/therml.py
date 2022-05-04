@@ -122,17 +122,8 @@ class Therml:
         thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
         with $\theta=0$
         """
-        # speed of light in SI
-        c = 299792458
-        # plancks constant in SI
-        h = 6.62607004e-34
-        # boltzmanns constant in SI
-        kb = 1.38064852e-23
 
-        self.blackbody_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
-        self.blackbody_spectrum /= (
-            np.exp(h * c / (wavelength_array * kb * self.temperature)) - 1
-        )
+        self.blackbody_spectrum = self._compute_blackbody_spectrum(wavelength_array, self.temperature)
         self.thermal_emission_array = self.blackbody_spectrum * emissivity_array
 
     def _compute_therml_spectrum_gradient(
@@ -163,13 +154,6 @@ class Therml:
         thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
         with $\theta=0$
         """
-        # speed of light in SI
-        c = 299792458
-        # plancks constant in SI
-        h = 6.62607004e-34
-        # boltzmanns constant in SI
-        kb = 1.38064852e-23
-
         # get the dimension of the gradient vector
         _ngr = len(emissivity_gradient_array[0, :])
         # get the number of wavelengths
@@ -177,14 +161,26 @@ class Therml:
         # initialize the gradient array
         self.thermal_emission_gradient_array = np.zeros((_nwl, _ngr))
 
-        self.blackbody_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
-        self.blackbody_spectrum /= (
-            np.exp(h * c / (wavelength_array * kb * self.temperature)) - 1
-        )
+        self.blackbody_spectrum = self._compute_blackbody_spectrum(wavelength_array, self.temperature)
+
         for i in range(0, _ngr):
             self.thermal_emission_gradient_array[:, i] = (
                 self.blackbody_spectrum * emissivity_gradient_array[:, i]
             )
+
+    def _compute_blackbody_spectrum(self, wavelength_array, T):
+        # speed of light in SI
+        c = 299792458
+        # plancks constant in SI
+        h = 6.62607004e-34
+        # boltzmanns constant in SI
+        kb = 1.38064852e-23
+
+        _bb_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
+        _bb_spectrum /= (
+            np.exp(h * c / (wavelength_array * kb * T)) - 1
+        )
+        return _bb_spectrum 
 
     def _compute_pv_stpv_power_density(self, wavelength_array):
         """ method to compute the radiated power density of a PV-STPV structure specifically 
@@ -477,7 +473,7 @@ class Therml:
         None
         
         """
-        self._compute_pv_short_circuit_current = np.trapz(absorptivity_array * spectral_response * solar_spectrum, wavelength_array)
+        self.pv_short_circuit_current = np.trapz(absorptivity_array * spectral_response * solar_spectrum, wavelength_array)
 
     def _compute_luminous_efficiency(self, wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
