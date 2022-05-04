@@ -818,12 +818,18 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
 
     def compute_pv_stpv(self):
+        # first we need to get the temperature of the emitter stack
+        # get emissivity of stack back towards sky
+        self.compute_spectrum()
+        emissivity_1_T = self.emissivity_array
         # reverse stack and get thermal emission spectrum of the stack INTO the active layer
         self.reverse_stack()
         self.compute_spectrum()
+        emissivity_1_B = self.emissivity_array 
+        # get Blackbody spectrum at the default temperature - this is tentative
         self._compute_therml_spectrum()
-        self._compute_pv_stpv_power_density(self.wavelength_array)
-        # reverse stack again and add active layer and get absorbed power into the structure
+
+        # now add perovskite layer to the stack and get the emissivity/absorptivity towards the sky 
         self.reverse_stack()
 
         # get terminal layer number
@@ -833,7 +839,36 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # make sure the active layer has RI of 2D perovskite
         self.material_2D_HOIP(_ln)
         self.compute_spectrum()
-        # 
+        absorptivity_2_T = self.emissivity_array
+        
+        # get the absorbed power
+        P_abs = np.trapz(absorptivity_2_T * self._solar_spectrum, self.wavelength_array)
+
+        # loop over temperature to try to find the temperature of the stack that balances emitted
+        # power with absorbed power
+        _kill = 1
+        while(_kill):
+            _T = 300
+            _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
+            P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_1_B + emissivity_1_T), self.wavelength_array)
+            _T += 1
+            if P_emit > P_abs:
+                _kill = 0
+        
+        self._compute_pv_stpv_power_density(self.wavelength_array)
+        # reverse stack again and add active layer and get absorbed power into the structure
+        self.reverse_stack()
+
+
+        # approximate ideal spectral response assuming \lambda_bg = 700 nm
+        self.lambda_bandgap = 700e-9
+        self.spectral_response = self.wavelength_array / self.lambda_bandgap
+        # make sure we have the solar spectrum
+        self._solar_spectrum = self._read_AM()
+        # now compute pv_stpv short circuit current
+        self._compute_pv_short_circuit_current(self.wavelength_array, self.emissivity_array, self.spectral_response, self._solar_spectrum)
+        
+
 
 
 
