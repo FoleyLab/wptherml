@@ -10,7 +10,7 @@ wptherml
 [![Documentation Status](https://readthedocs.org/projects/wptherml/badge/?version=latest)](https://wptherml.readthedocs.io/en/latest/?badge=latest)
 
 A python package for modeling light-matter interactions in nanoscale and molecular materials!
-Today we are adding something new!
+Today we are adding something new!  How will it work?
 
 ### [Quickstart](https://wptherml.readthedocs.io/en/latest/quickstart.html)
 
