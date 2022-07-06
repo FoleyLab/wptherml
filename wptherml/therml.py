@@ -122,17 +122,8 @@ class Therml:
         thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
         with $\theta=0$
         """
-        # speed of light in SI
-        c = 299792458
-        # plancks constant in SI
-        h = 6.62607004e-34
-        # boltzmanns constant in SI
-        kb = 1.38064852e-23
 
-        self.blackbody_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
-        self.blackbody_spectrum /= (
-            np.exp(h * c / (wavelength_array * kb * self.temperature)) - 1
-        )
+        self.blackbody_spectrum = self._compute_blackbody_spectrum(wavelength_array, self.temperature)
         self.thermal_emission_array = self.blackbody_spectrum * emissivity_array
 
     def _compute_therml_spectrum_gradient(
@@ -163,13 +154,6 @@ class Therml:
         thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf
         with $\theta=0$
         """
-        # speed of light in SI
-        c = 299792458
-        # plancks constant in SI
-        h = 6.62607004e-34
-        # boltzmanns constant in SI
-        kb = 1.38064852e-23
-
         # get the dimension of the gradient vector
         _ngr = len(emissivity_gradient_array[0, :])
         # get the number of wavelengths
@@ -177,14 +161,42 @@ class Therml:
         # initialize the gradient array
         self.thermal_emission_gradient_array = np.zeros((_nwl, _ngr))
 
-        self.blackbody_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
-        self.blackbody_spectrum /= (
-            np.exp(h * c / (wavelength_array * kb * self.temperature)) - 1
-        )
+        self.blackbody_spectrum = self._compute_blackbody_spectrum(wavelength_array, self.temperature)
+
         for i in range(0, _ngr):
             self.thermal_emission_gradient_array[:, i] = (
                 self.blackbody_spectrum * emissivity_gradient_array[:, i]
             )
+
+    def _compute_blackbody_spectrum(self, wavelength_array, T):
+        # speed of light in SI
+        c = 299792458
+        # plancks constant in SI
+        h = 6.62607004e-34
+        # boltzmanns constant in SI
+        kb = 1.38064852e-23
+
+        _bb_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
+        _bb_spectrum /= (
+            np.exp(h * c / (wavelength_array * kb * T)) - 1
+        )
+        return _bb_spectrum 
+
+    def _compute_pv_stpv_power_density(self, wavelength_array):
+        """ method to compute the radiated power density of a PV-STPV structure specifically 
+            in the 0.3 - 0.5 eV range (~2450-4150 nm range) 
+            
+        """
+        # set lower- and upper limits on wavelength for integration
+        _lambda_min = 2450e-9
+        _lambda_max = 4150e-9
+
+        # get the index associated with these upper- and lower-wavelengths
+        _min_idx = np.abs(wavelength_array - _lambda_min).argmin()
+        _max_idx = np.abs(wavelength_array - _lambda_max).argmin()
+
+        # integrate the thermal emission spectrum over wavelength range using np.trapz
+        self.pv_stpv_exciton_splitting_power = np.pi * np.trapz(self.thermal_emission_array[_min_idx:_max_idx], wavelength_array[_min_idx:_max_idx])
 
     def _compute_power_density(self, wavelength_array):
         """method to compute the power density from blackbody spectrum and thermal emission spectrum
@@ -433,6 +445,35 @@ class Therml:
             self.stpv_spectral_efficiency_gradient[i] = (
                 _rho_prime * _P - _P_prime * _rho
             ) / (_P * _P)
+
+    def _compute_pv_short_circuit_current(self, wavelength_array, absorptivity_array, spectral_response, solar_spectrum):
+        """method to approximate the short circuit current of a PV cell
+        
+        Arguments
+        ---------
+        wavelength_array : numpy array of floats
+            the wavelengths over which the absorptivity of the structure is known
+
+        absorptivity_array : numpy array of floats
+            the absorptivity / emissivity spectrum of the PV structure
+
+        spectral_response : numpy array of floats
+            the mapping between power in  (W) / current out (Amps) of the active layer
+
+        solar_spectrum : numpy array of floats
+            the solar spectrum incident on the PV structure
+
+        Attributes
+        ----------
+        self.short_circuit_current : float
+            the short circuit current in Amps / m^2 of the surface
+
+        Returns
+        -------
+        None
+        
+        """
+        self.pv_short_circuit_current = np.trapz(absorptivity_array * spectral_response * solar_spectrum, wavelength_array)
 
     def _compute_luminous_efficiency(self, wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
