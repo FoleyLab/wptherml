@@ -60,6 +60,8 @@ class Materials:
 
         return unique_index_array
 
+    
+
     def material_H2O(self, layer_number):
         """defines the refractive index layer of layer_number to be water
         assuming static refractive index of n = 1.33 + 0j
@@ -153,6 +155,48 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
+
+    def material_2D_HOIP(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be 2D hybrid organic-inorganic
+               perovskites
+
+            Reference
+            ---------
+            Song et al. "Determination of dielectric functions and exciton oscillator 
+            strength of two-dimensional hybrid perovskites", ACS Materials Lett. 2021, 3, 1, 148-159
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as SiO2
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+            """
+            # get path to the sio2 data file
+            file_path = path + "data/2D_HOIP.txt"
+            # now read SiO2 data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
 
     def material_SiO2(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
