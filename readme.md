@@ -10,7 +10,8 @@ wptherml
 [![Documentation Status](https://readthedocs.org/projects/wptherml/badge/?version=latest)](https://wptherml.readthedocs.io/en/latest/?badge=latest)
 
 A python package for modeling light-matter interactions in nanoscale and molecular materials!
-Today we are adding something new!  How will it work?
+
+This is an addition for ESCIP!
 
 ### [Quickstart](https://wptherml.readthedocs.io/en/latest/quickstart.html)
 
