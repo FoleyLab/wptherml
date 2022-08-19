@@ -1,15 +1,6 @@
 import wptherml
 from matplotlib import pyplot as plt
 import numpy as np
-#test_1_args = {
-#    "wavelength_list": [400e-9, 800e-9, 1000],
-#    "material_list": [
-#        "Air",
-#        "Au",
-#        "Air",
-#    ],
-#    "thickness_list": [0, 200e-9, 0],
-#}
 
 test_args = {
 
