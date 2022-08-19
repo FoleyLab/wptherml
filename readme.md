@@ -11,14 +11,13 @@ wptherml
 
 A python package for modeling light-matter interactions in nanoscale and molecular materials!
 
-Added something just for ESCIP!
 
-### [Quickstart](https://wptherml.readthedocs.io/en/latest/quickstart.html)
+### [Quickstart](https://github.com/FoleyLab/wptherml/blob/main/docs/quickstart.rst)
 
 ### [Examples](https://github.com/FoleyLab/wptherml/tree/main/examples)
 
 ### Copyright
-Copyright (c) 2021, Foley Lab, William Paterson University
+Copyright (c) 2022, Foley Lab, University of North Carolina Charlotte
 
 
 #### Acknowledgements
