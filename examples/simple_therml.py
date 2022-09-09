@@ -11,8 +11,9 @@ test_args = {
 }
 
 
-sf = wptherml.SpectrumFactory()  
+sf = wptherml.SpectrumFactory()
 test = sf.spectrum_factory('Tmm', test_args)
+
 
 plt.plot(test.wavelength_array, test.thermal_emission_array, 'red')
 plt.plot(test.wavelength_array, test.blackbody_spectrum, 'black')

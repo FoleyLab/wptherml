@@ -23,7 +23,7 @@ setup(
     # Self-descriptive entries which should always be present
     name='wptherml',
     author='Foley Lab',
-    author_email='foleyj10@wpunj.edu',
+    author_email='jfoley19@uncc.edu',
     description=short_description[0],
     long_description=long_description,
     long_description_content_type="text/markdown",
