@@ -17,7 +17,7 @@ so to create your conda environment (called `wptherml` based on the name above),
 
 `conda env create -f wptherml.yml`
 
-Activate this environment *before* by typing
+Activate this environment by typing
 
 `conda activate wptherml`
 
