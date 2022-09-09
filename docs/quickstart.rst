@@ -11,7 +11,7 @@ Dependencies
 You need to install `numpy`, `scipy`, and `pip`.
 We recommend `matplotlib`, `jupyter`, and `pytest`.
 
-You can copy and paste the following into a yaml file (`wptherml.yml`) 
+You may use the `wptherml.yml <https://github.com/FoleyLab/wptherml/edit/main/docs/quickstart.rst>`_ 
 to create a conda environment will these dependencies.
 
 name: wptherml
