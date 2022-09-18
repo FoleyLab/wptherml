@@ -70,6 +70,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # compute reflectivity spectrum
         self.compute_spectrum()
 
+        # this flag tells the code to determine the temperature
+        # of an PV-STPV stack self-consistently
+        # 0 means don't compute self-consistently
+        self.loop_var = 0
+
         # print output message
         print(" Your spectra have been computed! \N{smiling face with sunglasses} ")
 
@@ -274,7 +279,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Si(i)
             elif _lm == "sio2":
                 self.material_SiO2(i)
-            elif _lm == "ta2O5":
+            elif _lm == "ta2o5":
                 self.material_Ta2O5(i)
             elif _lm == "tin":
                 self.material_TiN(i)
@@ -827,7 +832,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.compute_spectrum()
         emissivity_1_B = self.emissivity_array 
         # get Blackbody spectrum at the default temperature - this is tentative
-        self._compute_therml_spectrum()
+        self._compute_therml_spectrum(self.wavelength_array, emissivity_1_B)
+        self.pv_stpv_p_split = np.pi * np.trapz(self.thermal_emission_array, self.wavelength_array)
 
         # now add perovskite layer to the stack and get the emissivity/absorptivity towards the sky 
         self.reverse_stack()
@@ -842,22 +848,25 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         absorptivity_2_T = self.emissivity_array
         
         # get the absorbed power
-        P_abs = np.trapz(absorptivity_2_T * self._solar_spectrum, self.wavelength_array)
+        self.pv_stpv_p_abs = np.trapz(absorptivity_2_T * self._solar_spectrum, self.wavelength_array)
 
         # loop over temperature to try to find the temperature of the stack that balances emitted
         # power with absorbed power
-        _kill = 1
-        while(_kill):
-            _T = 300
-            _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
-            P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_1_B + emissivity_1_T), self.wavelength_array)
-            _T += 1
-            if P_emit > P_abs:
-                _kill = 0
+        if self.loop_var==1:
+            _kill = 1
+            while(_kill):
+                _T = 300
+                _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
+                P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_1_B + emissivity_1_T), self.wavelength_array)
+                _T += 1
+                if P_emit > P_abs:
+                    _kill = 0
+        else:
+            _T = 440
         
         self._compute_pv_stpv_power_density(self.wavelength_array)
         # reverse stack again and add active layer and get absorbed power into the structure
-        self.reverse_stack()
+        #self.reverse_stack()
 
 
         # approximate ideal spectral response assuming \lambda_bg = 700 nm
@@ -867,9 +876,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._solar_spectrum = self._read_AM()
         # now compute pv_stpv short circuit current
         self._compute_pv_short_circuit_current(self.wavelength_array, self.emissivity_array, self.spectral_response, self._solar_spectrum)
-        
-
-
+        self.remove_layer(_ln)
 
 
     def compute_cooling(self):
