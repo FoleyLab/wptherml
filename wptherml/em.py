@@ -1244,6 +1244,35 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         return _pm_analytical_gradient
 
+    def compute_planckian_locus(self):
+
+        xc = 0
+        yc = 0
+        _T = self.temperature 
+        if _T <= 4000 and _T >= 1667:
+            xc = -0.2661239e9/(_T **3 ) - 0.2343589e6/(_T **2 ) + 0.8776956e3/_T + 0.179910
+        elif _T <= 25000 and _T > 4000:
+            xc - -3.0258469e9/(_T ** 3) + 2.1070379e6/(_T ** 2) + 0.2226347e3/_T + 0.240390
+        else:
+            xc = 0
+            print("Temperature out of range for Planckian locus")
+        
+        if _T <= 2222 and _T >= 1667:
+            yc = -1.1063814 * xc ** 3 - 1.34811020 * xc ** 2 + 2.18555832 * xc - 0.20219683
+        elif _T > 2222 and _T <= 4000:
+            yc = -0.9549476 * xc ** 3 - 1.37418593 * xc ** 2 + 2.09137015 * xc - 0.16748867
+        elif _T > 4000 and _T <= 25000:
+            yc = 3.0817580 * xc ** 3 - 5.87338670 * xc ** 2 + 3.75112997 * xc - 0.37001483
+        else:
+            yc = 0
+            print("Temperature out of range for Planckian locus")
+
+        zc = 1 - xc - yc
+        return xc, yc, zc 
+        
+
+
+
     def compute_cie(self, spectrum_data):
         
         # get color response functions
