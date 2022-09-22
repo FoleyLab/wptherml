@@ -1244,6 +1244,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         return _pm_analytical_gradient
 
+    def compute_cie(self, spectrum_data):
+        
+        # get color response functions
+        self._read_CIE()
+
+        # get X, Y, and Z from reflectivity spectrum and Cr, Cg, Cb response functions
+        X = np.trapz(self._cie_cr * spectrum_data, self.wavelength_array)
+        Y = np.trapz(self._cie_cg * spectrum_data, self.wavelength_array)
+        Z = np.trapz(self._cie_cb * spectrum_data, self.wavelength_array)
+
+        # get total magnitude
+        tot = X + Y + Z
+
+        # get normalized values
+        x = X / tot
+        y = Y / tot
+        z = Z / tot
+
+        return x, y, z
+
+
     def _compute_rgb(self, colorblindness="False"):
 
         # get color response functions
