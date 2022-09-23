@@ -1268,7 +1268,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             print("Temperature out of range for Planckian locus")
 
         zc = 1 - xc - yc
-        return xc, yc, zc 
+        cielist = [xc, yc, zc]
+        return cielist
         
 
 
@@ -1291,7 +1292,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         y = Y / tot
         z = Z / tot
 
-        return x, y, z
+        cielist = [x, y, z]
+        return cielist
 
 
     def _compute_rgb(self, colorblindness="False"):
