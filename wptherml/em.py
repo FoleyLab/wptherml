@@ -1274,7 +1274,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
 
 
-    def compute_cie(self, spectrum_data):
+    def compute_cie(self, spectrum_data, colorblindness="False"):
         
         # get color response functions
         self._read_CIE()
@@ -1283,39 +1283,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         X = np.trapz(self._cie_cr * spectrum_data, self.wavelength_array)
         Y = np.trapz(self._cie_cg * spectrum_data, self.wavelength_array)
         Z = np.trapz(self._cie_cb * spectrum_data, self.wavelength_array)
-
-        # get total magnitude
-        tot = X + Y + Z
-
-        # get normalized values
-        x = X / tot
-        y = Y / tot
-        z = Z / tot
-
-        cielist = [x, y, z]
-        return cielist
-
-
-    def _compute_rgb(self, colorblindness="False"):
-
-        # get color response functions
-        self._read_CIE()
-        # plt.plot(self.wavelength_array * 1e9, self.reflectivity_array, label="Reflectivity")
-        # plt.plot(self.wavelength_array * 1e9, self._cie_cr, label="CIE Red")
-        # plt.legend()
-        # plt.plot(self.wavelength_array, self._cie_cr * self.reflectivity_array)
-        # plt.show()
-
-        # get X, Y, and Z from reflectivity spectrum and Cr, Cg, Cb response functions
-        X = np.trapz(self._cie_cr * self.reflectivity_array, self.wavelength_array)
-        Y = np.trapz(self._cie_cg * self.reflectivity_array, self.wavelength_array)
-        Z = np.trapz(self._cie_cb * self.reflectivity_array, self.wavelength_array)
-
-        # zero out appropriate response if colorblindness is indicated
-        # from here: https://www.color-blindness.com/types-of-color-blindness/
-        # Tritanopia/Tritanomaly: Missing/malfunctioning S-cone (blue).
-        # Deuteranopia/Deuteranomaly: Missing/malfunctioning M-cone (green).
-        # Protanopia/Protanomaly: Missing/malfunctioning L-cone (red).
 
         if colorblindness == "Tritanopia" or colorblindness == "Tritanomaly":
             Z = 0
@@ -1332,79 +1299,25 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         y = Y / tot
         z = Z / tot
 
-        # should also be equal to z = 1 - x - y
-        # array of xr, xg, xb, xw, ..., zr, zg, zb, zw
-        # use hdtv standard
-        xrgbw = [0.670, 0.210, 0.150, 0.3127]
-        yrgbw = [0.330, 0.710, 0.060, 0.3291]
-        zrgbw = []
-        for i in range(0, len(xrgbw)):
-            zrgbw.append(1.0 - xrgbw[i] - yrgbw[i])
+        cielist = [x, y, z]
+        return cielist
 
-        ## rx = yg*zb - yb*zg
-        rx = yrgbw[1] * zrgbw[2] - yrgbw[2] * zrgbw[1]
-        ## ry = xb*zg - xg*zb
-        ry = xrgbw[2] * zrgbw[1] - xrgbw[1] * zrgbw[2]
-        ## rz = (xg * yb) - (xb * yg)
-        rz = xrgbw[1] * yrgbw[2] - xrgbw[2] * yrgbw[1]
-        ## gx = (yb * zr) - (yr * zb)
-        gx = yrgbw[2] * zrgbw[0] - yrgbw[0] * zrgbw[2]
-        ## gy = (xr * zb) - (xb * zr)
-        gy = xrgbw[0] * zrgbw[2] - xrgbw[2] * zrgbw[0]
-        ## gz = (xb * yr) - (xr * yb)
-        gz = xrgbw[2] * yrgbw[0] - xrgbw[0] * yrgbw[2]
-        ## bx = (yr * zg) - (yg * zr)
-        bx = yrgbw[0] * zrgbw[1] - yrgbw[1] * zrgbw[0]
-        ## by = (xg * zr) - (xr * zg)
-        by = xrgbw[1] * zrgbw[0] - xrgbw[0] * zrgbw[1]
-        ## bz = (xr * yg) - (xg * yr)
-        bz = xrgbw[0] * yrgbw[1] - xrgbw[1] * yrgbw[0]
 
-        ## rw = ((rx * xw) + (ry * yw) + (rz * zw)) / yw;
-        rw = (rx * xrgbw[3] + ry * yrgbw[3] + rz * zrgbw[3]) / yrgbw[3]
-        ## gw = ((gx * xw) + (gy * yw) + (gz * zw)) / yw;
-        gw = (gx * xrgbw[3] + gy * yrgbw[3] + gz * zrgbw[3]) / yrgbw[3]
-        ## bw = ((bx * xw) + (by * yw) + (bz * zw)) / yw;
-        bw = (bx * xrgbw[3] + by * yrgbw[3] + bz * zrgbw[3]) / yrgbw[3]
+    def compute_rgb(self, spectrum_data, colorblindness="False"):
 
-        ## /* xyz -> rgb matrix, correctly scaled to white. */
-        rx = rx / rw
-        ry = ry / rw
-        rz = rz / rw
-        gx = gx / gw
-        gy = gy / gw
-        gz = gz / gw
-        bx = bx / bw
-        by = by / bw
-        bz = bz / bw
+        # get CIE values and store in a numpy array
+        cie_xyz = self.compute_cie(spectrum_data, colorblindness)
 
-        ## /* rgb of the desired point */
-        r = (rx * x) + (ry * y) + (rz * z)
-        g = (gx * x) + (gy * y) + (gz * z)
-        b = (bx * x) + (by * y) + (bz * z)
+        # define the conversion matrix
+        cie_to_rgb = np.array([
+            [ 3.2404542, -1.5371385, -0.4985314], 
+            [-0.9692660, 1.8760108,  0.0415560],
+            [ 0.0556434,-0.2040259,  1.0572252] 
+        ])
 
-        rgblist = []
-        rgblist.append(r)
-        rgblist.append(g)
-        rgblist.append(b)
+        rgb = cie_to_rgb.dot(cie_xyz)
 
-        # are there negative values?
-        w = np.amin(rgblist)
-        if w < 0:
-            rgblist[0] = rgblist[0] - w
-            rgblist[1] = rgblist[1] - w
-            rgblist[2] = rgblist[2] - w
-
-        # scale things so that max has value of 1
-        mag = np.amax(rgblist)
-
-        rgblist[0] = rgblist[0] / mag
-        rgblist[1] = rgblist[1] / mag
-        rgblist[2] = rgblist[2] / mag
-
-        # rgb = {'r': rgblist[0]/mag, 'g': rgblist[1]/mag, 'b': rgblist[2]/mag }
-
-        return rgblist
+        return rgb
 
     def render_color(self, string, colorblindness="False"):
 
