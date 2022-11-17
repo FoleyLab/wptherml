@@ -38,7 +38,7 @@ def test_insert_layer():
     test1 = sf.spectrum_factory("Tmm", test_1_args)
     test2 = sf.spectrum_factory("Tmm", test_2_args)
 
-    test1.insert_layer(3, 5e-9)
+    test1.insert_layer(3, 50e-9)
     test1.material_Ag(3)
     test1.compute_spectrum()
 
