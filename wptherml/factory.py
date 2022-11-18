@@ -3,6 +3,7 @@ from .spectrum_driver import SpectrumDriver
 # child classes
 from .mie import MieDriver
 from .em import TmmDriver
+from .acoustic import AcousticDriver
 from .therml import Therml
 
 
@@ -12,6 +13,8 @@ class SpectrumFactory:
             return MieDriver(args)
         elif spectrum_toolkit == "Tmm":
             return TmmDriver(args)
+        elif spectrum_toolkit == "Acoustic":
+            return AcousticDriver(args)
         else:
             raise TypeError("Toolkit not found")
 
