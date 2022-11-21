@@ -17,7 +17,9 @@ A python package for modeling light-matter interactions in nanoscale and molecul
 ### [Examples](https://github.com/FoleyLab/wptherml/tree/main/examples)
 
 ### Copyright
-Copyright (c) 2022, Foley Lab, The University of North Carolina at Charlotte
+
+Copyright (c) 2022, Foley Lab, University of North Carolina at Charlotte
+
 
 
 #### Acknowledgements
