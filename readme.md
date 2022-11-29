@@ -18,7 +18,7 @@ A python package for modeling light-matter interactions in nanoscale and molecul
 
 ### Copyright
 
-Copyright (c) 2022, Foley Lab, The University of North Carolina at Charlotte, NC
+Copyright (c) 2022, Foley Lab, The University of North Carolina at Charlotte, NC, USA.
 
 
 
