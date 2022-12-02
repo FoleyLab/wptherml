@@ -101,6 +101,11 @@ class AcousticDriver(SpectrumDriver, Materials):
         - the value of Ly is stored in the attribute self.Ly
 
         """
+<<<<<<< Updated upstream
+=======
+        self.gamma = self.k / (np.sqrt((m*np.pi/self.Lx)**2 + (n*np.pi/self.Ly)**2))
+
+>>>>>>> Stashed changes
         pass # <=== replace with lines of code to compute self.gamma
 
     def _compute_kx_ky_kz(self):
@@ -136,7 +141,18 @@ class AcousticDriver(SpectrumDriver, Materials):
         self.k_x, self.k_y, and self.k_z should be 2D numpy arrays with dimensions len(theta) x len(phi)
 
         """
+<<<<<<< Updated upstream
         pass # <=== replace with lines of code to compute self.k_x, self.k_y, and self.k_z 
+=======
+    
+        self.k_x_array = self.k * np.cos(self.phi)*np.sin(self.theta)
+        self.k_y_array = self.k * np.sin(self.phi)*np.sin(self.theta)
+        self.k_z_array = self.k * np.cos(self.theta)
+
+
+
+       # <=== replace with lines of code to compute self.k_x, self.k_y, and self.k_z 
+>>>>>>> Stashed changes
 
 
     def compute_spectrum(self):
