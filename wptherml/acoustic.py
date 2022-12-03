@@ -118,7 +118,7 @@ class AcousticDriver(SpectrumDriver, Materials):
         """
         self.gamma = self.k / (np.sqrt((m*np.pi/self.Lx)**2 + (n*np.pi/self.Ly)**2))
 
-    def _compute_kx_ky_kz(self):
+    def _compute_kx_ky_kz(self, k, theta, phi):
         """Compute the kx, ky, and kz values given
 
         Arguments
@@ -151,9 +151,9 @@ class AcousticDriver(SpectrumDriver, Materials):
         self.k_x, self.k_y, and self.k_z should be 2D numpy arrays with dimensions len(theta) x len(phi)
 
         """
-        self.k_x_array = self.k * np.cos(self.phi)*np.sin(self.theta)
-        self.k_y_array = self.k * np.sin(self.phi)*np.sin(self.theta)
-        self.k_z_array = self.k * np.cos(self.theta)
+        self.k_x_val = k * np.cos(phi)*np.sin(theta)
+        self.k_y_val = k * np.sin(phi)*np.sin(theta)
+        self.k_z_val = k * np.cos(theta)
 
 
     def compute_Smn(self):
