@@ -178,7 +178,7 @@ class AcousticDriver(SpectrumDriver, Materials):
         S_mn = 0
         for theta in self.theta_array:
             for phi in self.phi_array:
-                S_mn += # insert appropriate function evaluation multiplied by appropriate widths in theta and phi
+                self.S_mn += # insert appropriate function evaluation multiplied by appropriate widths in theta and phi
 
         """
         pass # <== replace with code to evaluate S_mn
