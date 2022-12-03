@@ -57,14 +57,6 @@ class AcousticDriver(SpectrumDriver, Materials):
         self.parse_input(args)
         print("Lx is ", self.Lx)
 
-        # hard-code theta array
-        self.theta = np.linspace(0, np.pi/2, 200)
-        # hard-code phi array
-        self.phi = np.linspace(0, np.pi * 2, 200)
-
-        #self.ci = 0 + 1j
-        #self.compute_spectrum()
-
     def parse_input(self, args):
         if "Lx" in args:
             self.Lx = args["Lx"]
@@ -77,6 +69,29 @@ class AcousticDriver(SpectrumDriver, Materials):
             self.Ly = 100 # ==> To-do: decide what a reasonable value is!
 
         self.k = 100 # ==> To-do: decide what reasonable values are!
+
+        if "N_theta_vals" in args:
+            self.N_theta_vals = args["N_theta_vals"]
+        else:
+            self.N_theta_vals = 200
+
+        # define theta grid
+        self.theta = np.linspace(0, np.pi/2, self.N_theta_vals)
+        # get grid spacing in theta for numerical integration
+        self.d_theta = self.theta[1]
+        
+        
+        if "N_phi_vals" in args:
+            self.N_phi_vals = args["N_phi_vals"]
+        else:
+            self.N_phi_vals = 200
+
+        # define phi grid
+        self.phi = np.linspace(0, np.pi * 2, self.N_phi_vals)
+
+        # set grid spacing in phi for numerical integration
+        self.d_phi = self.phi[1]
+
 
     def _compute_gamma(self, m, n):
         """Compute the spherical bessel function from the Bessel function
@@ -101,12 +116,7 @@ class AcousticDriver(SpectrumDriver, Materials):
         - the value of Ly is stored in the attribute self.Ly
 
         """
-<<<<<<< Updated upstream
-=======
         self.gamma = self.k / (np.sqrt((m*np.pi/self.Lx)**2 + (n*np.pi/self.Ly)**2))
-
->>>>>>> Stashed changes
-        pass # <=== replace with lines of code to compute self.gamma
 
     def _compute_kx_ky_kz(self):
         """Compute the kx, ky, and kz values given
@@ -141,21 +151,12 @@ class AcousticDriver(SpectrumDriver, Materials):
         self.k_x, self.k_y, and self.k_z should be 2D numpy arrays with dimensions len(theta) x len(phi)
 
         """
-<<<<<<< Updated upstream
-        pass # <=== replace with lines of code to compute self.k_x, self.k_y, and self.k_z 
-=======
-    
         self.k_x_array = self.k * np.cos(self.phi)*np.sin(self.theta)
         self.k_y_array = self.k * np.sin(self.phi)*np.sin(self.theta)
         self.k_z_array = self.k * np.cos(self.theta)
 
 
-
-       # <=== replace with lines of code to compute self.k_x, self.k_y, and self.k_z 
->>>>>>> Stashed changes
-
-
-    def compute_spectrum(self):
+    def compute_Smn(self):
         """Will prepare the attributes and compute S_mn
 
         Attributes
@@ -169,9 +170,17 @@ class AcousticDriver(SpectrumDriver, Materials):
 
         Notes
         -----
-        Equation for S_mn can be found on Eq. 2.179 on page 69 of Earl Williams book. 
+        Equation for S_mn can be found on Eq. 2.179 on page 69 of Earl Williams book.
+        
+        Note that the evaluation of S_mn requires integration over theta and phi, which you can perform 
+        using nested for loops, for example using a structure like the following:
+
+        S_mn = 0
+        for theta in self.theta_array:
+            for phi in self.phi_array:
+                S_mn += # insert appropriate function evaluation multiplied by appropriate widths in theta and phi
 
         """
-        pass 
+        pass # <== replace with code to evaluate S_mn
 
 
