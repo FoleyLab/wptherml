@@ -51,41 +51,14 @@ class CuboidDriver(SpectrumDriver, Materials):
     _epsilon_B : float
         epsilon of surrounding medium = _medium_refractive_index ** 2
 
-    q_scat : numpy array of floats
+    sigma_scat : numpy array of floats
         the scattering efficiency as a function of wavelength
 
-    q_ext : numpy array of floats
+    sigma_ext : numpy array of floats
         the extenction efficiency as a function of wavelength
 
-    q_abs : 1 x number_of_wavelengths numpy array of floats
+    sigma_abs : 1 x number_of_wavelengths numpy array of floats
         the absorption efficiency as a function of wavelength
-
-    c_scat : numpy array of floats
-        the scattering cross section as a function of wavelength
-
-    c_ext : numpy array of floats
-        the extinction cross section as a function of wavelength
-
-    c_abs : 1 x number_of_wavelengths numpy array of floats
-        the absorption efficiency as a function of wavelength
-
-    _max_coefficient_n : int
-        the maximum coefficient to be computed in the Mie expansion
-
-    _n_array : 1 x _max_coefficient_n array of ints
-        array of indices for the terms in the Mie expansion
-
-    _an : _max_coefficient x number_of_wavelengths numpy array of complex floats
-        the array of a coefficients in the Mie expansion
-
-    _bn : _max_coefficientx x number_of_wavelengths numpy array of complex floats
-        the array of b coefficients in the Mie expansion
-
-    _cn : _max_coefficientx x number_of_wavelengths numpy array of complex floats
-        the array of c coefficients in the Mie expansion
-
-    _dn : _max_coefficientx x number_of_wavelengths numpy array of complex floats
-        the array of d coefficients in the Mie expansion
 
 
     Returns
@@ -99,17 +72,34 @@ class CuboidDriver(SpectrumDriver, Materials):
 
     def __init__(self, args):
         self.parse_input(args)
-        print("Radius of the sphere is ", self.radius)
-        self.ci = 0 + 1j
+        self._ci = 0 + 1j
 
         self.set_refractive_indicex_array()
         self.compute_spectrum()
 
     def parse_input(self, args):
-        if "radius" in args:
-            self.radius = args["radius"]
+        if "Lx" in args:
+            self.Lx = args["Lx"]
         else:
-            self.radius = 100e-9
+            self.Lx = 100e-9
+
+        if "Ly" in args:
+            self.Ly = args["Ly"]
+        else:
+            self.Ly = 100e-9
+        
+        if "Lx" in args:
+            self.Lz = args["Lx"]
+        else:
+            self.Lz = 100e-9
+
+        self._a = self.Lx / 2
+        self._b = self.Ly / 2
+        self._c = self.Lz / 2
+
+        self._beta = 12.6937 * self._a ** 2
+        self.number_of_layers = 3
+        
 
         if "wavelength_list" in args:
             lamlist = args["wavelength_list"]
@@ -122,22 +112,19 @@ class CuboidDriver(SpectrumDriver, Materials):
             self.number_of_wavelengths = 10
             self.wavenumber_array = 1 / self.wavelength_array
 
-        if "sphere_material" in args:
-            self.sphere_material = args["sphere_material"]
+        if "material" in args:
+            self.material = args["material"]
         else:
-            self.sphere_material = "ag"
+            self.material = "ag"
 
         if "medium_material" in args:
             self.medium_material = args["medium_material"]
         else:
             self.medium_material = "air"
 
-        self.number_of_layers = 3
         self._refractive_index_array = np.ones(
             (self.number_of_wavelengths, 3), dtype=complex
         )
-        self._relative_permeability = 1.0 + 0j
-        self._size_factor_array = np.pi * 2 * self.radius / self.wavelength_array
 
         self.q_ext = np.zeros_like(self.wavelength_array)
         self.q_scat = np.zeros_like(self.wavelength_array)
@@ -156,7 +143,7 @@ class CuboidDriver(SpectrumDriver, Materials):
         elif _lmed == "h2o":
             self.material_H2O(0)
 
-        _lm = self.sphere_material.lower()
+        _lm = self.material.lower()
 
         # check all possible values of the material string
         # and set material as appropriate.
@@ -206,10 +193,6 @@ class CuboidDriver(SpectrumDriver, Materials):
         else:
             self.material_SiO2(1)
 
-        self._relative_refractive_index_array = (
-            self._refractive_index_array[:, 1] / self._refractive_index_array[:, 0]
-        )
-
     def compute_spectrum(self):
         """Will prepare the attributes forcomputing q_ext, q_abs, q_scat, c_abs, c_ext, c_scat
         via computing the mie coefficients
@@ -226,343 +209,85 @@ class CuboidDriver(SpectrumDriver, Materials):
         """
         for i in range(0, len(self.wavelength_array)):
             # get Mie coefficients... stored in attriubutes
-            m_val = self._relative_refractive_index_array[i]
-            mu_val = self._relative_permeability
-            x_val = self._size_factor_array[i]
-            self._compute_mie_coeffients(m_val, mu_val, x_val)
+            _n = self._refractive_index_array[i, 1]
+            _nB = self._refractive_index_array[i, 0]
+            _kb = self.wavenumber_array[i] * _nB 
+            self._compute_alpha(_nB ** 2, _n ** 2, _kb)
 
             # compute q_scat
-            self.q_scat[i] = self._compute_q_scattering(x_val)
-            self.q_ext[i] = self._compute_q_extinction(x_val)
-            self.q_abs[i] = self.q_ext[i] - self.q_scat[i]
+            self.q_scat[i] = _kb ** 4 / (6 * np.pi) * np.real( np.conj( self._alpha ) * self._alpha  )
+            self.q_abs[i] = _kb * np.imag( self._alpha )
 
-    def _compute_s_jn(self, n, z):
-        """Compute the spherical bessel function from the Bessel function
-        of the first kind
+            self.q_ext[i] = self.q_scat[i] + self.q_abs[i]
 
-        Arguments
-        ---------
-        n : 1 x _max_coefficient numpy array of ints
-            orders of the bessel function
-
-        z : float
-            size parameter of the sphere
-
-
-        Returns
-        -------
-        _s_jn
-
-        Test Implemented
-        ----------------
-        Yes
-
-        """
-        ns = n + 0.5
-        return np.sqrt(np.pi / (2 * z)) * jv(ns, z)
-
-    def _compute_s_yn(self, n, z):
-        """Compute the spherical bessel function from the Bessel function
-        of the first kind
-
-        Arguments
-        ---------
-        n : 1 x _max_coefficient numpy array of ints
-            orders of the bessel function
-
-        z : float
-            variable passed to the bessel function
-
-
-        Returns
-        -------
-        _s_jn
-
-        Test Implemented
-        ----------------
-        Yes
-
-        """
-        ns = n + 0.5
-        return np.sqrt(np.pi / (2 * z)) * yv(ns, z)
-
-    def _compute_s_hn(self, n, z):
-        """Compute the spherical bessel function h_n^{(1)}
-
-        Arguments
-        ---------
-        n : 1 x _max_coefficient array of int
-            orders of the bessel function
-
-        z : float
-            variable passed to the bessel function
-
-
-        Returns
-        -------
-        _s_hn
-
-        Test Implemented
-        ----------------
-        Yes
-        """
-        return spherical_jn(n, z) + self.ci * spherical_yn(n, z)
-
-    def _compute_z_jn_prime(self, n, z):
-        """Compute derivative of z*j_n(z) using recurrence relations
-
-        Arguments
-        ---------
-        n : 1 x _max_coefficient array of int
-            orders of the bessel functions
-        z : float
-            variable passed to the bessel function
-
-        Returns
-        -------
-        _z_jn_prime
-
-        Test Implemented
-        ----------------
-        Yes
-
-        """
-        return z * spherical_jn(n - 1, z) - n * spherical_jn(n, z)
-
-    def _compute_z_hn_prime(self, n, z):
-        """Compute derivative of z*h_n^{(1)}(z) using recurrence relations
-
-        Arguments
-        ---------
-        n : 1 x _max_coefficient array of int
-            orders of the bessel functions
-        z : float
-            variable passed to the bessel function
-
-        Returns
-        -------
-        _z_hn_prime
-
-        """
-
-        return z * self._compute_s_hn(n - 1, z) - n * self._compute_s_hn(n, z)
-
-    def _compute_mie_coeffients(self, m, mu, x):
-        """computes the Mie coefficients given relative refractive index,
-
-        Arguments
-        ---------
-        n : 1 x _max_coefficient array of ints
-            order of the mie coefficients functions
-        m : complex float
-            relative refractive index of the sphere to the medium
-        mu : complex float
-            relative permeability of the sphere to the medium (typically 1)
-        x : float
-            size parameter of the sphere
+    def _compute_Omega(self):
+        """Compute the Eq. (2) in https://doi.org/10.1088/1367-2630/15/6/063013 
 
         Attributes
-        -------
-        _an
-
-        _bn
-
-        _cn
-
-        _dn
-
-        """
-        self._compute_n_array(x)
-        # self._n_array will be an array from 1 to n_max
-
-        # pre-compute terms that will be used numerous times in computing coefficients
-        _jnx = spherical_jn(self._n_array, x)
-        _jnmx = spherical_jn(self._n_array, m * x)
-        _hnx = self._compute_s_hn(self._n_array, x)
-        _xjnxp = self._compute_z_jn_prime(self._n_array, x)
-        _mxjnmxp = self._compute_z_jn_prime(self._n_array, m * x)
-        _xhnxp = self._compute_z_hn_prime(self._n_array, x)
-
-        # a_n coefficients
-        _a_numerator = m ** 2 * _jnmx * _xjnxp - mu * _jnx * _mxjnmxp
-        _a_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
-
-        self._an = _a_numerator / _a_denominator
-
-        # b_n coefficients
-        _b_numerator = mu * _jnmx * _xjnxp - _jnx * _mxjnmxp
-        _b_denominator = mu * _jnmx * _xhnxp - _hnx * _mxjnmxp
-
-        self._bn = _b_numerator / _b_denominator
-
-        # c_n coefficients
-        _c_numerator = mu * _jnx * _xhnxp - mu * _hnx * _xjnxp
-        _c_denominator = mu * _jnmx * _xhnxp - _hnx * _mxjnmxp
-
-        self._cn = _c_numerator / _c_denominator
-
-        # d_n coefficients
-        _d_numerator = mu * m * _jnx * _xhnxp - mu * m * _hnx * _xjnxp
-        _d_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
-
-        self._dn = _d_numerator / _d_denominator
-        # return [self._an,self._bn,self._cn,self._dn]
-
-    def _compute_q_scattering(self, x):
-        """computes the scattering efficiency from the mie coefficients
-
-        Parameters
         ----------
-        m : complex float
-            relative refractive index of the sphere
+        self.Omega : float
+            the solid angle subtended by the side perpendicular 
+            to the polarization axis of the cuboid (the x-axis in this case)
 
-        mu : float
-            relative permeability of the sphere
 
-        x : float
-            size parameter of the sphere, defined as 2 * pi * r / lambda
-            where r is the radius of the sphere and lambda is the wavelength of illumination
-
-        Attributes
-        -------
-        q_scat
-
-        Returns
-        -------
-        q_scat
+        Test Implemented
+        ----------------
+        No
 
         """
-        # c = self._compute_mie_coeffients(m, mu, x)
-        an = self._an
-        bn = self._bn
+        _numerator = self._b * self._c 
+        _denominator = np.sqrt( (self._a ** 2 + self._b ** 2) * (self._a ** 2 + self._c ** 2) )
 
-        q_scat = 0.0
-        for i in range(0, len(an)):
-            # n is i + 1
-            # because i indexes the arrays, n is the multipole order
-            n = i + 1
-            q_scat = q_scat + 2 / x ** 2 * (2 * n + 1) * (
-                np.abs(an[i]) ** 2 + np.abs(bn[i]) ** 2
-            )
+        self._Omega = 4 * np.arcsin( _numerator / _denominator ) 
 
-        return q_scat
+    def _compute_delta(self, _epsilon_B, _epsilon):
+        """ is a term that takes into account the polarization charges 
+        at the planar ends of the cuboid orthogonal to the x direction, and is expressed by
 
-    def _compute_q_extinction(self, x):
-        """computes the extinction efficiency from the mie coefficients
+        Arguments
+        ---------
+        _epsilon_B : float
+            permittivity of surrounding medium
 
-        Parameters
-        ----------
+        _epsilon : complex 
+            permittivity of the material at a particular wavelength
 
-        m : complex float
-            relative refractive index of the sphere
+        _delta : complex 
 
-        mu : float
-            relative permeability of the sphere
 
-        x : float
-            size parameter of the sphere, defined as 2 * pi * r / lambda
-            where r is the radius of the sphere and lambda is the wavelength of illumination
-
-        Attributes
-        -------
-        q_ext
-
-        Returns
-        -------
-        q_ext
+        Test Implemented
+        ----------------
+        No
 
         """
+        _numerator = 8 * self._a * self._b * self._c
+        _denominator = (self._a ** 2 + self._b **2 + self._c ) ** (3/2)
+        self._delta =  _numerator / _denominator * _epsilon_B / _epsilon
 
-        # c = self._compute_mie_coeffients(m, mu, x)
-        an = self._an
-        bn = self._bn
+    def _compute_alpha(self, _epsilon_B, _epsilon, _kb):
+        """ Polarizability of the cuboid
 
-        q_ext = 0
-        for i in range(0, len(an)):
-            # n is i + 1
-            # because i indexes the arrays, n is the multipole order
-            n = i + 1
-            q_ext = q_ext + 2 / x ** 2 * (2 * n + 1) * np.real(an[i] + bn[i])
+        Arguments
+        ---------
+        _epsilon_B : float
+            permittivity of surrounding medium
 
-        return q_ext
+        _epsilon : complex 
+            permittivity of the material at a particular wavelength
 
-    def _compute_n_array(self, x):
-        _n_max = int(x + 4 * x ** (1 / 3.0) + 2)
-        self._n_array = np.copy(np.linspace(1, _n_max, _n_max, dtype=int))
+        _kb : float
+            wavenumber in the surrounding medium - n_B * k_0 
 
-    def _compute_gl(l, r, h, mu, omega_p, eps_inf, eps_d):
-        """docstring goes here!"""
-        zeta = h / r
+        Test Implemented
+        ----------------
+        No
 
-        omega_l = self._compute_omega_l(l, omega_p, eps_inf, eps_d)
-        # note in atomics, 4 * pi * epsilon_0 = 1
-        g_l_squared = mu * omega_p / (1 * h * r ** 3) * (omega_l / omega_p) ** 3
-        g_l_squared *= (l + 1) ** 2 / ((1 + zeta) ** (2 * l + 4)) * (1 + 1 / (2 * l))
-
-        return np.sqrt(g_l_squared), omega_l
-
-    def _compute_gm(l_max, r, h, mu, omega_p, eps_inf, eps_d):
-        gm_array = np.zeros(len(l_max) - 2)
-        omegam_array = np.zeros(len(l_max) - 2)
-        for i in range(2, l_max):
-            gm_array[i - 2], omegam_array[i - 2] = self._compute_gl(
-                i, r, h, mu, omega_p, eps_inf, eps_d
-            )
-
-        gm = np.sqrt(np.sum(gm_array * gm_array))
-        omegam = np.sum(omegam_array * gm_array * gm_array) / np.sum(
-            gm_array * gm_array
-        )
-
-        return gm, omegam
-
-    def _compute_omega_l(l, omega_p, eps_inf, eps_d):
-        """docstring goes here!"""
-        return omega_p / np.sqrt(eps_inf + (1 + 1 / l) * eps_d)
-
-    def compute_hamiltonian(self, N, h, drude_dictionary, emitter_dictionary):
-        """docstring goes here!"""
-        # this is the wavelength relevant for the system studied in PRL 112, 253601 (2014)
-        # it is not general! should think of a more general way to get the l_max value!
-        # in that paper, the set omega_0 to 2.5 eV so we can convert that frequency into a wavelength
-        lambda_0 = 1240 / 2.5
-        # now we can get the size parameter
-        x = 2 * np.pi * self.radius / lambda_0
-        _l_max = int(x + 4 * x ** (1 / 3.0) + 2)
-
-        # get parameters of the metal nanoparticle
-        _omega_p = drude_dictionary["omega_p"]
-        _eps_inf = drude_dictionary["eps_inf"]
-        _gamma_p = drude_dictionary["gamma_p"]
-        _eps_d = drude_dictionary["eps_d"]
-
-        # get parameters of the quantum emitter
-        _gamma_qe = emitter_dictionary["gamma_qe"]
-        _omega_0 = emitter_dictionary["omega_0"]
-        _mu = emitter_dictionary["mu"]
-
-        # compute g_1 and omega_1
-        _g1, _omega1 = self._compute_gl(
-            1, self.radius, h, _mu, _omega_p, _eps_inf, _eps_d
-        )
-
-        # compute g_M and omega_M
-        _gm, _omegam = self._compute_gm(
-            _l_max, self.radius, h, _mu, _omega_p, _eps_inf, _eps_d
-        )
-
-        H = np.zeros((3, 3), dtype=complex)
-        ci = 0 + 1j
-
-        # diagonal elements
-        H[0, 0] = _omega_0 - ci * _gamma_qe / 2
-        H[1, 1] = _omega1 - ci * _gamma_p / 2
-        H[2, 2] = _omegam - ci * _gamma_p / 2
-
-        # off-diagonal for coupling to dipolar term
-        H[0, 1] = _g1 * np.sqrt(N / 3)
-        H[1, 0] = _g1 * np.sqrt(N / 3)
-
-        # off-diagonal for coupling to all higher multipoles
-        H[0, 2] = _gm
-        H[2, 0] = _gm
+        """
+        _ci = 0+1j
+        self._compute_Omega()
+        self._compute_delta(_epsilon_B, _epsilon)
+        _abc = self._a * self._b * self._c 
+        _numerator = 8 * _abc 
+        _denominator_1 = _epsilon_B / (_epsilon - _epsilon_B)
+        _denominator_2 = -2 * self._Omega - self._delta + _kb ** 2 / 2  * self._beta + 16 / 3 * _ci * _kb ** 3 * _abc
+        self._alpha = _numerator / (_denominator_1 - _denominator_2 / (4 * np.pi)) 
