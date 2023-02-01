@@ -23,6 +23,8 @@ class ExcitonDriver(SpectrumDriver):
     def __init__(self, args):
         self.parse_input(args)
         print("Exciton Energy is  ", self.exciton_energy)
+        # allocate the exciton Hamiltonian
+        self.exciton_hamiltonian = np.zeros((self.number_of_monomers, self.number_of_monomers))
 
 
     def parse_input(self, args):
@@ -52,10 +54,12 @@ class ExcitonDriver(SpectrumDriver):
 
         for i in range(self.number_of_monomers):
             self.coords[:,i] = self.displacement_between_monomers * i
-
-
     
     def _compute_H0_element(self, n, m):
+        """ Add proper docstring! 
+        
+        
+        """
         return self.exciton_energy * (n == m)
 
     def _compute_dipole_dipole_coupling(self, n, m):
@@ -92,6 +96,28 @@ class ExcitonDriver(SpectrumDriver):
         V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2))) 
 
         return V_nm
+
+    def build_exciton_hamiltonian(self):
+        """ Method to build the Frenkel Exciton Hamiltonian
+        
+        Attribute
+        ---------
+        exciton_hamiltonian : number_of_monomers x number_of_monomers numpy array of floats
+            the exciton Hamiltonian, initialized by init and to-be-filled with appropriate values 
+            by this function 
+
+        Notes
+        -----
+        
+        """
+        _N = self.number_of_monomers # <== _N is just easier to type!
+
+        # nested loop to build Hamiltonian
+        for _n in range(_N):
+            for _m in range(_N):
+                # <== call _compute_H0_element and store value -> H0
+                # <== call _compute_dipole_dipole_coupling and store value -> V
+                # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
         
 
     def compute_spectrum(self):

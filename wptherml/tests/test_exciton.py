@@ -39,11 +39,24 @@ def test_compute_H0_element():
 
 def test_compute_dipole_dipole_coupling():
 
-    V_test = exciton_test._compute_dipole_dipole_coupling(1, 2)
+    _V_test = exciton_test._compute_dipole_dipole_coupling(1, 2)
 
-    V_expected = 0.25
+    _V_expected = 0.25
     
-    assert np.isclose(V_test, V_expected)
+    assert np.isclose(_V_test, _V_expected)
 
     
 
+def test_build_exciton_hamiltonian():
+    # test case based on 2x2 system defined in args above
+    _H_expected = np.zeros((2,2))
+    _H_expected[0,0] = exciton_test.exciton_energy
+    _H_expected[1,1] = exciton_test.exciton_energy
+    _H_expected[0,1] = 0.25
+    _H_expected[1,0] = 0.25
+
+    # this line will build the exciton hamiltonian and 
+    # store it in the attribute .exciton_hamiltonian
+    exciton_test.build_exciton_hamiltonian()
+
+    assert np.allclose(_H_expected, exciton_test.exciton_hamiltonian)
