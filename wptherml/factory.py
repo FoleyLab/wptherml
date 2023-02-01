@@ -4,6 +4,7 @@ from .spectrum_driver import SpectrumDriver
 from .mie import MieDriver
 from .em import TmmDriver
 from .therml import Therml
+from .exciton import ExcitonDriver
 
 
 class SpectrumFactory:
@@ -12,6 +13,8 @@ class SpectrumFactory:
             return MieDriver(args)
         elif spectrum_toolkit == "Tmm":
             return TmmDriver(args)
+        elif spectrum_toolkit == "Frenkel":
+            return ExcitonDriver(args)
         else:
             raise TypeError("Toolkit not found")
 
