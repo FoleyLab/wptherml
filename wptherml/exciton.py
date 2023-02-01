@@ -43,6 +43,10 @@ class ExcitonDriver(SpectrumDriver):
             self.transition_dipole_moment = args["transition_dipole_moment"]
         else:
             self.transition_dipole_moment = np.array([0, 0, 1])
+        if "refractive_index" in args:
+                self.refractive_index = args["refractive_index"]
+        else:
+            self.refractive_index = 1
 
         self.coords = np.zeros((3, self.number_of_monomers))
 
@@ -85,13 +89,13 @@ class ExcitonDriver(SpectrumDriver):
         _r_vec = self.coords[:, _m] - self.coords[:, _n]
 
         # self.transition_dipole_moment is the transition dipole moment!
-        # add more code here to compute V_nm
+        V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2))) 
 
         return V_nm
         
 
     def compute_spectrum(self):
-        """Will prepare the Frenkel Exciton Hamiltonian and use to compute an absorption spectrum
+        """Will prepare the Frenkel Exciton Hamiltonian and use to compute an absorption spectrum 
 
         Attributes
         ---------

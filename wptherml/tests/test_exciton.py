@@ -16,9 +16,11 @@ import sys
 sf = wptherml.SpectrumFactory()
 args = {  
 'exciton_energy': 1.5,
-'number_of_monomers' : 10,
+'number_of_monomers' : 2,
 'displacement_between_monomers' : np.array([1, 0, 0]), 
-'transition_dipole_moment' : np.array([0, 0, 0.5]) 
+'transition_dipole_moment' : np.array([0, 0, 0.5]),
+'refractive_index' : 1.0
+
 }  
 
 exciton_test = sf.spectrum_factory('Frenkel', args)
@@ -36,8 +38,12 @@ def test_compute_H0_element():
 
 
 def test_compute_dipole_dipole_coupling():
-    """add a real unit test here!"""
 
-    pass
+    V_test = exciton_test._compute_dipole_dipole_coupling(1, 2)
 
+    V_expected = 0.25
+    
+    assert np.isclose(V_test, V_expected)
+
+    
 
