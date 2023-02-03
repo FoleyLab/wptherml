@@ -22,7 +22,7 @@ class ExcitonDriver(SpectrumDriver):
 
     def __init__(self, args):
         self.parse_input(args)
-        print("Exciton Energy is  ", self.exciton_energy)
+        #print("Exciton Energy is  ", self.exciton_energy)
         # allocate the exciton Hamiltonian
         self.exciton_hamiltonian = np.zeros((self.number_of_monomers, self.number_of_monomers))
 
@@ -156,8 +156,18 @@ class ExcitonDriver(SpectrumDriver):
         x : 1 x _len numpy array of floats
             the spatial grid that we will evaluate the exciton wavefunction on
 
+        x_min : float
+            the minimum x-value on the grid x
+        
+        x_max : float
+            the maximum x-value on the grid x
+
         phi : _len x number_of_monomer numpy array of floats
             the single-exciton wavefunctions for each cite
+
+        Note: self.phi[:,0] -> exciton wavefunction for site n = 1
+              self.phi[:,1] -> exciton wavefunction for site n = 2
+              etc.
 
         """
         # get distance between sites
@@ -186,6 +196,9 @@ class ExcitonDriver(SpectrumDriver):
         for n in range(self.number_of_monomers):
             _x_n = self.coords[0, n]
             self.phi[:, n] = _a * np.exp(- (self.x - _x_n) ** 2 / (2 * _c ** 2 ) )
+
+        self.x_max = _x_max
+        self.x_min = -_dx 
 
 
 
