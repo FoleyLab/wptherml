@@ -116,9 +116,11 @@ class ExcitonDriver(SpectrumDriver):
         for _n in range(_N):
             for _m in range(_N):
                 # <== call _compute_H0_element and store value -> H0
+                H0 = _compute_H0_element(_n, _m)
                 # <== call _compute_dipole_dipole_coupling and store value -> V
+                V = _compute_dipole_dipole_coupling(_n, _m)
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
-                pass
+                self.exciton_hamiltonian(n, m) = H0 + V
 
         pass
 
@@ -163,7 +165,7 @@ class ExcitonDriver(SpectrumDriver):
             the maximum x-value on the grid x
 
         phi : _len x number_of_monomer numpy array of floats
-            the single-exciton wavefunctions for each cite
+            the single-exciton wavefunctions for each site
 
         Note: self.phi[:,0] -> exciton wavefunction for site n = 1
               self.phi[:,1] -> exciton wavefunction for site n = 2
@@ -200,7 +202,7 @@ class ExcitonDriver(SpectrumDriver):
         self.x_max = _x_max
         self.x_min = -_dx
 
-    def _rk4_exciton(self, H, c, dt):
+    def _rk_exciton(self, H, c, dt):
         """ Function that will take c(t0) and H and return c(t0 + dt)
 
         Arguments
@@ -221,12 +223,10 @@ class ExcitonDriver(SpectrumDriver):
             he vector of coefficients at time t0 + dt
 
         """
-        # <== define k_1, k_2, k_3, k_4
         ci = 0 + 1j
         k_1 = -ci * np.dot(H, c)
         k_2 = -ci * np.dot(H, (c + k_1 * dt / 2))
         k_3 = -ci * np.dot(H, (c + k_2 * dt / 2))
         k_4 = -ci * np.dot(H, (c + k_3 * dt))
-        # <== define c_new as 1/6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
         c_new = c + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
         return c_new
