@@ -29,7 +29,7 @@ class ExcitonDriver(SpectrumDriver):
 
     def parse_input(self, args):
         if "exciton_energy" in args:
-            self.exciton_energy = args["exciton_energy"] 
+            self.exciton_energy = args["exciton_energy"]
         else:
             self.exciton_energy = 0.5
         if "number_of_monomers" in args:
@@ -54,17 +54,17 @@ class ExcitonDriver(SpectrumDriver):
 
         for i in range(self.number_of_monomers):
             self.coords[:,i] = self.displacement_between_monomers * i
-    
+
     def _compute_H0_element(self, n, m):
-        """ Add proper docstring! 
-        
-        
+        """ Add proper docstring!
+
+
         """
         return self.exciton_energy * (n == m)
 
     def _compute_dipole_dipole_coupling(self, n, m):
         """ Method to compute the dipole-dipole potential between excitons located on site n and site m
-        
+
         Arguments
         ---------
         n : int
@@ -84,7 +84,7 @@ class ExcitonDriver(SpectrumDriver):
         -------
         V_nm : float
              the dipole-dipole potential between exciton on site n and m
-        """ 
+        """
         # offset the indices for python
         _n = n - 1
         _m = m - 1
@@ -93,22 +93,22 @@ class ExcitonDriver(SpectrumDriver):
         _r_vec = self.coords[:, _m] - self.coords[:, _n]
 
         # self.transition_dipole_moment is the transition dipole moment!
-        V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2))) 
+        V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2)))
 
         return V_nm
 
     def build_exciton_hamiltonian(self):
         """ Method to build the Frenkel Exciton Hamiltonian
-        
+
         Attribute
         ---------
         exciton_hamiltonian : number_of_monomers x number_of_monomers numpy array of floats
-            the exciton Hamiltonian, initialized by init and to-be-filled with appropriate values 
-            by this function 
+            the exciton Hamiltonian, initialized by init and to-be-filled with appropriate values
+            by this function
 
         Notes
         -----
-        
+
         """
         _N = self.number_of_monomers # <== _N is just easier to type!
 
@@ -121,10 +121,10 @@ class ExcitonDriver(SpectrumDriver):
                 pass
 
         pass
-        
+
 
     def compute_spectrum(self):
-        """Will prepare the Frenkel Exciton Hamiltonian and use to compute an absorption spectrum 
+        """Will prepare the Frenkel Exciton Hamiltonian and use to compute an absorption spectrum
 
         Attributes
         ---------
@@ -140,11 +140,11 @@ class ExcitonDriver(SpectrumDriver):
 
     def compute_exciton_wavefunction_site_basis(self):
         """
-        Will compute the single-exciton wavefunctions (approximated as Gaussians) for each site.  
-        
-        ***Note:***  This is probably not the best model... better model might be a Slater function, but 
+        Will compute the single-exciton wavefunctions (approximated as Gaussians) for each site.
+
+        ***Note:***  This is probably not the best model... better model might be a Slater function, but
         we can fix that later. Also right now the width is somewhat arbitrary.  In reality, the exciton
-        has a Bohr radius that will determine the width.  We will update this later as well! 
+        has a Bohr radius that will determine the width.  We will update this later as well!
 
         Arguments
         ---------
@@ -158,7 +158,7 @@ class ExcitonDriver(SpectrumDriver):
 
         x_min : float
             the minimum x-value on the grid x
-        
+
         x_max : float
             the maximum x-value on the grid x
 
@@ -172,7 +172,7 @@ class ExcitonDriver(SpectrumDriver):
         """
         # get distance between sites
         _dx = self.coords[0, 1] - self.coords[0, 0]
-        
+
         # full-width at half-max based on distance between sites
         _fwhm = _dx / 2
 
@@ -185,7 +185,7 @@ class ExcitonDriver(SpectrumDriver):
         # create grid of x values spanning all sites in the system
         # get largest site index
         _N_max = self.number_of_monomers - 1
-        # get x-value associated with largest site index 
+        # get x-value associated with largest site index
         _x_max = self.coords[0,_N_max]
         # create the x-grid from 0 to _x_max
         _len = 500
@@ -198,8 +198,35 @@ class ExcitonDriver(SpectrumDriver):
             self.phi[:, n] = _a * np.exp(- (self.x - _x_n) ** 2 / (2 * _c ** 2 ) )
 
         self.x_max = _x_max
-        self.x_min = -_dx 
+        self.x_min = -_dx
+
+    def _rk4_exciton(self, H, c, dt):
+        """ Function that will take c(t0) and H and return c(t0 + dt)
+
+        Arguments
+        ---------
+        H : n_basis x n_basis numpy array of floats
+            the Hamiltonian matrix in atomic units
+
+        c : 1 x n_basis numpy array of complex floats
+         the vector of coefficients that defines the time-dependent wavefunction
+
+        dt : float
+            the increment in time in atomic units
 
 
+        Returns
+        -------
+        c_new : 1 x n_basis numpy array of complex floats
+            he vector of coefficients at time t0 + dt
 
-
+        """
+        # <== define k_1, k_2, k_3, k_4
+        ci = 0 + 1j
+        k_1 = -ci * np.dot(H, c)
+        k_2 = -ci * np.dot(H, (c + k_1 * dt / 2))
+        k_3 = -ci * np.dot(H, (c + k_2 * dt / 2))
+        k_4 = -ci * np.dot(H, (c + k_3 * dt))
+        # <== define c_new as 1/6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+        c_new = c + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+        return c_new
