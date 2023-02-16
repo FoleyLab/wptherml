@@ -14,14 +14,14 @@ import sys
     in air with ri = 1.0+0j
 """
 sf = wptherml.SpectrumFactory()
-args = {  
+args = {
 'exciton_energy': 1.5,
 'number_of_monomers' : 2,
-'displacement_between_monomers' : np.array([1, 0, 0]), 
+'displacement_between_monomers' : np.array([1, 0, 0]),
 'transition_dipole_moment' : np.array([0, 0, 0.5]),
 'refractive_index' : 1.0
 
-}  
+}
 
 exciton_test = sf.spectrum_factory('Frenkel', args)
 
@@ -42,10 +42,10 @@ def test_compute_dipole_dipole_coupling():
     _V_test = exciton_test._compute_dipole_dipole_coupling(1, 2)
 
     _V_expected = 0.25
-    
+
     assert np.isclose(_V_test, _V_expected)
 
-    
+
 
 def test_build_exciton_hamiltonian():
     # test case based on 2x2 system defined in args above
@@ -55,8 +55,41 @@ def test_build_exciton_hamiltonian():
     _H_expected[0,1] = 0.25
     _H_expected[1,0] = 0.25
 
-    # this line will build the exciton hamiltonian and 
+    # this line will build the exciton hamiltonian and
     # store it in the attribute .exciton_hamiltonian
     exciton_test.build_exciton_hamiltonian()
 
     assert np.allclose(_H_expected, exciton_test.exciton_hamiltonian)
+
+def test_rk_exciton():
+    # test for rk integrator Method
+    # imaginary unit
+    ci = 0+1j
+
+    # E1
+    E1 = exciton_text.exciton_energy
+
+    # dt
+    dt = 0.01
+
+    # tf
+    tf = 1
+
+    # define initial c vector for RK4 update
+    c_rk = np.array([1, 0], dtype=complex)
+
+    # number of basis functions
+    n_basis = 2
+
+    # build H, T, and V
+    H_matrix = build_exciton_hamiltonian(n_basis)
+
+    #   Define analytical result for c(t_f)
+    c_analytical = np.array([np.exp(-ci * E1 * tf  ), 0+0j])
+
+    # update c_rk4 100 times using the RK4 method
+    for i in range(1, 101):
+    c_rk4 = rk4_update(exciton_test.build_exciton_hamiltonian, c_rk4, dt)
+
+
+    assert np.allclose(c_analytical, c_rk4)
