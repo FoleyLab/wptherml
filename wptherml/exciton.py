@@ -120,9 +120,8 @@ class ExcitonDriver(SpectrumDriver):
                 # <== call _compute_dipole_dipole_coupling and store value -> V
                 V = _compute_dipole_dipole_coupling(_n, _m)
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
-                self.exciton_hamiltonian(n, m) = H0 + V
-
-        pass
+                H[_n, _m] = H0 + V
+        return H 
 
 
     def compute_spectrum(self):
