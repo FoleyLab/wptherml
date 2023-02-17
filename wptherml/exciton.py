@@ -70,7 +70,9 @@ class ExcitonDriver(SpectrumDriver):
         H_nm : float
             The matrix elements corresponding to
         """
-        H_nm = self.exciton_energy * (n == m)
+        _n = n - 1
+        _m = m - 1
+        H_nm = self.exciton_energy * (_n == _m)
         return H_nm
 
     def _compute_dipole_dipole_coupling(self, n, m):
