@@ -25,6 +25,24 @@ args = {
 
 exciton_test = sf.spectrum_factory('Frenkel', args)
 
+""" Define a second test instance that will 
+    provide a simple case to test the dynamics... simple meaning
+    no coupling, so the transition_dipole_moment is set to zero
+    so that the V terms are 0 and so any localized exciton state
+    (i.e. c_vector = [1, 0] or c_vector = [0, 1] will be an eigenstate)
+    of the exciton Hamiltonian 
+"""
+dynamics_args = {
+'exciton_energy': 1.5,
+'number_of_monomers' : 2,
+'displacement_between_monomers' : np.array([1, 0, 0]),
+'transition_dipole_moment' : np.array([0, 0, 0.0]),
+'refractive_index' : 1.0
+
+}
+
+dynamics_test = sf.spectrum_factory("Frenkel", dynamics_args)
+
 def test_compute_H0_element():
 
     _H_11 = exciton_test._compute_H0_element(1, 1)
@@ -64,7 +82,7 @@ def test_build_exciton_hamiltonian():
 def test_rk_exciton():
     ci = 0+1j
 
-    E1 = exciton_test.exciton_energy
+    E1 = dynamics_test.exciton_energy
 
     dt = 0.01
 
