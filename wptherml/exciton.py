@@ -127,7 +127,7 @@ class ExcitonDriver(SpectrumDriver):
         for _n in range(_N):
             for _m in range(_N):
                 # <== call _compute_H0_element and store value -> H0
-                H0 = exciton_test._compute_H0_element(_n, _m)
+                H0 = exciton._compute_H0_element(_n, _m)
                 # <== call _compute_dipole_dipole_coupling and store value -> V
                 V = _compute_dipole_dipole_coupling(_n, _m)
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
