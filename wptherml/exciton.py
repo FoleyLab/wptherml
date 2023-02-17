@@ -56,11 +56,22 @@ class ExcitonDriver(SpectrumDriver):
             self.coords[:,i] = self.displacement_between_monomers * i
 
     def _compute_H0_element(self, n, m):
-        """ Add proper docstring!
+        """ Method to compute the matrix elements of H0
 
+        Arguments
+        ---------
+        n : int
+            the index of site n offset by +1 relative to the python index
+        m : int
+            the index of site m offset by +1 relative to the python index
 
+        Returns
+        -------
+        H_nm : float
+            The matrix elements corresponding to
         """
-        return self.exciton_energy * (n == m)
+        H_nm = self.exciton_energy * (n == m)
+        return H_nm
 
     def _compute_dipole_dipole_coupling(self, n, m):
         """ Method to compute the dipole-dipole potential between excitons located on site n and site m
@@ -116,7 +127,7 @@ class ExcitonDriver(SpectrumDriver):
         for _n in range(_N):
             for _m in range(_N):
                 # <== call _compute_H0_element and store value -> H0
-                H0 = _compute_H0_element(_n, _m) 
+                H0 = _compute_H0_element(_n, _m)
                 # <== call _compute_dipole_dipole_coupling and store value -> V
                 V = _compute_dipole_dipole_coupling(_n, _m)
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
