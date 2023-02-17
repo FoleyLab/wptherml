@@ -64,7 +64,7 @@ def test_build_exciton_hamiltonian():
 def test_rk_exciton():
     ci = 0+1j
 
-    E1 = exciton_text.exciton_energy
+    E1 = exciton_test.exciton_energy
 
     dt = 0.01
 
@@ -74,7 +74,7 @@ def test_rk_exciton():
 
     n_basis = 2
 
-    H_matrix = build_exciton_hamiltonian(n_basis)
+    H_matrix = build_exciton_hamiltonian()
 
     c_analytical = np.array([np.exp(-ci * E1 * tf  ), 0+0j])
 
