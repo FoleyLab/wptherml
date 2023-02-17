@@ -108,8 +108,11 @@ class ExcitonDriver(SpectrumDriver):
         _r_vec = self.coords[:, _m] - self.coords[:, _n]
 
         # self.transition_dipole_moment is the transition dipole moment!
-        V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2)))
-
+        if _n != _m:
+            V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2)))
+        else:
+            V_nm = 0
+            
         return V_nm
 
     def build_exciton_hamiltonian(self):
@@ -136,9 +139,9 @@ class ExcitonDriver(SpectrumDriver):
                 V = self._compute_dipole_dipole_coupling(_n, _m) #<== Note self. notation
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
                 self.exciton_hamiltonian[_n, _m] = H0 + V #<= Note we will store the elements in hamiltonian attribute
-                
 
-        
+
+
 
 
     def compute_spectrum(self):
@@ -236,9 +239,8 @@ class ExcitonDriver(SpectrumDriver):
 
         """
         ci = 0 + 1j
-        k_1 = -ci * np.dot(H, c)
-        k_2 = -ci * np.dot(H, (c + k_1 * dt / 2))
-        k_3 = -ci * np.dot(H, (c + k_2 * dt / 2))
-        k_4 = -ci * np.dot(H, (c + k_3 * dt))
-        c_new = c + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
-        return c_new
+        k_1 = -ci * np.dot(self.exciton_hamiltonian, self.c_vector)
+        k_2 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_1 * dt / 2))
+        k_3 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_2 * dt / 2))
+        k_4 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_3 * dt))
+        self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
