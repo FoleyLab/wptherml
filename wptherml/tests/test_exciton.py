@@ -62,34 +62,23 @@ def test_build_exciton_hamiltonian():
     assert np.allclose(_H_expected, exciton_test.exciton_hamiltonian)
 
 def test_rk_exciton():
-    # test for rk integrator Method
-    # imaginary unit
     ci = 0+1j
 
-    # E1
     E1 = exciton_text.exciton_energy
 
-    # dt
     dt = 0.01
 
-    # tf
     tf = 1
 
-    # define initial c vector for RK4 update
     c_rk = np.array([1, 0], dtype=complex)
 
-    # number of basis functions
     n_basis = 2
 
-    # build H, T, and V
     H_matrix = build_exciton_hamiltonian(n_basis)
 
-    #   Define analytical result for c(t_f)
     c_analytical = np.array([np.exp(-ci * E1 * tf  ), 0+0j])
 
-    # update c_rk4 100 times using the RK4 method
     for i in range(1, 101):
-    c_rk4 = rk4_update(exciton_test.build_exciton_hamiltonian, c_rk4, dt)
-
+        c_rk4 = rk4_update(exciton_test.build_exciton_hamiltonian, c_rk4, dt)
 
     assert np.allclose(c_analytical, c_rk4)
