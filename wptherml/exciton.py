@@ -25,6 +25,10 @@ class ExcitonDriver(SpectrumDriver):
         #print("Exciton Energy is  ", self.exciton_energy)
         # allocate the exciton Hamiltonian
         self.exciton_hamiltonian = np.zeros((self.number_of_monomers, self.number_of_monomers))
+        self.c_vector = np.zeros(self.number_of_monomers, dtype=complex) #<== wavefunction coefficient vector
+        # Probably want to allow the user to specify an initial state!
+        # but right now just have the initial state with exciton localized on site 1
+        self.c_vector[0] = 1+0j
 
 
     def parse_input(self, args):
@@ -214,25 +218,21 @@ class ExcitonDriver(SpectrumDriver):
         self.x_max = _x_max
         self.x_min = -_dx
 
-    def _rk_exciton(self, H, c, dt):
+    def _rk_exciton(self, dt):
         """ Function that will take c(t0) and H and return c(t0 + dt)
 
         Arguments
         ---------
-        H : n_basis x n_basis numpy array of floats
-            the Hamiltonian matrix in atomic units
-
-        c : 1 x n_basis numpy array of complex floats
-         the vector of coefficients that defines the time-dependent wavefunction
-
         dt : float
             the increment in time in atomic units
 
+        Attributes
+        ----------
+        exciton_hamiltonian : NxN numpy array of floats
+            the Hamiltonian matrix that drives the dynamics
 
-        Returns
-        -------
-        c_new : 1 x n_basis numpy array of complex floats
-            he vector of coefficients at time t0 + dt
+        c_vector : 1xN numpy array of complex floats
+            the current wavefunction vector that will be updated
 
         """
         ci = 0 + 1j
