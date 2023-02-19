@@ -207,7 +207,7 @@ class ExcitonDriver(SpectrumDriver):
         # get largest site index
         _N_max = self.number_of_monomers - 1
         # get x-value associated with largest site index
-        _x_max = self.coords[0,_N_max]
+        _x_max = self.coords[0,_N_max] + _fwhm
         # create the x-grid from 0 to _x_max
         _len = 500
         self.x = np.linspace(-_dx, _x_max, _len)
