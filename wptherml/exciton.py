@@ -112,7 +112,7 @@ class ExcitonDriver(SpectrumDriver):
             V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2)))
         else:
             V_nm = 0
-            
+
         return V_nm
 
     def build_exciton_hamiltonian(self):
@@ -207,7 +207,7 @@ class ExcitonDriver(SpectrumDriver):
         # get largest site index
         _N_max = self.number_of_monomers - 1
         # get x-value associated with largest site index
-        _x_max = self.coords[0,_N_max] + _fwhm
+        _x_max = self.coords[0,_N_max] + 3 *  _fwhm
         # create the x-grid from 0 to _x_max
         _len = 500
         self.x = np.linspace(-_dx, _x_max, _len)
