@@ -29,6 +29,7 @@ class ExcitonDriver(SpectrumDriver):
         # Probably want to allow the user to specify an initial state!
         # but right now just have the initial state with exciton localized on site 1
         self.c_vector[0] = 1+0j
+        self.density_matrix = self.c_vector * np.conj(self.c_vector.T)
 
 
     def parse_input(self, args):
@@ -244,3 +245,26 @@ class ExcitonDriver(SpectrumDriver):
         k_3 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_2 * dt / 2))
         k_4 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_3 * dt))
         self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+    def _rk_exciton_density(self, dt):
+        """ Function that will take D and H and return D(t0 + dt)
+
+        Arguments
+        ---------
+        dt : float
+            the increment in time in atomic units
+
+        Attributes
+        ----------
+        exciton_hamiltonian : NxN numpy array of floats
+            the Hamiltonian matrix that drives the dynamics
+
+        density_matrix : NxN numpy array of complex floats
+            the current density matrix that will be updated
+
+        """
+        ci = 0 + 1j
+        k_1 = -ci * (np.dot(self.exciton_hamiltonian, self.density_matrix) - np.dot(self.density_matrix, self.exciton_hamiltonian))
+        k_2 = -ci * (np.dot(self.exciton_hamiltonian, (self.density_matrix + k_1 * dt / 2)) - np.dot((self.density_matrix + k_1 * dt / 2), self.exciton_hamiltonian))
+        k_3 = -ci * (np.dot(self.exciton_hamiltonian, (self.density_matrix + k_2 * dt / 2)) - np.dot((self.density_matrix + k_2 * dt / 2), self.exciton_hamiltonian))
+        k_4 = -ci * (np.dot(self.exciton_hamiltonian, (self.density_matrix + k_3 * dt)) - np.dot((self.density_matrix + k_3 * dt), self.exciton_hamiltonian))
+        self.density_matrix = self.density_matrix + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
