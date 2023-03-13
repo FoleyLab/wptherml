@@ -281,7 +281,9 @@ class ExcitonDriver(SpectrumDriver):
         ci = 0 + 1j
         # going to make some temporary arrays for the partial updates of d
         # to make this more readable
-        _H = np.copy(self.exciton_hamiltonian)
+        # also note I am using np.copy() here rather than setting _H = self.exciton_hamiltonian
+        # see here for why: https://stackoverflow.com/questions/27538174/why-do-i-need-np-array-or-np-copy 
+        _H = np.copy(self.exciton_hamiltonian) 
         _d0 = np.copy(self.density_matrix)
 
         # first time derivative and partial update
@@ -299,7 +301,7 @@ class ExcitonDriver(SpectrumDriver):
         # fourth time derivative
         k_4 = -ci * (np.dot(_H, _d3) - np.dot(_d3, _H))
 
-        # final update
+        # final update - using np.copy() again
         self.density_matrix = np.copy(
             _d0 + 1 / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
         )
