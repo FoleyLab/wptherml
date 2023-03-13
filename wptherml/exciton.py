@@ -3,7 +3,7 @@ from .spectrum_driver import SpectrumDriver
 
 
 class ExcitonDriver(SpectrumDriver):
-    """ A class for computing the dynamics and spectra of a system modelled by the Frenkel Exciton Hamiltonian
+    """A class for computing the dynamics and spectra of a system modelled by the Frenkel Exciton Hamiltonian
 
     Attributes
     ----------
@@ -22,15 +22,18 @@ class ExcitonDriver(SpectrumDriver):
 
     def __init__(self, args):
         self.parse_input(args)
-        #print("Exciton Energy is  ", self.exciton_energy)
+        # print("Exciton Energy is  ", self.exciton_energy)
         # allocate the exciton Hamiltonian
-        self.exciton_hamiltonian = np.zeros((self.number_of_monomers, self.number_of_monomers))
-        self.c_vector = np.zeros(self.number_of_monomers, dtype=complex) #<== wavefunction coefficient vector
+        self.exciton_hamiltonian = np.zeros(
+            (self.number_of_monomers, self.number_of_monomers)
+        )
+        self.c_vector = np.zeros(
+            self.number_of_monomers, dtype=complex
+        )  # <== wavefunction coefficient vector
         # Probably want to allow the user to specify an initial state!
         # but right now just have the initial state with exciton localized on site 1
-        self.c_vector[0] = 1+0j
+        self.c_vector[0] = 1 + 0j
         self.density_matrix = self.c_vector * np.conj(self.c_vector.T)
-
 
     def parse_input(self, args):
         if "exciton_energy" in args:
@@ -42,7 +45,7 @@ class ExcitonDriver(SpectrumDriver):
         else:
             self.number_of_monomers = 2
         if "displacement_between_monomers" in args:
-            self.displacement_between_monomers = args['displacement_between_monomers']
+            self.displacement_between_monomers = args["displacement_between_monomers"]
         else:
             self.displacement_between_monomers = np.array([1, 0, 0])
 
@@ -51,17 +54,17 @@ class ExcitonDriver(SpectrumDriver):
         else:
             self.transition_dipole_moment = np.array([0, 0, 1])
         if "refractive_index" in args:
-                self.refractive_index = args["refractive_index"]
+            self.refractive_index = args["refractive_index"]
         else:
             self.refractive_index = 1
 
         self.coords = np.zeros((3, self.number_of_monomers))
 
         for i in range(self.number_of_monomers):
-            self.coords[:,i] = self.displacement_between_monomers * i
+            self.coords[:, i] = self.displacement_between_monomers * i
 
     def _compute_H0_element(self, n, m):
-        """ Method to compute the matrix elements of H0
+        """Method to compute the matrix elements of H0
 
         Arguments
         ---------
@@ -79,7 +82,7 @@ class ExcitonDriver(SpectrumDriver):
         return H_nm
 
     def _compute_dipole_dipole_coupling(self, n, m):
-        """ Method to compute the dipole-dipole potential between excitons located on site n and site m
+        """Method to compute the dipole-dipole potential between excitons located on site n and site m
 
         Arguments
         ---------
@@ -110,14 +113,26 @@ class ExcitonDriver(SpectrumDriver):
 
         # self.transition_dipole_moment is the transition dipole moment!
         if _n != _m:
-            V_nm = (1 / (self.refractive_index ** 2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3 )) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * ((np.dot(self.transition_dipole_moment, _r_vec) * np.dot(_r_vec, self.transition_dipole_moment)) / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2)))
+            V_nm = (
+                1 / (self.refractive_index**2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3)
+            ) * (
+                np.dot(self.transition_dipole_moment, self.transition_dipole_moment)
+                - 3
+                * (
+                    (
+                        np.dot(self.transition_dipole_moment, _r_vec)
+                        * np.dot(_r_vec, self.transition_dipole_moment)
+                    )
+                    / (np.sqrt(np.dot(_r_vec, _r_vec)) ** 2)
+                )
+            )
         else:
             V_nm = 0
 
         return V_nm
 
     def build_exciton_hamiltonian(self):
-        """ Method to build the Frenkel Exciton Hamiltonian
+        """Method to build the Frenkel Exciton Hamiltonian
 
         Attribute
         ---------
@@ -129,21 +144,21 @@ class ExcitonDriver(SpectrumDriver):
         -----
 
         """
-        _N = self.number_of_monomers # <== _N is just easier to type!
+        _N = self.number_of_monomers  # <== _N is just easier to type!
 
         # nested loop to build Hamiltonian
         for _n in range(_N):
             for _m in range(_N):
                 # <== call _compute_H0_element and store value -> H0
-                H0 = self._compute_H0_element(_n, _m) #<== Note self. notation
+                H0 = self._compute_H0_element(_n, _m)  # <== Note self. notation
                 # <== call _compute_dipole_dipole_coupling and store value -> V
-                V = self._compute_dipole_dipole_coupling(_n, _m) #<== Note self. notation
+                V = self._compute_dipole_dipole_coupling(
+                    _n, _m
+                )  # <== Note self. notation
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
-                self.exciton_hamiltonian[_n, _m] = H0 + V #<= Note we will store the elements in hamiltonian attribute
-
-
-
-
+                self.exciton_hamiltonian[_n, _m] = (
+                    H0 + V
+                )  # <= Note we will store the elements in hamiltonian attribute
 
     def compute_spectrum(self):
         """Will prepare the Frenkel Exciton Hamiltonian and use to compute an absorption spectrum
@@ -208,22 +223,22 @@ class ExcitonDriver(SpectrumDriver):
         # get largest site index
         _N_max = self.number_of_monomers - 1
         # get x-value associated with largest site index
-        _x_max = self.coords[0,_N_max] + 3 *  _fwhm
+        _x_max = self.coords[0, _N_max] + 3 * _fwhm
         # create the x-grid from 0 to _x_max
         _len = 500
         self.x = np.linspace(-_dx, _x_max, _len)
 
-        self.phi = np.zeros((_len, self.number_of_monomers ))
+        self.phi = np.zeros((_len, self.number_of_monomers))
 
         for n in range(self.number_of_monomers):
             _x_n = self.coords[0, n]
-            self.phi[:, n] = _a * np.exp(- (self.x - _x_n) ** 2 / (2 * _c ** 2 ) )
+            self.phi[:, n] = _a * np.exp(-((self.x - _x_n) ** 2) / (2 * _c**2))
 
         self.x_max = _x_max
         self.x_min = -_dx
 
     def _rk_exciton(self, dt):
-        """ Function that will take c(t0) and H and return c(t0 + dt)
+        """Function that will take c(t0) and H and return c(t0 + dt)
 
         Arguments
         ---------
@@ -245,8 +260,9 @@ class ExcitonDriver(SpectrumDriver):
         k_3 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_2 * dt / 2))
         k_4 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_3 * dt))
         self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+
     def _rk_exciton_density(self, dt):
-        """ Function that will take D and H and return D(t0 + dt)
+        """Function that will take D and H and return D(t0 + dt)
 
         Arguments
         ---------
@@ -263,8 +279,27 @@ class ExcitonDriver(SpectrumDriver):
 
         """
         ci = 0 + 1j
-        k_1 = -ci * (np.dot(self.exciton_hamiltonian, self.density_matrix) - np.dot(self.density_matrix, self.exciton_hamiltonian))
-        k_2 = -ci * (np.dot(self.exciton_hamiltonian, (self.density_matrix + k_1 * dt / 2)) - np.dot((self.density_matrix + k_1 * dt / 2), self.exciton_hamiltonian))
-        k_3 = -ci * (np.dot(self.exciton_hamiltonian, (self.density_matrix + k_2 * dt / 2)) - np.dot((self.density_matrix + k_2 * dt / 2), self.exciton_hamiltonian))
-        k_4 = -ci * (np.dot(self.exciton_hamiltonian, (self.density_matrix + k_3 * dt)) - np.dot((self.density_matrix + k_3 * dt), self.exciton_hamiltonian))
-        self.density_matrix = self.density_matrix + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+        # going to make some temporary arrays for the partial updates of d
+        # to make this more readable
+        _H = np.copy(self.exciton_hamiltonian)
+        _d0 = np.copy(self.density_matrix)
+
+        # first time derivative and partial update
+        k_1 = -ci * (np.dot(_H, _d0) - np.dot(_d0, _H))
+        _d1 = _d0 + k_1 * dt / 2
+
+        # second time-derivative and partial update
+        k_2 = -ci * (np.dot(_H, _d1) - np.dot(_d1, _H))
+        _d2 = _d0 + k_2 * dt / 2
+
+        # third time-derivative and partial update
+        k_3 = -ci * (np.dot(_H, _d2) - np.dot(_d2, _H))
+        _d3 = _d0 + k_3 * dt
+
+        # fourth time derivative
+        k_4 = -ci * (np.dot(_H, _d3) - np.dot(_d3, _H))
+
+        # final update
+        self.density_matrix = np.copy(
+            _d0 + 1 / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+        )
