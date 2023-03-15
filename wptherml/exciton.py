@@ -282,8 +282,8 @@ class ExcitonDriver(SpectrumDriver):
         # going to make some temporary arrays for the partial updates of d
         # to make this more readable
         # also note I am using np.copy() here rather than setting _H = self.exciton_hamiltonian
-        # see here for why: https://stackoverflow.com/questions/27538174/why-do-i-need-np-array-or-np-copy 
-        _H = np.copy(self.exciton_hamiltonian) 
+        # see here for why: https://stackoverflow.com/questions/27538174/why-do-i-need-np-array-or-np-copy
+        _H = np.copy(self.exciton_hamiltonian)
         _d0 = np.copy(self.density_matrix)
 
         # first time derivative and partial update
