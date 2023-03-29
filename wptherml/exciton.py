@@ -28,13 +28,12 @@ class ExcitonDriver(SpectrumDriver):
             (self.number_of_monomers, self.number_of_monomers)
         )
         self.c_vector = np.zeros(
-            self.number_of_monomers, dtype=complex
+            (self.number_of_monomers, 1),  dtype=complex
         )  # <== wavefunction coefficient vector
         # Probably want to allow the user to specify an initial state!
         # but right now just have the initial state with exciton localized on site 1
         self.c_vector[0] = 1 + 0j
-        self.density_matrix = self.c_vector * np.conj(self.c_vector.T)
-        self.density_matrix[0] = self.c_vector[0] * np.conj(self.c_vector[0].T)
+        self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
     def parse_input(self, args):
         if "exciton_energy" in args:
             self.exciton_energy = args["exciton_energy"]
