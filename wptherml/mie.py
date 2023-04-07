@@ -363,8 +363,8 @@ class MieDriver(SpectrumDriver, Materials):
         _xhnxp = self._compute_z_hn_prime(self._n_array, x)
 
         # a_n coefficients
-        _a_numerator = m ** 2 * _jnmx * _xjnxp - mu * _jnx * _mxjnmxp
-        _a_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
+        _a_numerator = m**2 * _jnmx * _xjnxp - mu * _jnx * _mxjnmxp
+        _a_denominator = m**2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
 
         self._an = _a_numerator / _a_denominator
 
@@ -382,7 +382,7 @@ class MieDriver(SpectrumDriver, Materials):
 
         # d_n coefficients
         _d_numerator = mu * m * _jnx * _xhnxp - mu * m * _hnx * _xjnxp
-        _d_denominator = m ** 2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
+        _d_denominator = m**2 * _jnmx * _xhnxp - mu * _hnx * _mxjnmxp
 
         self._dn = _d_numerator / _d_denominator
         # return [self._an,self._bn,self._cn,self._dn]
@@ -420,7 +420,7 @@ class MieDriver(SpectrumDriver, Materials):
             # n is i + 1
             # because i indexes the arrays, n is the multipole order
             n = i + 1
-            q_scat = q_scat + 2 / x ** 2 * (2 * n + 1) * (
+            q_scat = q_scat + 2 / x**2 * (2 * n + 1) * (
                 np.abs(an[i]) ** 2 + np.abs(bn[i]) ** 2
             )
 
@@ -461,7 +461,7 @@ class MieDriver(SpectrumDriver, Materials):
             # n is i + 1
             # because i indexes the arrays, n is the multipole order
             n = i + 1
-            q_ext = q_ext + 2 / x ** 2 * (2 * n + 1) * np.real(an[i] + bn[i])
+            q_ext = q_ext + 2 / x**2 * (2 * n + 1) * np.real(an[i] + bn[i])
 
         return q_ext
 
@@ -475,7 +475,7 @@ class MieDriver(SpectrumDriver, Materials):
 
         omega_l = self._compute_omega_l(l, omega_p, eps_inf, eps_d)
         # note in atomics, 4 * pi * epsilon_0 = 1
-        g_l_squared = mu * omega_p / (1 * h * r ** 3) * (omega_l / omega_p) ** 3
+        g_l_squared = mu * omega_p / (1 * h * r**3) * (omega_l / omega_p) ** 3
         g_l_squared *= (l + 1) ** 2 / ((1 + zeta) ** (2 * l + 4)) * (1 + 1 / (2 * l))
 
         return np.sqrt(g_l_squared), omega_l

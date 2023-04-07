@@ -60,8 +60,6 @@ class Materials:
 
         return unique_index_array
 
-    
-
     def material_H2O(self, layer_number):
         """defines the refractive index layer of layer_number to be water
         assuming static refractive index of n = 1.33 + 0j
@@ -163,7 +161,7 @@ class Materials:
 
             Reference
             ---------
-            Song et al. "Determination of dielectric functions and exciton oscillator 
+            Song et al. "Determination of dielectric functions and exciton oscillator
             strength of two-dimensional hybrid perovskites", ACS Materials Lett. 2021, 3, 1, 148-159
 
             Arguments
@@ -196,7 +194,6 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
-
 
     def material_SiO2(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
