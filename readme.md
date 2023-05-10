@@ -20,8 +20,6 @@ A python package for modeling light-matter interactions in nanoscale and molecul
 
 Copyright (c) 2022, Foley Lab, The University of North Carolina at Charlotte, NC, USA.
 
-<iframe width="560" height="315" src="https://www.youtube.com/embed/g1bhriqLtsU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowfullscreen></iframe>
-
 #### Acknowledgements
 Project based on the
 [Computational Molecular Science Python Cookiecutter](https://github.com/molssi/cookiecutter-cms) version 1.5.
