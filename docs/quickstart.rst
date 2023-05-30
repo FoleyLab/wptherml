@@ -15,7 +15,7 @@ You may use the `wptherml_env.yml <https://github.com/FoleyLab/wptherml/blob/mai
 to create a conda environment with these dependencies.  This yaml file is located in the top-level wptherml directory,
 so to create your conda environment (called `wptherml` based on the name above), you can type the following command from the top-level wptherml directory:
 
-`conda env create -f wptherml.yml`
+`conda env create -f wptherml_env.yml`
 
 Activate this environment by typing
 
