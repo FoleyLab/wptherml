@@ -88,16 +88,16 @@ def test_build_2D_hamiltonian():
     _H_expected[2,2] = exciton_test.exciton_energy
     _H_expected[3,3] = exciton_test.exciton_energy
     _H_expected[0,1] = 0
-    _H_expected[0,2] = 0.0625
-    _H_expected[0,3] = 0.02209709
+    _H_expected[0,2] = 0.25
+    _H_expected[0,3] = 0.08838835
     _H_expected[1,0] = 0
     _H_expected[1,2] = 0
-    _H_expected[1,3] = 0.0625
-    _H_expected[2,0] = 0.0625
+    _H_expected[1,3] = 0.25
+    _H_expected[2,0] = 0.25
     _H_expected[2,1] = 0
     _H_expected[2,3] = 0
-    _H_expected[3,0] = 0.02209709
-    _H_expected[3,1] = 0.0625
+    _H_expected[3,0] = 0.08838835
+    _H_expected[3,1] = 0.25
     _H_expected[3,2] = 0
 
 
