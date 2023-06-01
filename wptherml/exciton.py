@@ -58,6 +58,18 @@ class ExcitonDriver(SpectrumDriver):
             self.refractive_index = args["refractive_index"]
         else:
             self.refractive_index = 1
+        
+        if "vert_displacement_between_monomers" in args: 
+            self.vert_displacement_between_monomers = args["vert_displacement_between_monomers"]
+        else: 
+            self.vert_displacement_between_monomers = np.array([0, 19.633983, 0])
+        
+        if "diag_displacement_between_monomers" in args:
+            self.diag_displacement_between_monomers = args["diag_displacement_between_monomers"]
+        else:
+            self.diag_displacement_between_monomers = np.array([-17.7348345, 19.633983, 0])
+        
+
 
         self.coords = np.zeros((3, self.number_of_monomers))
 
@@ -131,6 +143,28 @@ class ExcitonDriver(SpectrumDriver):
             V_nm = 0
 
         return V_nm
+    
+    def _compute_2D_dd_coupling(self, r_vector):
+        """ Function that computes the dipole dipole coupling contribution of the total energy of a system based upon mu_d,
+            the transition dipole moment of the donor, mu_a, the transition dipole moment of the acceptor, r_vector, the 
+            distance separating the donor and acceptor, and the refractive index, a paremeter that describes the effect of 
+            the system on light.
+    
+        Arguments
+        ---------
+        mu_d : numpy array of floats
+         the transition dipole mooment of the donor
+        mu_a : numpy array of floats
+            the transition dipole moment of the acceptor
+        r : numpy array of floats
+            the distance separating the donor and acceptor
+        n : float
+            refractive index of the medium
+        """
+
+        r_scalar = np.sqrt(np.dot(r_vector, r_vector))
+    
+        return (1 / (self.refractive_index ** 2 * r_scalar ** 3)) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * (np.dot(self.transition_dipole_moment, r_vector) * np.dot(r_vector, self.transition_dipole_moment)) / r_scalar ** 2)
 
     def build_exciton_hamiltonian(self):
         """Method to build the Frenkel Exciton Hamiltonian
@@ -160,6 +194,61 @@ class ExcitonDriver(SpectrumDriver):
                 self.exciton_hamiltonian[_n, _m] = (
                     H0 + V
                 )  # <= Note we will store the elements in hamiltonian attribute
+    
+    def _find_indices(self, mons, mon_int):
+        """Helper function to designate indices of a a matrix element designated by an integer
+    
+        Arguments
+        ---------
+        mons : int
+            Integer value that creates n x n array that represents film dimentions
+        mon_int : int
+            Integer value thatg will find a target integer within the matrix which corresponds to a set of indices
+        """
+        film_matrix = np.zeros((mons, mons))
+        rows = mons
+        cols = mons
+        mon_range = range(mons ** 2)
+        for r in range(rows):
+            for c in range(cols):
+                mon_idx = r * cols + c
+                film_matrix[r][c] = mon_range[mon_idx]
+    
+        indices = np.column_stack(np.where(film_matrix == mon_int))
+        return indices
+
+    def build_2D_hamiltonian(self):
+        """ Function that builds the Hamailtonian which models the time evolution of an excitonic system based upon the
+        field free energy of the system and the dipole dipole coupling of the sysetem
+        
+        Arguments
+        ---------
+        H_o : numpy array of floats
+            a numpy array of spectral data fed to the function
+        dd_p : float
+            positive coupling term calculated from compute_dd_coupling
+        dd_n : float
+            negative coupling term calculated from compute_dd_coupling
+        
+        """
+        _N = self.number_of_monomers
+        H = np.zeros((_N ** 2, _N ** 2))
+        dd_p1 = self._compute_2D_dd_coupling(self.vert_displacement_between_monomers)
+        dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers)
+        for i in range(_N ** 2):
+            n = i 
+            for j in range(_N ** 2):
+                m = j 
+                H0 = self._compute_H0_element(n, m, self.exciton_energy)
+                if np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([-1, -1])): V = self.dd_n
+                elif np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([1, 1])): V = self.dd_n
+                elif np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([-1, 0])): V = self.dd_p
+                elif np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([1, 0])): V = self.dd_p
+                else: V = 0
+                self.exciton_hamiltonian_2D[i, j] = (
+                    H0 + V
+                )
+        
 
     def compute_spectrum(self):
         """Will prepare the Frenkel Exciton Hamiltonian and use to compute an absorption spectrum
@@ -306,3 +395,27 @@ class ExcitonDriver(SpectrumDriver):
         self.density_matrix = np.copy(
             _d0 + 1 / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
         )
+
+def _2D_rk_exciton(self, dt):
+        """Function that will take c(t0) and H and return c(t0 + dt)
+
+        Arguments
+        ---------
+        dt : float
+            the increment in time in atomic units
+
+        Attributes
+        ----------
+        exciton_hamiltonian : NxN numpy array of floats
+            the Hamiltonian matrix that drives the dynamics
+
+        c_vector : 1xN numpy array of complex floats
+            the current wavefunction vector that will be updated
+
+        """
+        ci = 0 + 1j
+        k_1 = -ci * np.dot(self.exciton_hamiltonian_2D, self.c_vector)
+        k_2 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_1 * dt / 2))
+        k_3 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_2 * dt / 2))
+        k_4 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_3 * dt))
+        self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
