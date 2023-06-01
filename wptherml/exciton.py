@@ -195,7 +195,7 @@ class ExcitonDriver(SpectrumDriver):
                     H0 + V
                 )  # <= Note we will store the elements in hamiltonian attribute
     
-    def _find_indices(self, mons, mon_int):
+    def _find_indices(self, mon_int):
         """Helper function to designate indices of a a matrix element designated by an integer
     
         Arguments
@@ -205,10 +205,10 @@ class ExcitonDriver(SpectrumDriver):
         mon_int : int
             Integer value thatg will find a target integer within the matrix which corresponds to a set of indices
         """
-        film_matrix = np.zeros((mons, mons))
-        rows = mons
-        cols = mons
-        mon_range = range(mons ** 2)
+        film_matrix = np.zeros((self.number_of_monomers, self.number_of_monomers))
+        rows = self.number_of_monomers
+        cols = self.number_of_monomers
+        mon_range = range(self.number_of_monomers ** 2)
         for r in range(rows):
             for c in range(cols):
                 mon_idx = r * cols + c
@@ -238,10 +238,10 @@ class ExcitonDriver(SpectrumDriver):
         for _n in range(_N ** 2):
             for _m in range(_N ** 2):
                 H0 = self._compute_H0_element(_n, _m, self.exciton_energy)
-                if np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([-1, -1])): V = self.dd_n
-                elif np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([1, 1])): V = self.dd_n
-                elif np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([-1, 0])): V = self.dd_p
-                elif np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([1, 0])): V = self.dd_p
+                if np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([-1, -1])): V = self.dd_n
+                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([1, 1])): V = self.dd_n
+                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([-1, 0])): V = self.dd_p
+                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([1, 0])): V = self.dd_p
                 else: V = 0
                 self.exciton_hamiltonian_2D[_n, _m] = (
                     H0 + V
