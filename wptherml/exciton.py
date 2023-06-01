@@ -235,17 +235,15 @@ class ExcitonDriver(SpectrumDriver):
         H = np.zeros((_N ** 2, _N ** 2))
         dd_p1 = self._compute_2D_dd_coupling(self.vert_displacement_between_monomers)
         dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers)
-        for i in range(_N ** 2):
-            n = i 
-            for j in range(_N ** 2):
-                m = j 
-                H0 = self._compute_H0_element(n, m, self.exciton_energy)
-                if np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([-1, -1])): V = self.dd_n
-                elif np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([1, 1])): V = self.dd_n
-                elif np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([-1, 0])): V = self.dd_p
-                elif np.all(self._find_indices(_N, n) == self._find_indices(_N, m) + np.array([1, 0])): V = self.dd_p
+        for _n in range(_N ** 2):
+            for _m in range(_N ** 2):
+                H0 = self._compute_H0_element(_n, _m, self.exciton_energy)
+                if np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([-1, -1])): V = self.dd_n
+                elif np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([1, 1])): V = self.dd_n
+                elif np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([-1, 0])): V = self.dd_p
+                elif np.all(self._find_indices(_N, _n) == self._find_indices(_N, _m) + np.array([1, 0])): V = self.dd_p
                 else: V = 0
-                self.exciton_hamiltonian_2D[i, j] = (
+                self.exciton_hamiltonian_2D[_n, _m] = (
                     H0 + V
                 )
         
