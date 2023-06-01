@@ -105,7 +105,7 @@ def test_build_2D_hamiltonian():
     # store it in the attribute .exciton_hamiltonian
     exciton_test.build_2D_hamiltonian()
 
-    assert np.anyclose(_H_expected, exciton_test.exciton_hamiltonian_2D)
+    assert np.allclose(_H_expected, exciton_test.exciton_hamiltonian_2D)
 
 def test_rk_exciton():
     ci = 0+1j
