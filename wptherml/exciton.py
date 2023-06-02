@@ -237,7 +237,7 @@ class ExcitonDriver(SpectrumDriver):
         dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers)
         for _n in range(_N ** 2):
             for _m in range(_N ** 2):
-                H0 = self._compute_H0_element(_n, _m, self.exciton_energy)
+                H0 = self._compute_H0_element(_n, _m)
                 if np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([-1, -1])): V = self.dd_n
                 elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([1, 1])): V = self.dd_n
                 elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([-1, 0])): V = self.dd_p
