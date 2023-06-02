@@ -1,13 +1,17 @@
 import numpy as np
+from pyqubo import Binary
+import neal
+import copy
 
 class FactorizationMachine:
-    def __init__(self, N, K):
+    def __init__(self, N, K, verbose = False):
         self.N = N  #<== number of features of the input, e.g. x = [1,0,0] has 3 features
         self.K = K #<== latent space of the interaction matrix
 
         self.V = np.random.rand(N, K) #<==interaction matrix
         self.w = np.random.rand(N) #<== weights for linear portion
         self.w0 = np.random.rand() #<== bias for linear portion
+        self.verbose = verbose
     
 
     def fit(self, x_train , y_train ,   alpha = 0.005, num_epochs = 100, lambda_w=0.001, lambda_v = 0.001):
@@ -206,7 +210,71 @@ class FactorizationMachine:
                 
                 
         return [grad_v, grad_w, grad_w0]
-            
+
+    def get_qubo_hamiltonian_minima(self):
+            # define Q_ij = \sum_k V_ik V_jk
+
+        V = copy.deepcopy(self.V)
+
+        if self.verbose:
+            print("Bias ----- ",self.w0, "\n type bias : ", type(self.w0))
+            print("W ----- ", self.w , "\n type w : ", type(self.w))
+            print("W[0] ----- ", self.w[0] , "\n type w[0] : ", type(self.w[0]))
+            print("v.shape :::   ", V.shape)
+            print("v:   " , V, "\ntype v:   ", type(V))
+            print("v[0]:   " , V[0], "\ntype v[0]:   ", type(V[0]))
+            print("v[0[0]]:   " , V[0][0], "\ntype v[0][0]:   ", type(V[0][0]))
+
+            print(V.shape)
+
+
+        Q = np.einsum("ik,jk->ij", V, V)
+
+
+        if self.verbose:
+            print("Q ----- ", Q, "\n type Q : ", type(Q))
+            print("Q[0] ----- ", Q[0], "\n type Q[0] : ", type(Q[0]))
+            print("Q[0][0] ----- ", Q[0][0], "\n type Q[0][0] : ", type(Q[0][0]))
+
+
+        #print("Q: " ,Q)
+
+        binary_len=int(self.N)
+        qubo_basis = []
+        for i in range(0, binary_len):
+            new_string = 'x' + str(i+1)
+            qubo_basis.append(Binary(new_string))
+
+
+
+        # define qubo Hamiltonian
+        H = 0
+
+        for i in range(0, len(Q)):
+            for j in range(0, len(Q)):
+                H += Q[i,j] * qubo_basis[i] * qubo_basis[j]
+
+        for i in range(0, len(np.array(self.w))):
+            H+=np.array(self.w)[i] * qubo_basis[i]
+
+        H+= float(self.w0)
+
+        if self.verbose: print(H)
+
+        model = H.compile()
+        bqm = model.to_bqm()
+        if self.verbose: print(bqm)
+
+        # solve the model
+        sa = neal.SimulatedAnnealingSampler()
+        sampleset = sa.sample(bqm, num_reads=10000)
+        if self.verbose: print(sampleset)
+        decoded_samples = model.decode_sampleset(sampleset)
+        best_sample = min(decoded_samples, key=lambda x: x.energy)
+        if self.verbose: print(best_sample.sample)
+        if self.verbose: print(best_sample.energy)
+
+        return best_sample
             
 
 
@@ -235,7 +303,7 @@ class FactorizationMachineTF(tf.keras.Model):
     print(self.W)
 
     #interactions
-    self.V = tf.Variable(tf.random.normal([K, N], stddev=0.01), trainable = True, name= "interactions")
+    self.V = tf.Variable(tf.random.normal([N, K], stddev=0.1), trainable = True, name= "interactions")
     print(self.V)
 
   def __call__(self, X, training = False):
@@ -248,8 +316,8 @@ class FactorizationMachineTF(tf.keras.Model):
         interactions = (tf.multiply(0.5,
                 tf.math.reduce_sum(
                     tf.subtract(
-                        tf.pow( tf.matmul(X, tf.transpose(self.V)), 2),
-                        tf.matmul(tf.pow(X, 2), tf.transpose(tf.pow(self.V, 2)))),
+                        tf.pow( tf.matmul(X, self.V), 2),
+                        tf.matmul(tf.pow(X, 2), tf.pow(self.V, 2))),
                     axis = -1, keepdims=True)))
     
 
@@ -257,6 +325,77 @@ class FactorizationMachineTF(tf.keras.Model):
 
 
         return self.y_hat
+
+  def get_qubo_hamiltonian_minima( self):
+    # define Q_ij = \sum_k V_ik V_jk
+
+    weights = self.get_weights()
+    print("weights -- - -  - ", weights)
+
+    V = self.V
+    print("v:   " , V, "\ntype v:   ", type(V))
+
+
+    Q = np.einsum("ik,jk->ij", V, V)
+
+    #print("Q: " ,Q)
+
+    binary_len=int(self.N)
+    qubo_basis = []
+    for i in range(0, binary_len):
+        new_string = 'x' + str(i+1)
+        qubo_basis.append(Binary(new_string))
+
+
+
+    # define qubo Hamiltonian
+    H = 0
+
+    for i in range(0, len(Q)):
+        for j in range(0, len(Q)):
+            H += Q[i,j] * qubo_basis[i] * qubo_basis[j]
+
+    w = np.array(self.W).copy()
+    print("W ----- ", w , "\n type w: ", type(w))
+
+    for i in range(0, len(w)):
+        H+=w[i] * qubo_basis[i]
+
+    
+    bias = float(self.w0)
+    print("B ----- ", bias, "\n type b : ", type(bias))
+
+    H+= bias
+
+    print(H)
+
+    model = H.compile()
+    bqm = model.to_bqm()
+    print(bqm)
+
+    # solve the model
+    
+    sa = neal.SimulatedAnnealingSampler()
+    sampleset = sa.sample(bqm, num_reads=100000)
+    decoded_samples = model.decode_sampleset(sampleset)
+    best_sample = min(decoded_samples, key=lambda x: x.energy)
+    print(best_sample.sample)
+    print(best_sample.energy)
+    
+
+    """
+    sa= neal.SimulatedAnnealingSampler()
+    sampleset = sa.sample(bqm, seed=1234, beta_range=[0.1, 4.2],num_sweeps=20000, beta_schedule_type='geometric', num_reads = 1000)
+    print(sampleset)
+    decoded_samples = model.decode_sampleset(sampleset)
+    best_sample = min(decoded_samples, key=lambda x: x.energy)
+    """
+
+
+    return best_sample
+
+
+
 
 
 """
