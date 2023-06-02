@@ -208,7 +208,7 @@ class ExcitonDriver(SpectrumDriver):
         film_matrix = np.zeros((self.number_of_monomers, self.number_of_monomers))
         rows = self.number_of_monomers
         cols = self.number_of_monomers
-        mon_range = range(0, (self.number_of_monomers ** 2) - 1)
+        mon_range = range(self.number_of_monomers ** 2)
         for r in range(rows):
             for c in range(cols):
                 mon_idx = r * cols + c
@@ -240,6 +240,7 @@ class ExcitonDriver(SpectrumDriver):
                 self.exciton_hamiltonian_2D[_n, _m] = (
                     H0 + V
                 )
+                
         
 
     def compute_spectrum(self):
