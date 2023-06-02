@@ -227,8 +227,8 @@ class ExcitonDriver(SpectrumDriver):
         """
         _N = self.number_of_monomers
         self.exciton_hamiltonian_2D = np.zeros((_N ** 2, _N ** 2))
-        self.dd_p1 = self._compute_2D_dd_coupling(self.vert_displacement_between_monomers)
-        self.dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers)
+        self.dd_p1 = self._compute_2D_dd_coupling(self.vert_displacement_between_monomers) * (9.8 / 8.8)
+        self.dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers) * (9.8 / 8.8)
         for _n in range(_N ** 2):
             for _m in range(_N ** 2):
                 H0 = self._compute_H0_element(_n, _m)
