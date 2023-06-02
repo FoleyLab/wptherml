@@ -21,7 +21,7 @@ args = {
 'transition_dipole_moment' : np.array([0, 0, 0.5]),
 'refractive_index' : 1.0,
 'vert_displacement_between_monomers' : [0,1,0],
-'diag_displacement_between_monomerss' : [-1,1,0]
+'diag_displacement_between_monomers' : [-1,1,0]
 }
 
 exciton_test = sf.spectrum_factory('Frenkel', args)
@@ -38,8 +38,7 @@ dynamics_args = {
 'number_of_monomers' : 2,
 'displacement_between_monomers' : np.array([1, 0, 0]),
 'transition_dipole_moment' : np.array([0, 0, 0.0]),
-'refractive_index' : 1.0
-
+'refractive_index' : 1.0,
 }
 
 dynamics_test = sf.spectrum_factory("Frenkel", dynamics_args)
@@ -89,20 +88,18 @@ def test_build_2D_hamiltonian():
     _H_expected[3,3] = exciton_test.exciton_energy
     _H_expected[0,1] = 0
     _H_expected[0,2] = 0.25
-    _H_expected[0,3] = 0.08838834764831842
+    _H_expected[0,3] = 0.08838835
     _H_expected[1,0] = 0
     _H_expected[1,2] = 0
     _H_expected[1,3] = 0.25
     _H_expected[2,0] = 0.25
     _H_expected[2,1] = 0
     _H_expected[2,3] = 0
-    _H_expected[3,0] = 0.08838834764831842
+    _H_expected[3,0] = 0.08838835
     _H_expected[3,1] = 0.25
     _H_expected[3,2] = 0
 
 
-    # this line will build the exciton hamiltonian and
-    # store it in the attribute .exciton_hamiltonian
     exciton_test.build_2D_hamiltonian()
 
     assert np.allclose(_H_expected, exciton_test.exciton_hamiltonian_2D)
