@@ -16,4 +16,7 @@
 |Platinum/Pt | Pt_txt | A. D. Rakić, A. B. Djurišic, J. M. Elazar, and M. L. Majewski. Optical properties of metallic films for vertical-cavity optoelectronic devices, Appl. Opt. 37, 5271-5283 (1998) | TBD |
 |Lead/Pb | Pb_Werner.txt | W. S. M. Werner, K. Glantschnig, C. Ambrosch-Draxl. Optical constants and inelastic electron-scattering data for 17 elemental metals, J. Phys Chem Ref. Data 38, 1013-1092 (2009) | TBD |
 |Rhenium/Re| Re_txt | E. D. Palik, "Handbook of optical constants of solids" (Academic Press, 1998) | TBD |
+|Zirconia/ZrO2|ZrO2_Wood.txt | D. L Wood and K. Nassau. Refractive index of cubic zirconia stabilized with yttria, Appl. Opt. 21, 2978-2981 (1982) | 0.361-5.14 microns |
+|Silicon Nitride/Si3N4| Si3N4_Luke.txt | K. Luke, Y. Okawachi, M. R. E. Lamont, A. L. Gaeta, M. Lipson. Broadband mid-infrared frequency comb generation in a Si3N4 microresonator, Opt. Lett. 40, 4823-4826 (2015) | 0.310–5.504 µm |
 |2D Hybrid organic-inorganic perovskite | 2D_HOIP.txt | Song et al. "Determinatino of dielectric functions and exciton oscillator strength of two-dimensional hybrid perovskites", ACS Materials Lett. 2021, 3, 1, 148–159 | 0.371-1.69 µm |
+

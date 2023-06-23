@@ -359,6 +359,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_TiO2(i)
             elif _lm == "w":
                 self.material_W(i)
+            elif _lm == "zro2":
+                self.material_ZrO2(i)
+            elif _lm == "si3n4":
+                self.material_Si3N4(i)
             # if we don't match one of these strings, then we assume the user has passed
             # a filename
             else:
@@ -1496,16 +1500,17 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
            useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
 
            total_reflected_power = \int R(\lambda) d\lambda
-        """
+        
 
         _diff = self.reflective_envelope - self.reflectivity_array
+
         # try to weight the reflectivity band more than the outside region
         _diffscale = (self.reflective_envelope + 0.1) * _diff
 
-        _diff_s = _diff ** 2
+        #_diff_s = _diff ** 2
         _diffscale_s = _diffscale ** 2
 
-        self.normalized_squared_reflectivity_error = np.sum(_diff_s / np.max(_diff_s))
+        #self.normalized_squared_reflectivity_error = np.sum(_diff_s / np.max(_diff_s))
         self.normalized_scaled_squared_reflectivity_error = np.sum(_diffscale_s / np.max(_diffscale_s))
 
         self.mean_squared_reflectivity_error = np.mean(_diff_s / np.max(_diff_s))
@@ -1525,12 +1530,19 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.mean_squared_transmissivity_error = np.mean( _diff_s / np.max(_diff_s) )
         self.mean_scaled_squared_transmissivity_error = np.mean(_diffscale_s / np.max(_diffscale_s))
 
+        """
+        # numerators are both the actual spectra times the envelope
         _utp_array = self.transmissive_envelope * self.transmissivity_array
         _urp_array = self.reflective_envelope * self.reflectivity_array
 
+        # denominator for R is the reflection over entire spectrum because
+        # we want to penalize reflection outside the envelope
+        # denominator for T is just the ideal transmission in envelope because
+        # we want to get as close to ideal transmission here but don't care if
+        # we have high transmissivity outside as well
         self.useful_transmitted_power = np.trapz(_utp_array, self.wavelength_array)
         self.useful_reflected_power = np.trapz(_urp_array, self.wavelength_array)
-        self.total_transmitted_power = np.trapz(self.transmissivity_array, self.wavelength_array)
+        self.total_transmitted_power = np.trapz(self.transmissive_envelope, self.wavelength_array)
         self.total_reflected_power = np.trapz(self.reflectivity_array, self.wavelength_array)
 
         self.transmission_efficiency = self.useful_transmitted_power / self.total_transmitted_power

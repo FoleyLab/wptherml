@@ -1064,6 +1064,90 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
+    def material_Si3N4(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be Si3N4
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as Si3N4
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_Si3N4(1, wavelength_range="visible") -> layer 1 will be Si3N4 from the Si3N4_Luke.txt data set good from visible to 5 microns (0.361-5.14)
+            """
+            # get path to the tin data file
+            file_path = path + "data/Si3N4_Luke.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+    def material_ZrO2(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be ZrO2
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as ZrO2
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_ZrO2(1, wavelength_range="visible") -> layer 1 will be ZrO2 from the ZrO2_Wood.txt data set good from visible to 5.5 microns (0.31-5.504)
+            """
+            # get path to the tin data file
+            file_path = path + "data/ZrO2_Wood.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
     def material_Re(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Re
