@@ -186,6 +186,41 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.material_array = ["Air", "SiO2", "Air"]
             self.number_of_layers = 3
 
+        # see if we want to specify certain layers to randomize the thickness of
+        if "random_thickness_layers" in args:
+            self.random_thickness_list = np.array(args["random_thickness_layers"], dtype=int)
+        else:
+            # default is that all layers can be randomized in thickness
+            self.random_thickness_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
+
+        # do we want to put bounds on the random thicknesses (specified in nanometers)
+        if "random_thickness_bounds_nm" in args:
+            bounds = args["random_thickness_bounds"]
+            self.minimum_thickness_nm = bounds[0]
+            self.maximum_thickness_nm = bounds[1]
+        else:
+            # default to 1 nm for minimum and 1000 nm for maximum
+            self.minimum_thickness_nm = 1
+            self.maximum_thickness_nm = 1000
+
+        # see if we want to specifiy only certain layers with materials
+        # that can be randomized
+        if "random_material_layers" in args:
+            self.random_materials_list = np.array(args["random_material_layers"], dtype=int)
+
+        # default is that all layers can be randomized
+        else:
+            self.random_materials_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
+
+        # see if there are specific materials we would like to draw from
+        if "possible_random_materials" in args:
+            self.possible_materials = args["possible_random_materials"]
+        else:
+            # default materials to draw from
+            self.possible_materials = ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
+                                                  
+
+
         # user can specify which layers to compute gradients with respect to
         # i.e. for a structure like ['Air', 'SiO2', 'Ag', 'TiO2', 'Air]
         # the gradient list [1, 2] would take the gradients
@@ -208,6 +243,48 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             # this is a good default empirically if
             # Gauss-Legendre quadrature is used for angular spectra
             self.number_of_angles = 7
+
+        # some keywords for the visible transmissive and IR reflective Stacks for Blake and Michael
+        # 
+        if "transmissive_window_nm" in args:
+            lamlist = args["transmissive_window_nm"]
+            # in nanometers
+            self.transmissive_window_start_nm = lamlist[0]
+            self.transmissive_window_stop_nm = lamlist[1]
+            # in SI units
+            self.transmissive_window_start =  lamlist[0] * 1e-9
+            self.transmissive_window_stop = lamlist[1] * 1e-9
+        else:
+            # default to visible
+            self.transmissive_window_start = 350e-9
+            self.transmissive_window_stop = 700e-9
+        
+        self.transmissive_envelope = np.zeros_like(self.wavelength_array)
+        for i in range(self.number_of_wavelengths):
+            if self.wavelength_array[i] >= self.transmissive_window_start and self.wavelength_array[i] <= self.transmissive_window_stop:
+                self.transmissive_envelope[i] = 1.0
+
+        if "reflective_window_wn" in args:
+            lamlist = args["reflective_window_wn"]
+            # in inverse cm
+            self.reflective_window_start_wn = lamlist[0]
+            self.reflective_window_stop_wn = lamlist[1]
+            # in SI units
+            self.reflective_window_start = 10000000 / lamlist[1] * 1e-9
+            self.reflective_window_stop = 10000000 / lamlist[0] * 1e-9
+        else:
+            # default to 2000 - 2400 wavenumbers
+            self.reflective_window_start_wn = 2000
+            self.reflective_window_stop_wn = 2400
+            # in SI units
+            self.reflective_window_start = 10000000 / 2400 * 1e-9
+            self.reflective_window_stop = 10000000 / 2000 * 1e-9
+
+        self.reflective_envelope = np.zeros_like(self.wavelength_array)
+        for i in range(self.number_of_wavelengths):
+            if self.wavelength_array[i] >= self.reflective_window_start and self.wavelength_array[i] <= self.reflective_window_stop:
+                self.reflective_envelope[i] = 1.0        
+    
 
         # for now always get solar spectrum!
         self._solar_spectrum = self._read_AM()
@@ -274,7 +351,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Si(i)
             elif _lm == "sio2":
                 self.material_SiO2(i)
-            elif _lm == "ta2O5":
+            elif _lm == "ta2o5":
                 self.material_Ta2O5(i)
             elif _lm == "tin":
                 self.material_TiN(i)
@@ -369,6 +446,33 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             ") command to define the material of this new layer!",
         )
 
+    def randomize_thickness_array(self):
+        """ Function to randomize the thickness array
+        
+        """
+        N = len(self.random_thickness_list)
+        for i in range(N):
+            _idx = self.random_thickness_list[i]
+            _d = np.random.randint(self.minimum_thickness_nm, self.maximum_thickness_nm) * 1e-9
+            self.thickness_array[_idx] = _d 
+
+    def randomize_materials_array(self):
+        """ Function to randomize the materials array
+        
+        """
+        # randomize the materials array
+        N = len(self.random_materials_list)
+        M = len(self.possible_materials)
+        self.materials_code = np.zeros(N)
+        for i in range(N):
+            _idx = self.random_materials_list[i]
+            _jdx = np.random.randint(0, M)
+            self.material_array[_idx] = self.possible_materials[_jdx]
+            self.materials_code[i] = _jdx
+
+        # reset the refractive index array
+        self.set_refractive_index_array()
+         
     def compute_spectrum(self):
         """computes the following attributes:
         Attributes
@@ -868,9 +972,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # now compute pv_stpv short circuit current
         self._compute_pv_short_circuit_current(self.wavelength_array, self.emissivity_array, self.spectral_response, self._solar_spectrum)
         
-
-
-
 
     def compute_cooling(self):
         """Method to compute the radiative cooling figures of merit
@@ -1381,3 +1482,58 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # Make sure our circles are circular!
         ax.set_aspect("equal")
         plt.show()
+
+    def compute_selective_mirror_fom(self):
+        """compute the figure of merit for selective tranmission and reflection according
+           to the transmissive_envelope and reflective_envelope functions
+
+           Working Equation
+           ----------------
+           useful_transmitted_power = \int T(\lambda) * transmission_envelope d\lambda 
+
+           total_transmitted_power = \int T(\lambda) d\lambda
+
+           useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
+
+           total_reflected_power = \int R(\lambda) d\lambda
+        """
+
+        _diff = self.reflective_envelope - self.reflectivity_array
+        # try to weight the reflectivity band more than the outside region
+        _diffscale = (self.reflective_envelope + 0.1) * _diff
+
+        _diff_s = _diff ** 2
+        _diffscale_s = _diffscale ** 2
+
+        self.normalized_squared_reflectivity_error = np.sum(_diff_s / np.max(_diff_s))
+        self.normalized_scaled_squared_reflectivity_error = np.sum(_diffscale_s / np.max(_diffscale_s))
+
+        self.mean_squared_reflectivity_error = np.mean(_diff_s / np.max(_diff_s))
+        self.mean_scaled_squared_reflectivity_error = np.mean(_diffscale_s / np.max(_diffscale_s))
+
+
+        _diff = self.transmissive_envelope - self.transmissivity_array
+        # try to weight the reflectivity band more than the outside region
+        _diffscale = (self.transmissive_envelope + 0.1) * _diff
+
+        _diff_s = _diff ** 2
+        _diffscale_s = _diffscale ** 2
+
+        self.normalized_squared_transmissivity_error = np.sum( _diff_s / np.max(_diff_s) )
+        self.normalized_scaled_squared_transmissivity_error = np.sum(_diffscale_s / np.max(_diffscale_s))
+
+        self.mean_squared_transmissivity_error = np.mean( _diff_s / np.max(_diff_s) )
+        self.mean_scaled_squared_transmissivity_error = np.mean(_diffscale_s / np.max(_diffscale_s))
+
+        _utp_array = self.transmissive_envelope * self.transmissivity_array
+        _urp_array = self.reflective_envelope * self.reflectivity_array
+
+        self.useful_transmitted_power = np.trapz(_utp_array, self.wavelength_array)
+        self.useful_reflected_power = np.trapz(_urp_array, self.wavelength_array)
+        self.total_transmitted_power = np.trapz(self.transmissivity_array, self.wavelength_array)
+        self.total_reflected_power = np.trapz(self.reflectivity_array, self.wavelength_array)
+
+        self.transmission_efficiency = self.useful_transmitted_power / self.total_transmitted_power
+        self.reflection_efficiency = self.useful_reflected_power / self.total_reflected_power
+        self.selective_mirror_fom = 0.5 * (self.transmission_efficiency + self.reflection_efficiency)
+
