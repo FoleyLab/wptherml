@@ -931,26 +931,41 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # reset temperature to whatever it was at the beginning
         self.temperature = _T
 
-   def compute_pv_stpv_gradient(self) :
-    """ 
+    def compute_pv_stpv_gradient(self):
+        """
+        Computes the short circuit current
+
+        Attributes
+        ----------
+
+        e_gradient_index: Length of the emissivity gradient array.
+
+        emissivity_gradient_array_prime: (Emissivity gradient array x Wavelength array) / Lambda bandgap.
+
+        pv_stpv_short_circuit_current: Short circuit current as defined in Equation (23) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+        the integration of Emissivity x Spectral Response x Solar Spectrum over wavelength.
+        """
+
         # Looking at the short circuit current (Jsc)
         # Need to iterate over emissivity_gradient_array for every value at a given wavelength.
         # Need to take the integral of this multiplied by _solar_spectrum and spectral_response (both precalculated), between 0 and lambda bandgap.
 
-        # Initialize Jsc array
+        # Acquire necessary variables
+        self._solar_spectrum = self._read_AM()
+
+        # Initialize short circuit current array
         e_gradient_index = len(self.emissivity_gradient_array[0, :])
         self.pv_stpv_short_circuit_current = np.zeros(e_gradient_index)
 
         # Iterate over material thicknesses
         for i in range(0, e_gradient_index):
         
-           self.emissivity_gradient_array_prime = (
+            self.emissivity_gradient_array_prime = (
                                                      self.emissivity_gradient_array[:, i]
-                                                     * wavelength_array
-                                                      / self.lambda_bandgap)
-
-           self.pv_stpv_short_circuit_current[i] = np.trapz(self.emissivity_gradient_array_prime[i]*self.spectral_response*self._solar_spectrum, wavelength_array) # Integrate for short circuit current
-    """
+                                                     * self.wavelength_array
+                                                     / self.lambda_bandgap)
+            self.pv_stpv_short_circuit_current[i] = np.trapz(self.emissivity_gradient_array_prime[i]*self.spectral_response*self._solar_spectrum, self.wavelength_array) # Integrate for short circuit current
+    
 
 
     def compute_cooling(self):
