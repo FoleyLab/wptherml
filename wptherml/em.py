@@ -857,29 +857,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         This is an approximation, and we should figure out how to do this rigorously
         using the transfer matrix!
 
-        
-        ------------------------------
-        Pseudocode for compute_pv_stpv_gradient (I am not sure what level of detail you are looking for, but this is what I have so far).
-        
-        def compute_pv_stpv_gradient(self) :
-            
-            # Looking at the short circuit current (Jsc)
-            # Need to iterate over emissivity_gradient_array for every value at a given wavelength.
-            # Need to take the integral of this multiplied by solar_spectrum and spectral response (both precalculated), between 0 and lambda bandgap.
-
-            # Initialize Jsc array
-            self.pv_stpv_short_circuit_current = []
-
-            for i in range(0, self.wavelength_array): # Catching the wavelengths- if there is just one, specify under the integral.
-                for j in range(0, self.emissivity_gradient_array): # Catching the material thickness values
-                   self.pv_stpv_short_circuit_current[i,j] = np.trapz(self.wavelength_array, 
-                                                                      self.solar_spectrum*self.emissivity_gradient_array[i,j]*self.spectral_response) # Integrate for short circuit current
-
-        This is what I have so far on the short circuit current. I feel there should be more additions, but from what I can tell the code structure should basically be 
-        a loop going through the 2D array of emissivity gradients and integrating each one, then composing a separate array of these values.
-        Assuming there are multiple wavelength values, the second array should be 2D. If one, it should be 1D.
-        I also have yet to ensure the syntax is correct for np.trapz. This is a very rough preliminary draft based on the equation we discussed earlier- (23) in PhysRev.
-
         """
         # temporarily set the temperature to 440 K
         _T = self.temperature
@@ -953,6 +930,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         
         # reset temperature to whatever it was at the beginning
         self.temperature = _T
+
+   def compute_pv_stpv_gradient(self) :
+    """ 
+        # Looking at the short circuit current (Jsc)
+        # Need to iterate over emissivity_gradient_array for every value at a given wavelength.
+        # Need to take the integral of this multiplied by _solar_spectrum and spectral_response (both precalculated), between 0 and lambda bandgap.
+
+        # Initialize Jsc array
+        e_gradient_index = len(self.emissivity_gradient_array[0, :])
+        self.pv_stpv_short_circuit_current = np.zeros(e_gradient_index)
+
+        # Iterate over material thicknesses
+        for i in range(0, e_gradient_index):
+        
+           self.emissivity_gradient_array_prime = (
+                                                     self.emissivity_gradient_array[:, i]
+                                                     * wavelength_array
+                                                      / self.lambda_bandgap)
+
+           self.pv_stpv_short_circuit_current[i] = np.trapz(self.emissivity_gradient_array_prime[i]*self.spectral_response*self._solar_spectrum, wavelength_array) # Integrate for short circuit current
+    """
 
 
     def compute_cooling(self):
