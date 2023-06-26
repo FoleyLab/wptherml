@@ -933,17 +933,24 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     def compute_pv_stpv_gradient(self):
         """
-        Computes the short circuit current
+        Computes the following attributes for short circuit current calculation:
 
         Attributes
         ----------
 
-        e_gradient_index: Length of the emissivity gradient array.
+        e_gradient_index : Integer
+                        Length of the emissivity gradient array.
 
-        emissivity_gradient_array_prime: (Emissivity gradient array x Wavelength array) / Lambda bandgap.
+        emissivity_gradient_array_prime : Array
+                                        (Emissivity gradient array x Wavelength array) / Lambda bandgap.
 
-        pv_stpv_short_circuit_current: Short circuit current as defined in Equation (23) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
-        the integration of Emissivity x Spectral Response x Solar Spectrum over wavelength.
+        pv_stpv_short_circuit_current : Float
+                                    Short circuit current as defined in Equation (23) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
+                                     the integration of Emissivity x Spectral Response x Solar Spectrum over wavelength.
+        
+        Returns:
+        --------
+        None
         """
 
         # Looking at the short circuit current (Jsc)
