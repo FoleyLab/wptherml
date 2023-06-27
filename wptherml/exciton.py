@@ -311,7 +311,7 @@ class ExcitonDriver(SpectrumDriver):
         _len = 500
         self.x = np.linspace(-_dx, _x_max, _len)
 
-        self.phi = np.zeros((_len, self.number_of_monomers))
+        self.phi = np.zeros((_len, 1))
 
         for n in range(self.number_of_monomers):
             _x_n = self.coords[0, n]
