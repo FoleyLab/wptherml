@@ -13,8 +13,8 @@ class Therml:
     self.atmospheric_temperature : float
         temperature of the atmosphere in Kelvin
 
-    self.lambda_bandgap : float
-        bandgap wavelength of the target PV for PV or STPV in meters
+    self.stpv_lambda_bandgap : float
+        bandgap wavelength of the target PV for STPV in meters
 
     self.solar_angle : float
         angle of the incident solar spectrum in radians
@@ -79,11 +79,11 @@ class Therml:
             # default temperature is 300 K
             self.temperature = 300
 
-        if "bandgap wavelength" in args:
-            self.lambda_bandgap = args["bandgap wavelength"]
+        if "stpv bandgap wavelength" in args:
+            self.stpv_lambda_bandgap = args["stpv bandgap wavelength"]
         else:
             # default is ~InGaAsSb bandgap
-            self.lambda_bandgap = 2254e-9
+            self.stpv_lambda_bandgap = 2254e-9
 
         if "atmospheric temperature" in args:
             self.atmospheric_temperature = args["atmospheric temperature"]
@@ -123,7 +123,9 @@ class Therml:
         with $\theta=0$
         """
 
-        self.blackbody_spectrum = self._compute_blackbody_spectrum(wavelength_array, self.temperature)
+        self.blackbody_spectrum = self._compute_blackbody_spectrum(
+            wavelength_array, self.temperature
+        )
         self.thermal_emission_array = self.blackbody_spectrum * emissivity_array
 
     def _compute_therml_spectrum_gradient(
@@ -161,7 +163,9 @@ class Therml:
         # initialize the gradient array
         self.thermal_emission_gradient_array = np.zeros((_nwl, _ngr))
 
-        self.blackbody_spectrum = self._compute_blackbody_spectrum(wavelength_array, self.temperature)
+        self.blackbody_spectrum = self._compute_blackbody_spectrum(
+            wavelength_array, self.temperature
+        )
 
         for i in range(0, _ngr):
             self.thermal_emission_gradient_array[:, i] = (
@@ -176,16 +180,14 @@ class Therml:
         # boltzmanns constant in SI
         kb = 1.38064852e-23
 
-        _bb_spectrum = 2 * h * c ** 2 / wavelength_array ** 5
-        _bb_spectrum /= (
-            np.exp(h * c / (wavelength_array * kb * T)) - 1
-        )
-        return _bb_spectrum 
+        _bb_spectrum = 2 * h * c**2 / wavelength_array**5
+        _bb_spectrum /= np.exp(h * c / (wavelength_array * kb * T)) - 1
+        return _bb_spectrum
 
     def _compute_pv_stpv_power_density(self, wavelength_array):
-        """ method to compute the radiated power density of a PV-STPV structure specifically 
-            in the 0.3 - 0.5 eV range (~2450-4150 nm range) 
-            
+        """method to compute the radiated power density of a PV-STPV structure specifically
+        in the 0.3 - 0.5 eV range (~2450-4150 nm range)
+
         """
         # set lower- and upper limits on wavelength for integration
         _lambda_min = 2450e-9
@@ -196,7 +198,10 @@ class Therml:
         _max_idx = np.abs(wavelength_array - _lambda_max).argmin()
 
         # integrate the thermal emission spectrum over wavelength range using np.trapz
-        self.pv_stpv_exciton_splitting_power = np.pi * np.trapz(self.thermal_emission_array[_min_idx:_max_idx], wavelength_array[_min_idx:_max_idx])
+        self.pv_stpv_exciton_splitting_power = np.pi * np.trapz(
+            self.thermal_emission_array[_min_idx:_max_idx],
+            wavelength_array[_min_idx:_max_idx],
+        )
 
     def _compute_power_density(self, wavelength_array):
         """method to compute the power density from blackbody spectrum and thermal emission spectrum
@@ -230,7 +235,7 @@ class Therml:
         # compute Blackbody power density from Stefan-Boltzmann law for validation
         # Stefan-Boltzmann constant
         sig = 5.670374419e-8
-        self.stefan_boltzmann_law = sig * self.temperature ** 4
+        self.stefan_boltzmann_law = sig * self.temperature**4
 
     def _compute_power_density_gradient(self, wavelength_array):
         """method to compute the gradient of the power density of a thermal emitter
@@ -297,7 +302,7 @@ class Therml:
         thermal_emission_array : numpy array of floats (already assigned)
             the thermal emission spectrum for each value of wavelength array for the stpv structure
 
-        lambda_bandgap : float (already assigned)
+        stpv_lambda_bandgap : float (already assigned)
             the bandgap wavelength -> upper limit on the integral for the stpv_power_density
 
         stpv_power_density : float (will be computed by this function)
@@ -312,11 +317,11 @@ class Therml:
         # compute the useful power density spectrum
         power_density_array = (
             self.thermal_emission_array * wavelength_array
-        ) / self.lambda_bandgap
+        ) / self.stpv_lambda_bandgap
 
         # determine the index corresponding to lambda_bandgap in the wavelength_array
         # which will be used to determine the appropriate slice to feed to np.trapz
-        bg_idx = np.abs(wavelength_array - self.lambda_bandgap).argmin()
+        bg_idx = np.abs(wavelength_array - self.stpv_lambda_bandgap).argmin()
 
         # integrate the power density between 0 to lambda_bandgap
         # by feeding the slice of the power_density_array and wavelength_array
@@ -351,7 +356,7 @@ class Therml:
             stpv_power_density_array_prime = (
                 self.thermal_emission_gradient_array[:, i]
                 * wavelength_array
-                / self.lambda_bandgap
+                / self.stpv_lambda_bandgap
             )
             self.stpv_power_density_gradient[i] = np.pi * np.trapz(
                 stpv_power_density_array_prime, wavelength_array
@@ -428,13 +433,13 @@ class Therml:
 
         # determine the index corresponding to lambda_bandgap in the wavelength_array
         # which will be used to determine the appropriate slice to feed to np.trapz
-        _bg_idx = np.abs(wavelength_array - self.lambda_bandgap).argmin()
+        _bg_idx = np.abs(wavelength_array - self.stpv_lambda_bandgap).argmin()
 
         for i in range(0, _ngr):
             _rho_prime_integrand = (
                 self.thermal_emission_gradient_array[:_bg_idx, i]
                 * wavelength_array[:_bg_idx]
-                / self.lambda_bandgap
+                / self.stpv_lambda_bandgap
             )
             _rho_prime = np.pi * np.trapz(
                 _rho_prime_integrand, wavelength_array[:_bg_idx]
@@ -446,9 +451,11 @@ class Therml:
                 _rho_prime * _P - _P_prime * _rho
             ) / (_P * _P)
 
-    def _compute_pv_short_circuit_current(self, wavelength_array, absorptivity_array, spectral_response, solar_spectrum):
+    def _compute_pv_short_circuit_current(
+        self, wavelength_array, absorptivity_array, spectral_response, solar_spectrum
+    ):
         """method to approximate the short circuit current of a PV cell
-        
+
         Arguments
         ---------
         wavelength_array : numpy array of floats
@@ -471,9 +478,11 @@ class Therml:
         Returns
         -------
         None
-        
+
         """
-        self.pv_short_circuit_current = np.trapz(absorptivity_array * spectral_response * solar_spectrum, wavelength_array)
+        self.pv_short_circuit_current = np.trapz(
+            absorptivity_array * spectral_response * solar_spectrum, wavelength_array
+        )
 
     def _compute_luminous_efficiency(self, wavelength_array):
         """method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure
@@ -649,7 +658,7 @@ class Therml:
             _o_over_cos_t = 1 / np.cos(theta_vals[i])
             _emissivity_atm = (
                 np.ones(len(atmospheric_transmissivity))
-                - atmospheric_transmissivity ** _o_over_cos_t
+                - atmospheric_transmissivity**_o_over_cos_t
             )
             _TE_atm = self.blackbody_spectrum * _emissivity_atm * np.cos(theta_vals[i])
             _absorbed_TE_spectrum = (
@@ -705,7 +714,7 @@ class Therml:
                 _o_over_cos_t = 1 / np.cos(theta_vals[j])
                 _emissivity_atm = (
                     np.ones(len(atmospheric_transmissivity))
-                    - atmospheric_transmissivity ** _o_over_cos_t
+                    - atmospheric_transmissivity**_o_over_cos_t
                 )
                 _TE_atm = (
                     self.blackbody_spectrum * _emissivity_atm * np.cos(theta_vals[j])

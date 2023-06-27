@@ -150,6 +150,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         -------
         None
         """
+        if "pv_bandgap_wavelength" in args:
+            self.pv_lambda_bandgap = args["pv_bandgap_wavelength"]
+        else:
+            self.pv_lambda_bandgap = 700e-9
+
         if "incident_angle" in args:
             # user input expected in deg so convert to radians
             self.incident_angle = args["incident_angle"] * np.pi / 180.0
@@ -305,8 +310,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # use np.flip to reverse the arrays
         self._refractive_index_array = np.flip(_ri, axis=1)
         self.thickness_array = np.flip(_ta)
-
-
 
     def remove_layer(self, layer_number):
         """remove layer number layer_number from your stack.
@@ -830,7 +833,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         """
         # First make sure we have full stack including the PSC layer
         # get terminal layer number
-        _ln = len(self.thickness_array)-1
+        _ln = len(self.thickness_array) - 1
         # insert thick active layer as the bottom-most layer
         self.insert_layer(_ln, 1000e-9)
         # make sure the active layer has RI of 2D perovskite
@@ -840,24 +843,20 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # scale AM by \lambda / \lambda_bg
         # compute the useful power density spectrum
-        lambda_bandgap = 700e-9
         power_density_array = (
-            self._solar_spectrum * self.wavelength_array / lambda_bandgap
+            self._solar_spectrum * self.wavelength_array / self.pv_lambda_bandgap
         )
 
-        bg_idx = np.abs(self.wavelength_array - self.lambda_bandgap).argmin()
+        bg_idx = np.abs(self.wavelength_array - self.pv_lambda_bandgap).argmin()
 
         self.pv_stpv_jsc = np.pi * np.trapz(
             power_density_array[:bg_idx], self.wavelength_array[:bg_idx]
         )
 
-
-
-
     def compute_pv_stpv(self):
-        """ Turn this into a proper docstring
-        
-            Let's denote the PV-STPV stack as 
+        """Turn this into a proper docstring
+
+            Let's denote the PV-STPV stack as
 
             ---------------------------------
                 layer A (AR + polystyrene)
@@ -865,26 +864,26 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 layer B (active perovskite)
             ---------------------------------
 
-        where we need to determine the amount of solar light absorbed into 
+        where we need to determine the amount of solar light absorbed into
         the active layer (layer B) and we need to also compute the thermal
-        emission spectrum of layer A into layer B.  
+        emission spectrum of layer A into layer B.
 
-        Upon entering the compute_pv_stpv function, layer A will be defined.  We 
-        can therefore compute the "top-side" (relevant for solar absorption) 
-        absorptivity of layer A alone, as well as the "bottom-side" emissivity 
-        (relevant for thermal emission into layer B) of layer A alone. We will 
+        Upon entering the compute_pv_stpv function, layer A will be defined.  We
+        can therefore compute the "top-side" (relevant for solar absorption)
+        absorptivity of layer A alone, as well as the "bottom-side" emissivity
+        (relevant for thermal emission into layer B) of layer A alone. We will
         need to reverse the layer A structure to get the "bottom-side" emissivity.
-        
+
         Top-side absorptivity of layer A: absorptivity_A_T
         Bottom-side absorptivity of layer A: emissivity_A_B
         Top-side transmissivity of layer A: transmissivity_A_T
         Top-side reflectivity of layer A: reflectivity_A_T
 
-        After these quantities are calculated, we can reverse the structure once again so 
+        After these quantities are calculated, we can reverse the structure once again so
         that it matches the original order of layer A and add Layer B to the bottom.
         At this point, we can compute the "top-side" absorptivity of layer AB:
-        absorptivity_AB_T and then approximate the "top-side" absorptivity of 
-        the actual active layer (layer B) as 
+        absorptivity_AB_T and then approximate the "top-side" absorptivity of
+        the actual active layer (layer B) as
         absororptivity_B_T = absorptivity_AB_T - absorptivity_A_T
         This is an approximation, and we should figure out how to do this rigorously
         using the transfer matrix!
@@ -899,28 +898,31 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         transmissivity_A_T = self.transmissivity_array
         reflectivity_A_T = self.reflectivity_array
 
-
         # make sure we have the solar spectrum
         self._solar_spectrum = self._read_AM()
 
         # define transmitted solar spectrum
         self.transmitted_solar_spectrum = self._solar_spectrum * transmissivity_A_T
-        self.pv_stpv_transmitted_solar_power = np.trapz(self.transmitted_solar_spectrum, self.wavelength_array)
+        self.pv_stpv_transmitted_solar_power = np.trapz(
+            self.transmitted_solar_spectrum, self.wavelength_array
+        )
 
         # reverse stack and get thermal emission spectrum of the stack INTO the active layer
         self.reverse_stack()
         self.compute_spectrum()
-        emissivity_A_B = self.emissivity_array 
+        emissivity_A_B = self.emissivity_array
 
         # get Blackbody spectrum at the default temperature - this is tentative
         self._compute_therml_spectrum(self.wavelength_array, emissivity_A_B)
-        self.pv_stpv_p_split = np.pi * np.trapz(self.thermal_emission_array, self.wavelength_array)
+        self.pv_stpv_p_split = np.pi * np.trapz(
+            self.thermal_emission_array, self.wavelength_array
+        )
 
-        # now add perovskite layer to the stack and get the emissivity/absorptivity towards the sky 
+        # now add perovskite layer to the stack and get the emissivity/absorptivity towards the sky
         self.reverse_stack()
 
         # get terminal layer number
-        _ln = len(self.thickness_array)-1
+        _ln = len(self.thickness_array) - 1
         # insert thick active layer as the bottom-most layer
         self.insert_layer(_ln, 1000e-9)
         # make sure the active layer has RI of 2D perovskite
@@ -930,9 +932,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # approximate the absorptivity only of the active layer
         absorptivity_B_T = absorptivity_AB_T - absorptivity_A_T
-        
+
         # get the absorbed power
-        self.pv_stpv_p_abs = np.trapz(absorptivity_B_T * self._solar_spectrum, self.wavelength_array)
+        self.pv_stpv_p_abs = np.trapz(
+            absorptivity_B_T * self._solar_spectrum, self.wavelength_array
+        )
 
         # loop over temperature to try to find the temperature of the stack that balances emitted
         # power with absorbed power
@@ -945,21 +949,24 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         #        _T += 1
         #        if P_emit > absorptivity_B_T :
         #            _kill = 0
-        #else:
+        # else:
         #    _T = 440
-        
+
         self._compute_pv_stpv_power_density(self.wavelength_array)
         # reverse stack again and add active layer and get absorbed power into the structure
         self.reverse_stack()
 
-
-        # approximate ideal spectral response assuming \lambda_bg = 700 nm
-        self.lambda_bandgap = 700e-9
-        self.spectral_response = self.wavelength_array / self.lambda_bandgap
+        # approximate ideal spectral response using pv_lambda_bandgap
+        self.spectral_response = self.wavelength_array / self.pv_lambda_bandgap
         # now compute pv_stpv short circuit current
-        self._compute_pv_short_circuit_current(self.wavelength_array, self.emissivity_array, self.spectral_response, self._solar_spectrum)
+        self._compute_pv_short_circuit_current(
+            self.wavelength_array,
+            self.emissivity_array,
+            self.spectral_response,
+            self._solar_spectrum,
+        )
         self.remove_layer(_ln)
-        
+
         # reset temperature to whatever it was at the beginning
         self.temperature = _T
 
@@ -979,7 +986,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         pv_stpv_short_circuit_current : Float
                                     Short circuit current as defined in Equation (23) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018
                                      the integration of Emissivity x Spectral Response x Solar Spectrum over wavelength.
-        
+
         Returns:
         --------
         None
@@ -991,21 +998,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # Acquire necessary variables
         self._solar_spectrum = self._read_AM()
+        self.compute_spectrum_gradient()
 
         # Initialize short circuit current array
         e_gradient_index = len(self.emissivity_gradient_array[0, :])
         self.pv_stpv_short_circuit_current = np.zeros(e_gradient_index)
+        _spectral_response = self.wavelength_array / self.pv_lambda_bandgap
 
         # Iterate over material thicknesses
         for i in range(0, e_gradient_index):
-        
             self.emissivity_gradient_array_prime = (
-                                                     self.emissivity_gradient_array[:, i]
-                                                     * self.wavelength_array
-                                                     / self.lambda_bandgap)
-            self.pv_stpv_short_circuit_current[i] = np.trapz(self.emissivity_gradient_array_prime[i]*self.spectral_response*self._solar_spectrum, self.wavelength_array) # Integrate for short circuit current
-    
+                self.emissivity_gradient_array[:, i]
+                * self.wavelength_array
+                / self.pv_lambda_bandgap
+            )
 
+            self.pv_stpv_short_circuit_current[i] = np.trapz(
+                self.emissivity_gradient_array_prime[i]
+                * _spectral_response
+                * self._solar_spectrum,
+                self.wavelength_array,
+            )  # Integrate for short circuit current
 
     def compute_cooling(self):
         """Method to compute the radiative cooling figures of merit
@@ -1072,7 +1085,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         )
 
     def compute_cooling_gradient(self):
-
         # get the gradient of the emissivity vs angle and wavelength
         self.compute_explicit_angle_spectrum_gradient()
         self.radiative_cooling_power_gradient = (
@@ -1284,7 +1296,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         return _tm, _THETA, _CTHETA
 
     def _compute_dm(self, refractive_index, cosine_theta):
-
         """compute the D and D_inv matrices for each layer and wavelength
         Arguments
         ---------
@@ -1380,7 +1391,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         return _pm_analytical_gradient
 
     def _compute_rgb(self, colorblindness="False"):
-
         # get color response functions
         self._read_CIE()
         # plt.plot(self.wavelength_array * 1e9, self.reflectivity_array, label="Reflectivity")
@@ -1490,7 +1500,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         return rgblist
 
     def render_color(self, string, colorblindness="False"):
-
         fig, ax = plt.subplots()
         # The grid of visible wavelengths corresponding to the grid of colour-matching
         # functions used by the ColourSystem instance.

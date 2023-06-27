@@ -29,7 +29,6 @@ def test_compute_power_density():
 
 
 def test_compute_stpv_power_density():
-
     # define basic structure at 1500 K
     test_args = {
         "wavelength_list": [400e-9, 7000e-9, 1000],
@@ -242,3 +241,43 @@ def test_compute_cooling_gradient():
         _numeric_atmospheric_warming_power_gradient,
         1e-2,
     )
+
+
+def test_compute_pv_stpv_jsc_gradient():
+    """unit test for the computation of the gradients of stpv quantities
+    including the stpv_power_density and the spectral_efficiency"""
+    test_args = {
+        "wavelength_list": [300e-9, 1000e-9, 1000],
+        "material_list": ["Air", "SiO2", "Al2O3", "Polystyrene", "Air"],
+        "thickness_list": [0, 200e-9, 300e-9, 1000e-9, 0],
+        "temperature": 440,
+    }
+    sf = wptherml.SpectrumFactory()
+    test = sf.spectrum_factory("Tmm", test_args)
+    test.compute_pv_stpv_gradient()
+
+    _analytic_sio2_layer_gradient = test.pv_stpv_short_circuit_current[0]
+
+    # define a displacement in thickness of SiO2
+    _delta_d_sio2 = 0.1e-9
+    # take forward step and store quantities
+    test.thickness_array[1] += _delta_d_sio2
+    # update R, T, and \epsilon
+    test.compute_spectrum()
+    # use updated \epsilon to compute jsc
+    test.compute_pv_stpv_jsc()
+    _jsc_f = test.pv_stpv_jsc
+
+    # create a new instance of the stack using test_args so that
+    # the stack only contains the AR + Polystyrene layer
+    test = sf.spectrum_factory("Tmm", test_args)
+
+    # take backward step and store quantities
+    test.thickness_array[1] -= _delta_d_sio2
+    test.compute_spectrum()
+    test.compute_pv_stpv_jsc()
+    _jsc_b = test.pv_stpv_jsc
+
+    _numeric_sio2_layer_gradient = (_jsc_f - _jsc_b) / (2 * _delta_d_sio2)
+
+    assert np.isclose(_numeric_sio2_layer_gradient, _analytic_sio2_layer_gradient, 2e-2)
