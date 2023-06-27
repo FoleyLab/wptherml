@@ -251,7 +251,10 @@ def test_compute_pv_stpv_jsc_gradient():
         "material_list": ["Air", "SiO2", "Al2O3", "Polystyrene", "Air"],
         "thickness_list": [0, 200e-9, 300e-9, 1000e-9, 0],
         "temperature": 440,
+        "pv_bandgap_wavelength" : 540e-9
     }
+
+    _expected_numeric_grad = 381938936.44233865
     sf = wptherml.SpectrumFactory()
     test = sf.spectrum_factory("Tmm", test_args)
     test.compute_pv_stpv_gradient()
@@ -279,5 +282,7 @@ def test_compute_pv_stpv_jsc_gradient():
     _jsc_b = test.pv_stpv_jsc
 
     _numeric_sio2_layer_gradient = (_jsc_f - _jsc_b) / (2 * _delta_d_sio2)
+
+    assert np.isclose(_expected_numeric_grad, _numeric_sio2_layer_gradient)
 
     assert np.isclose(_numeric_sio2_layer_gradient, _analytic_sio2_layer_gradient, 2e-2)

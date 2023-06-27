@@ -840,17 +840,20 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.material_2D_HOIP(_ln)
         self.compute_spectrum()
         absorptivity_full_stack = self.emissivity_array
+        
+        # get envelope function that behaves like ideal spectral response function
+        bg_idx = np.abs(self.wavelength_array - self.pv_lambda_bandgap).argmin()
+        env = np.zeros_like(self.wavelength_array)
+        env[:bg_idx] = self.wavelength_array[:bg_idx] / self.pv_lambda_bandgap
 
         # scale AM by \lambda / \lambda_bg
         # compute the useful power density spectrum
         power_density_array = (
-            self._solar_spectrum * self.wavelength_array / self.pv_lambda_bandgap
+            self._solar_spectrum * absorptivity_full_stack * env
         )
 
-        bg_idx = np.abs(self.wavelength_array - self.pv_lambda_bandgap).argmin()
-
         self.pv_stpv_jsc = np.pi * np.trapz(
-            power_density_array[:bg_idx], self.wavelength_array[:bg_idx]
+            power_density_array, self.wavelength_array
         )
 
     def compute_pv_stpv(self):
