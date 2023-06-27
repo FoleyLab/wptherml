@@ -822,6 +822,38 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_stpv_power_density_gradient(self.wavelength_array)
         self._compute_stpv_spectral_efficiency_gradient(self.wavelength_array)
 
+    def compute_pv_stpv_jsc(self):
+        """
+        Function to compute the f_C figure of merit for pv-stpv, Eq. (45) here: https://www.overleaf.com/project/648a0cfeae29e31e10afc075
+        We will assume the base layer is the AR + Polystyrene stack so we
+        will add the PSC layer here too
+        """
+        # First make sure we have full stack including the PSC layer
+        # get terminal layer number
+        _ln = len(self.thickness_array)-1
+        # insert thick active layer as the bottom-most layer
+        self.insert_layer(_ln, 1000e-9)
+        # make sure the active layer has RI of 2D perovskite
+        self.material_2D_HOIP(_ln)
+        self.compute_spectrum()
+        absorptivity_full_stack = self.emissivity_array
+
+        # scale AM by \lambda / \lambda_bg
+        # compute the useful power density spectrum
+        lambda_bandgap = 700e-9
+        power_density_array = (
+            self._solar_spectrum * self.wavelength_array / lambda_bandgap
+        )
+
+        bg_idx = np.abs(self.wavelength_array - self.lambda_bandgap).argmin()
+
+        self.pv_stpv_jsc = np.pi * np.trapz(
+            power_density_array[:bg_idx], self.wavelength_array[:bg_idx]
+        )
+
+
+
+
     def compute_pv_stpv(self):
         """ Turn this into a proper docstring
         
