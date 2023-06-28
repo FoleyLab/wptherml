@@ -343,7 +343,7 @@ class ExcitonDriver(SpectrumDriver):
         k_3 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_2 * dt / 2))
         k_4 = -ci * np.dot(self.exciton_hamiltonian, (self.c_vector + k_3 * dt))
         self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
-
+        return self.c_vector
     def _rk_exciton_density_matrix(self, dt):
         """Function that will take D and H and return D(t0 + dt)
 
