@@ -391,7 +391,7 @@ class ExcitonDriver(SpectrumDriver):
         )
         return self.density_matrix
 
-def _2D_rk_exciton(self, dt):
+    def _2D_rk_exciton(self, dt):
         """Function that will take c(t0) and H and return c(t0 + dt)
 
         Arguments
@@ -415,29 +415,29 @@ def _2D_rk_exciton(self, dt):
         k_4 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_3 * dt))
         self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
 
-def msd(self, dt, N_time):
-    """Method that will take dt and a number of time steps and return the mean squared displacement
+    def msd(self, dt, N_time):
+        """Method that will take dt and a number of time steps and return the mean squared displacement
 
-    Arguments
-    ---------
-    dt : float
-        the increment in time in atomic units
+        Arguments
+        ---------
+        dt : float
+            the increment in time in atomic units
     
-    N_time : int
-        the number of time steps
+        N_time : int
+            the number of time steps
     
-    """
-    prod1 = 0
-    prod2 = 0
-    msd_matrix = np.zeros((1, N_time))
-    for i in range(self.number_of_monomers):
-        for j in range(self.number_of_monomers):
-            x_int = np.conj(self.c_vector[i] * self.phi[:,i]) * self.x * self.c_vector[j] * self.phi[:,j]
-            x_o = np.trapz(x_int, self.x)
-            for k in range(N_time):
-                self.c_temp = self._rk_exciton(dt)
-                prod1 += np.conj(self.c_temp[i] * self.phi[:,i]) * self.x ** 2 * self.c_temp[j] * self.phi[:,j]
-                prod2 += np.conj(self.c_temp[i] * self.phi[:,i]) * self.x * self.c_temp[j] * self.phi[:,j]
-                msd_matrix[0,k] = np.trapz(prod1, self.x) - 2 * x_o * np.trapz(prod2, self.x) + x_o ** 2
+         """
+        prod1 = 0
+        prod2 = 0
+        msd_matrix = np.zeros((1, N_time))
+        for i in range(self.number_of_monomers):
+            for j in range(self.number_of_monomers):
+                x_int = np.conj(self.c_vector[i] * self.phi[:,i]) * self.x * self.c_vector[j] * self.phi[:,j]
+                x_o = np.trapz(x_int, self.x)
+                for k in range(N_time):
+                    self.c_temp = self._rk_exciton(dt)
+                    prod1 += np.conj(self.c_temp[i] * self.phi[:,i]) * self.x ** 2 * self.c_temp[j] * self.phi[:,j]
+                    prod2 += np.conj(self.c_temp[i] * self.phi[:,i]) * self.x * self.c_temp[j] * self.phi[:,j]
+                    msd_matrix[0,k] = np.trapz(prod1, self.x) - 2 * x_o * np.trapz(prod2, self.x) + x_o ** 2
     
-    return msd_matrix[0,:]
+        return msd_matrix[0,:]
