@@ -7,6 +7,7 @@ import tqdm
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 from sklearn.preprocessing import MinMaxScaler
+import itertools
 
 import copy
 
@@ -18,7 +19,14 @@ class TorchFM(nn.Module):
         super().__init__()
         # Initially we fill V with random values sampled from Gaussian distribution
         # NB: use nn.Parameter to compute gradients
-        self.V = nn.Parameter(torch.rand(n, k, requires_grad=True))
+
+        #self.V = nn.Parameter(torch.rand(n, k, requires_grad=True))
+        self.V = nn.Parameter(torch.FloatTensor(n, k).uniform_(-0.1, .1), requires_grad=True)
+
+        self.a= nn.Parameter(torch.FloatTensor(1).uniform_(.1, 3), requires_grad=True)
+        self.b = nn.Parameter(torch.FloatTensor(1).uniform_(0.1, 2.5), requires_grad=True)
+        self.c= nn.Parameter(torch.FloatTensor(1).uniform_(0.1, 2.5), requires_grad=True)
+
         self.lin = nn.Linear(n, 1)
 
         self.n  = n
@@ -32,10 +40,26 @@ class TorchFM(nn.Module):
         
         out_inter = 0.5*(out_1 - out_2)
 
-        out_lin = self.lin(x)
-        out = out_inter + out_lin 
-        return out
+        #out_inter = 1.35 * torch.nn.functional.tanh( out_inter)  #-2
+        #out_inter = 2 * torch.nn.functional.tanh(0.55 * out_inter)  #-2
 
+        out_lin = self.lin(x)
+
+        #out_lin = 1.1 * torch.nn.functional.tanh(out_lin)
+
+        out = out_inter + out_lin 
+
+        #out = 2 * torch.nn.functional.logsigmoid(out) + 1.5
+        #out = 2.5 * torch.nn.functional.logsigmoid(out- 1) + 1.3
+        #out = self.a.item() * torch.nn.functional.logsigmoid(out- self.b.item()) + self.c.item()
+        #out = 1.2 * torch.nn.functional.logsigmoid(out- 1.8) + 1.8
+
+        #best
+        #out = 0.6426 * torch.nn.functional.logsigmoid(out- 0.8374) + 0.4480
+        #out = 0.46 * torch.nn.functional.logsigmoid(out- 1) + 0.44
+
+
+        return out
 
     def return_params(self):
         V = self.V.detach().cpu().numpy().copy()
@@ -79,7 +103,7 @@ class FMTraining:
             if self.standardscale:
                 self.scaler = StandardScaler()
             else: 
-                self.scaler = MinMaxScaler()
+                self.scaler = MinMaxScaler((-1,1))
             self.scaler.fit(self.y_train_raw)
             self.y_train = self.scaler.transform(self.y_train_raw)
             self.y_test = self.scaler.transform(self.y_test_raw)
@@ -127,7 +151,7 @@ class FMTraining:
             running_loss = 0
             self.model.train()
             with tqdm.tqdm(batch_start, unit="batch", mininterval=0, disable=True) as bar:
-                bar.set_description(f"Epoch {epoch}")
+                if self.verbose: bar.set_description(f"Epoch {epoch}")
                 for start in bar:
                     # take a batch
                     X_batch = torch.autograd.Variable(X_train[start:start+batch_size], requires_grad =True)
@@ -159,7 +183,8 @@ class FMTraining:
                     loss = closure()
                     running_loss += loss.item()
                     # print progress
-                    bar.set_postfix(mse=float(loss))
+                    if self.verbose:
+                        bar.set_postfix(mse=float(loss))
             # evaluate accuracy at end of each epoch
             self.model.eval()
             y_pred_train = self.model(X_train)
@@ -168,7 +193,7 @@ class FMTraining:
             y_pred = self.model(X_test)
             mse = loss_fn(y_pred, y_test)
             mse = float(mse)
-            print('epoch-',epoch,'   mse------',mse, '   mse_train------', mse_train)
+            if self.verbose: print('epoch-',epoch,'   mse------',mse, '   mse_train------', mse_train)
             history.append(np.log(mse))
             history_train.append(np.log(mse_train))
             if mse < self.best_mse:
@@ -177,12 +202,14 @@ class FMTraining:
 
         # restore model and return best accuracy
         self.model.load_state_dict(self.best_weights)
-        print("MSE: %.2f" % self.best_mse)
-        print("RMSE: %.2f" % np.sqrt(self.best_mse))
-        plt.plot(history, color = 'green')
-        plt.plot(history_train, color = 'red')
-        plt.legend(['test', 'train'])
-        plt.show()
+
+        if self.verbose:
+            print("MSE: %.2f" % self.best_mse)
+            print("RMSE: %.2f" % np.sqrt(self.best_mse))
+            plt.plot(history, color = 'green')
+            plt.plot(history_train, color = 'red')
+            plt.legend(['test', 'train'])
+            plt.show()
 
 
     def eval(self, num_eval = 20):
@@ -251,17 +278,24 @@ class FMTraining:
         params = copy.deepcopy(self.get_weights())
 
         V = np.array(params[2], dtype = np.float64)
+        """
         if self.verbose: 
             print("v.shape :::   ", V.shape)
             print("v:   " , V, "\ntype v:   ", type(V))
             print("v[0]:   " , V[0], "\ntype v[0]:   ", type(V[0]))
             print("v[0[0]]:   " , V[0][0], "\ntype v[0][0]:   ", type(V[0][0]))
+        """
         W = np.array(np.array(params[1])[0], dtype = np.float64)
+        """
         if self.verbose:
             print("W ----- ", W , "\n type w[0] : ", type(W[0]))
+        """
         bias = np.array(params[0], dtype = np.float64)[0]
+        """
         if self.verbose: 
             print("B ----- ", bias, "\n type b : ", type(bias))
+
+        """
 
 
         """
@@ -272,11 +306,14 @@ class FMTraining:
         """
 
         Q = V @ V.T
+
+        """
         if self.verbose:
                 
             print("Q ----- ", Q, "\n type Q : ", type(Q))
             print("Q[0] ----- ", Q[0], "\n type Q[0] : ", type(Q[0]))
             print("Q[0][0] ----- ", Q[0][0], "\n type Q[0][0] : ", type(Q[0][0]))
+        """
 
         """
         Q = np.zeros((self.n,self.n))
@@ -290,10 +327,14 @@ class FMTraining:
         """
 
         Q = self.VtoQ(V)
+        #Q = 1.35 * np.tanh(Q)
+        """
         if self.verbose:
             print("Q ----- ", Q, "\n type Q : ", type(Q))
             print("Q[0] ----- ", Q[0], "\n type Q[0] : ", type(Q[0]))
             print("Q[0][0] ----- ", Q[0][0], "\n type Q[0][0] : ", type(Q[0][0]))
+
+        """
 
 
         #print("Q: " ,Q)
@@ -317,11 +358,11 @@ class FMTraining:
 
         #H+= float(bias) 
  
-        if self.verbose: print(H)
+        #if self.verbose: print(H)
         model = H.compile()
-        if self.verbose: print(model)
+        #if self.verbose: print(model)
         bqm = model.to_bqm()
-        if self.verbose: print(bqm)
+        #if self.verbose: print(bqm)
 
 
         # solve the model
@@ -354,7 +395,7 @@ class FMTraining:
 
         sampleset = sa.sample(bqm, num_sweeps =100, num_reads=1)
         
-        if self.verbose: print(sampleset)
+        #if self.verbose: print(sampleset)
         decoded_samples = model.decode_sampleset(sampleset)
         best_sample = min(decoded_samples, key=lambda x: x.energy)
         
@@ -377,17 +418,23 @@ class FMTraining:
         params = copy.deepcopy(self.get_weights())
 
         V = np.array(params[2], dtype = np.float64)
+        """
         if self.verbose: 
             print("v.shape :::   ", V.shape)
             print("v:   " , V, "\ntype v:   ", type(V))
             print("v[0]:   " , V[0], "\ntype v[0]:   ", type(V[0]))
             print("v[0[0]]:   " , V[0][0], "\ntype v[0][0]:   ", type(V[0][0]))
+        """
         W = np.array(np.array(params[1])[0], dtype = np.float64)
+        """
         if self.verbose:
             print("W ----- ", W , "\n type w[0] : ", type(W[0]))
+        """
         bias = np.array(params[0], dtype = np.float64)[0]
+        """
         if self.verbose: 
             print("B ----- ", bias, "\n type b : ", type(bias))
+        """
 
 
         """
@@ -398,11 +445,13 @@ class FMTraining:
         """
 
         Q = V @ V.T
+        """
         if self.verbose:
                 
             print("Q ----- ", Q, "\n type Q : ", type(Q))
             print("Q[0] ----- ", Q[0], "\n type Q[0] : ", type(Q[0]))
             print("Q[0][0] ----- ", Q[0][0], "\n type Q[0][0] : ", type(Q[0][0]))
+        """
 
         """
         Q = np.zeros((self.n,self.n))
@@ -416,10 +465,12 @@ class FMTraining:
         """
 
         Q = self.VtoQ(V)
+        """
         if self.verbose:
             print("Q ----- ", Q, "\n type Q : ", type(Q))
             print("Q[0] ----- ", Q[0], "\n type Q[0] : ", type(Q[0]))
             print("Q[0][0] ----- ", Q[0][0], "\n type Q[0][0] : ", type(Q[0][0]))
+        """
 
 
         #print("Q: " ,Q)
@@ -443,11 +494,11 @@ class FMTraining:
 
         #H+= float(bias) 
  
-        if self.verbose: print(H)
+        #if self.verbose: print(H)
         model = H.compile()
-        if self.verbose: print(model)
+        #if self.verbose: print(model)
         bqm = model.to_bqm()
-        if self.verbose: print(bqm)
+        #if self.verbose: print(bqm)
 
 
         # solve the model
@@ -478,24 +529,24 @@ class FMTraining:
         
         sa = neal.SimulatedAnnealingSampler()
 
+
+        samples_list = []
+
         for i in range(0, num_groups_of_5):
             sampleset = sa.sample(bqm,num_sweeps = 1000, num_reads=10)
-            print(sampleset.record['sample'])
+            #print(sampleset.record['sample'])
+            for l in list(sampleset.record['sample']):
+                samples_list.append(list(l))
         
-        if self.verbose: print(sampleset)
+        samples_list = [list(tupl) for tupl in {tuple(item) for item in samples_list}]
+
+
 
         decoded_samples = model.decode_sampleset(sampleset)
         best_sample = min(decoded_samples, key=lambda x: x.energy)
-        
-    
-        
 
 
-
-        print("sample:    ", best_sample.sample)
-        print("energy:   ",best_sample.energy)
-
-        return best_sample
+        return best_sample, decoded_samples
 
 
 
@@ -550,6 +601,7 @@ class FMTraining:
 def f(x):
     #return x**2 +50*x - 2000
     return 40*np.sin(0.2 * x ) + 5*x**0.5
+    return 40*np.sin(0.05 * x ) + 5*x**0.5
 
 
 from matplotlib import pyplot as plt
@@ -623,10 +675,7 @@ def test_fm():
 
         return train_x, train_y, actuals
 
-    train_x,train_y, actuals = generate_training_data(8, 200)
-
-    plt.scatter(actuals, train_y)
-    #plt.show()
+    train_x,train_y, actuals = generate_training_data(8, 256)
 
     print(train_x)
     print(train_y)
@@ -636,7 +685,8 @@ def test_fm():
     FMtorch= FMTraining(N, K, verbose=True)
 
     #FMtorch.train(x_train, y_train, split_size = 0.5, batch_size = 10000, n_epochs = 40, standardscale=False, LR = 0.1)
-    FMtorch.train(train_x, np.array(train_y).reshape(-1,1), split_size = 0.8, batch_size = 10000, n_epochs = 100, standardscale=True, LR = 0.5, opt ="LBFGS", l2_lambda=0.00001)
+    #FMtorch.train(train_x, np.array(train_y).reshape(-1,1), split_size = 0.8, batch_size = 10000, n_epochs = 200, standardscale=True, LR = 0.02, opt ="LBFGS", l2_lambda=0.002)
+    FMtorch.train(train_x, np.array(train_y).reshape(-1,1), split_size = 0.8, batch_size = 10000, n_epochs = 10000, minmaxscale=True, LR = 0.25, opt ="SGD", l2_lambda=0.001)
 
 
     predictions = FMtorch.predict(train_x)
@@ -690,6 +740,11 @@ def test_fm():
     #green dot shows what annealing predicted to be the lowest
     plt.plot(best_sample_data[1], best_sample_data[0], 'go')
     plt.show()
+
+    print(FMtorch.model.a)
+    print(FMtorch.model.b)
+    print(FMtorch.model.c)
+
 
 
 
