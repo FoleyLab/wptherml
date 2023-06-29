@@ -34,7 +34,7 @@ class ExcitonDriver(SpectrumDriver):
         # Probably want to allow the user to specify an initial state!
         # but right now just have the initial state with exciton localized on site 1
         self.c_vector[0,0] = 1 + 0j
-        self.density_matrix = self.c_vector * np.conj(self.c_vector.T)
+        self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
 
     def parse_input(self, args):
         if "exciton_energy" in args:
@@ -91,6 +91,7 @@ class ExcitonDriver(SpectrumDriver):
         H_nm : float
             The matrix elements corresponding to
         """
+     
         H_nm = self.exciton_energy * (n == m)
         return H_nm
 
@@ -122,10 +123,10 @@ class ExcitonDriver(SpectrumDriver):
         _m = m - 1
 
         # calculate separation vector between site m and site n
-        _r_vec = self.coords[:, _m] - self.coords[:, _n]
+        _r_vec = self.coords[:, m] - self.coords[:, n]
 
         # self.transition_dipole_moment is the transition dipole moment!
-        if _n != _m:
+        if n != m:
             V_nm = (
                 1 / (self.refractive_index**2 * np.sqrt(np.dot(_r_vec, _r_vec)) ** 3)
             ) * (
