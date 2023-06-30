@@ -852,7 +852,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self._solar_spectrum * absorptivity_full_stack * env
         )
 
-        self.pv_stpv_jsc = np.pi * np.trapz(
+        self.pv_stpv_jsc = np.trapz(
             power_density_array, self.wavelength_array
         )
 
@@ -1005,19 +1005,17 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # Initialize short circuit current array
         e_gradient_index = len(self.emissivity_gradient_array[0, :])
-        self.pv_stpv_short_circuit_current = np.zeros(e_gradient_index)
-        _spectral_response = self.wavelength_array / self.pv_lambda_bandgap
+        self.pv_stpv_short_circuit_current_gradient = np.zeros(e_gradient_index)
+
+        bg_idx = np.abs(self.wavelength_array - self.pv_lambda_bandgap).argmin()
+        _spectral_response = np.zeros_like(self.wavelength_array)
+
+        _spectral_response[:bg_idx] = self.wavelength_array[:bg_idx] / self.pv_lambda_bandgap
 
         # Iterate over material thicknesses
         for i in range(0, e_gradient_index):
-            self.emissivity_gradient_array_prime = (
-                self.emissivity_gradient_array[:, i]
-                * self.wavelength_array
-                / self.pv_lambda_bandgap
-            )
-
-            self.pv_stpv_short_circuit_current[i] = np.trapz(
-                self.emissivity_gradient_array_prime[i]
+            self.pv_stpv_short_circuit_current_gradient[i] = np.trapz(
+                self.emissivity_gradient_array[:,i]
                 * _spectral_response
                 * self._solar_spectrum,
                 self.wavelength_array,
