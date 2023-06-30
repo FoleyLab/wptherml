@@ -943,17 +943,18 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # loop over temperature to try to find the temperature of the stack that balances emitted
         # power with absorbed power
-        # if self.loop_var==1:
-        #    _kill = 1
-        #    _T = 300
-        #    while(_kill):
-        #        _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
-        #        P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_A_B + absorptivity_AB_T), self.wavelength_array)
-        #        _T += 1
-        #        if P_emit > absorptivity_B_T :
-        #            _kill = 0
-        # else:
-        #    _T = 440
+    
+        if self.loop_var==1:
+            _kill = 1
+            _T = 300
+            while(_kill):
+                _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
+                P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_A_B + absorptivity_AB_T), self.wavelength_array)
+                _T += 1
+                if P_emit > absorptivity_B_T :
+                    _kill = 0
+        else:
+            _T = 440
 
         self._compute_pv_stpv_power_density(self.wavelength_array)
         # reverse stack again and add active layer and get absorbed power into the structure
