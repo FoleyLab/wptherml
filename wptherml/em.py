@@ -912,6 +912,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                             stores total absorbed power
         spectral_response : 
                             stores approximate spectral response calculations
+        _T :
+                            temperature at which absorbed and emitted power balance
 
         Returns:
         --------
@@ -1002,25 +1004,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # reset temperature to whatever it was at the beginning
         self.temperature = _T
-    
-    # Other figure of merit calculations here
-    # Pulling functions from compute_pv_stpv on their own (to be called in compute_pv_stpv)
-
-    def compute_pv_stpv_total_incident_power(self):
-        """Docstring
-        Use equation npv = Jsc * Voc * FF
-        Jsc = short circuit current
-        Voc = open circuit current
-        FF = fill factor
-        
-        The plan:
-        initialze npv (assuming a static number), calculate Voc and FF, and multiply these three together to get total incident power as a unitless efficiency 
-        Voc = (kB*Temperature/charge)*(ln(short circuit current)/(initial current))
-
-        total_incident_power = pv_stpv_short_circuit_current_gradient * Voc * Fill factor
-        
-        """
-        # Figure of Merit two
 
 
     def compute_pv_stpv_gradient(self):
@@ -1070,6 +1053,24 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 * self._solar_spectrum,
                 self.wavelength_array,
             )  # Integrate for short circuit current
+
+    # Other figure of merit calculations here to be called in compute_pv_stpv
+
+    def compute_pv_stpv_total_incident_power(self):
+        """Docstring
+        Use equation npv = Jsc * Voc * FF
+        Jsc = short circuit current
+        Voc = open circuit current
+        FF = fill factor/ratio of ontainable power to short circuit * open circuit voltage
+        
+        The plan:
+
+        initialze npv (assuming a static number), calculate Voc and FF, and multiply these three together to get total incident power as a unitless efficiency 
+        Voc = (kB*Temperature/charge)*(ln(short circuit current)/(initial current))
+        total_incident_power = pv_stpv_short_circuit_current_gradient * Voc * Fill factor
+        
+        """
+        # Figure of Merit two
 
 
     def compute_cooling(self):
