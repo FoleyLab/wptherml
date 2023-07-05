@@ -890,6 +890,33 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         absororptivity_B_T = absorptivity_AB_T - absorptivity_A_T
         This is an approximation, and we should figure out how to do this rigorously
         using the transfer matrix!
+        --------------------------------------------------------------------------------
+
+        computes the following attributes:
+
+        Attributes:
+        -----------
+        absorptivity_A_T : 
+                            stores emissivity_array
+        transmissivity_A_T : 
+                            stores transmissivity_array
+        reflectivity_A_T : 
+                            stores reflectivity_array
+        emissivity_A_B : 
+                            stores thermal emission into the perovskite active layer
+        absorptivity_AB_T : 
+                            stores absorptivity of stack and active layer
+        absorptivity_B_T : 
+                            stores absorptivity of just active layer
+        pv_stpv_p_abs : 
+                            stores total absorbed power
+        spectral_response : 
+                            stores approximate spectral response calculations
+
+        Returns:
+        --------
+        None
+
 
         """
         # temporarily set the temperature to 440 K
@@ -979,13 +1006,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
     # Other figure of merit calculations here
     # Pulling functions from compute_pv_stpv on their own (to be called in compute_pv_stpv)
 
-    def compute_spectral_response(self)
-        """Docstring
-        
-        """
-        # Figure of Merit one
-
-
     def compute_pv_stpv_total_incident_power(self):
         """Docstring
         Use equation npv = Jsc * Voc * FF
@@ -995,8 +1015,9 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         
         The plan:
         initialze npv (assuming a static number), calculate Voc and FF, and multiply these three together to get total incident power as a unitless efficiency 
+        Voc = (kB*Temperature/charge)*(ln(short circuit current)/(initial current))
 
-        total_incident_power = pv_stpv_short_circuit_current_gradient * Voc
+        total_incident_power = pv_stpv_short_circuit_current_gradient * Voc * Fill factor
         
         """
         # Figure of Merit two
