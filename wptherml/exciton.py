@@ -383,7 +383,7 @@ class ExcitonDriver(SpectrumDriver):
         k_4 = -ci * (np.dot(_H, _d3) - np.dot(_H, _d3))
 
         # final update - using np.copy() again
-        self.density_matrix = _d0 + 1 / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+        self.density_matrix = self.density_matrix + 1 / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
         
         return self.density_matrix
 
