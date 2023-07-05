@@ -947,12 +947,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         if self.loop_var==1:
             _kill = 1
             _T = 300
+    
             while(_kill):
                 _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
                 P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_A_B + absorptivity_AB_T), self.wavelength_array)
                 _T += 1
                 if P_emit > absorptivity_B_T :
                     _kill = 0
+
         else:
             _T = 440
 
@@ -973,6 +975,32 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # reset temperature to whatever it was at the beginning
         self.temperature = _T
+    
+    # Other figure of merit calculations here
+    # Pulling functions from compute_pv_stpv on their own (to be called in compute_pv_stpv)
+
+    def compute_spectral_response(self)
+        """Docstring
+        
+        """
+        # Figure of Merit one
+
+
+    def compute_pv_stpv_total_incident_power(self):
+        """Docstring
+        Use equation npv = Jsc * Voc * FF
+        Jsc = short circuit current
+        Voc = open circuit current
+        FF = fill factor
+        
+        The plan:
+        initialze npv (assuming a static number), calculate Voc and FF, and multiply these three together to get total incident power as a unitless efficiency 
+
+        total_incident_power = pv_stpv_short_circuit_current_gradient * Voc
+        
+        """
+        # Figure of Merit two
+
 
     def compute_pv_stpv_gradient(self):
         """
@@ -1021,6 +1049,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 * self._solar_spectrum,
                 self.wavelength_array,
             )  # Integrate for short circuit current
+
 
     def compute_cooling(self):
         """Method to compute the radiative cooling figures of merit
