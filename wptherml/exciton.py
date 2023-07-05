@@ -35,7 +35,7 @@ class ExcitonDriver(SpectrumDriver):
         # but right now just have the initial state with exciton localized on site 1
         self.c_vector[0,0] = 1 + 0j
         #self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
-        self.density_matrix = self.c_vector * np.conj(self.c_vector)
+        self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
 
     def parse_input(self, args):
         if "exciton_energy" in args:
@@ -371,25 +371,20 @@ class ExcitonDriver(SpectrumDriver):
         _H = np.copy(self.exciton_hamiltonian)
         _d0 = np.copy(self.density_matrix)
 
-        # first time derivative and partial update
         k_1 = -ci * (np.dot(_H, _d0) - np.dot(_d0, _H))
         _d1 = _d0 + k_1 * dt / 2
 
-        # second time-derivative and partial update
         k_2 = -ci * (np.dot(_H, _d1) - np.dot(_d1, _H))
         _d2 = _d0 + k_2 * dt / 2
 
-        # third time-derivative and partial update
         k_3 = -ci * (np.dot(_H, _d2) - np.dot(_d2, _H))
         _d3 = _d0 + k_3 * dt
 
-        # fourth time derivative
         k_4 = -ci * (np.dot(_H, _d3) - np.dot(_d3, _H))
 
         # final update - using np.copy() again
-        self.density_matrix = np.copy(
-            _d0 + 1 / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
-        )
+        self.density_matrix = _d0 + 1 / 6 * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+        
         return self.density_matrix
 
     def _2D_rk_exciton(self, dt):
