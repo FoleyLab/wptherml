@@ -35,7 +35,7 @@ class ExcitonDriver(SpectrumDriver):
         # but right now just have the initial state with exciton localized on site 1
         self.c_vector[0,0] = 1 + 0j
         #self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
-        self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.t))
+        self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
 
     def parse_input(self, args):
         if "exciton_energy" in args:
