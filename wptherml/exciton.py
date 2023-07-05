@@ -372,19 +372,19 @@ class ExcitonDriver(SpectrumDriver):
         _d0 = np.copy(self.density_matrix)
 
         # first time derivative and partial update
-        k_1 = -ci * (np.dot(_H, _d0) - np.dot(_d0, _H))
+        k_1 = -ci * (np.dot(_H, _d0) - np.dot(_H, _d0))
         _d1 = _d0 + k_1 * dt / 2
 
         # second time-derivative and partial update
-        k_2 = -ci * (np.dot(_H, _d1) - np.dot(_d1, _H))
+        k_2 = -ci * (np.dot(_H, _d1) - np.dot(_H, _d1))
         _d2 = _d0 + k_2 * dt / 2
 
         # third time-derivative and partial update
-        k_3 = -ci * (np.dot(_H, _d2) - np.dot(_d2, _H))
+        k_3 = -ci * (np.dot(_H, _d2) - np.dot(_H, _d2))
         _d3 = _d0 + k_3 * dt
 
         # fourth time derivative
-        k_4 = -ci * (np.dot(_H, _d3) - np.dot(_d3, _H))
+        k_4 = -ci * (np.dot(_H, _d3) - np.dot(_H, _d3))
 
         # final update - using np.copy() again
         self.density_matrix = np.copy(
