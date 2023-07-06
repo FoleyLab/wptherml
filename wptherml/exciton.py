@@ -411,7 +411,7 @@ class ExcitonDriver(SpectrumDriver):
         k_4 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_3 * dt))
         self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
 
-    def msd(self, dt, N_time):
+    def msd_psi(self, dt, N_time):
         """Method that will take dt and a number of time steps and return the mean squared displacement
 
         Arguments
@@ -437,3 +437,36 @@ class ExcitonDriver(SpectrumDriver):
                     msd_matrix[0,k] = np.trapz(prod1, self.x) - 2 * x_o * np.trapz(prod2, self.x) + x_o ** 2
     
         return msd_matrix[0,:]
+    
+    def msd_density_matrix(self, dt, N_time):
+        """Method that will take dt and a number of time steps and return the mean squared displacement
+
+        Arguments
+        ---------
+        dt : float
+            the increment in time in atomic units
+    
+        N_time : int
+            the number of time steps
+    
+         """
+        x_matrix = np.zeros((self.number_of_monomers, self.number_of_monomers))
+        msd_matrix = np.zeros(N_time)
+
+        for n in range(self.number_of_monomers):
+            for m in range(self.number_of_monomers):
+                x_nm = self.phi[:,m] * self.x * self.phi[:,n]
+                x_matrix[n,m] = np.trapz(x_nm)
+        
+        x_o = np.trace(x_matrix * self.density_matrix)
+
+        for i in range(self.number_of_monomers):
+            for j in range(self.number_of_monomers):
+                for k in range(N_time):
+                    density_matrix = self._rk_exciton_density_matrix(dt)
+                    prod1 = np.trace(density_matrix * (x_matrix ** 2))
+                    prod2 = np.trace(density_matrix * x_matrix)
+                    msd_matrix[k] = prod1 - 2 * x_o * prod2 * x_o ** 2
+        
+        return msd_matrix
+        
