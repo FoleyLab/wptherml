@@ -1461,20 +1461,28 @@ class Materials:
         assert np.isclose(_expected_value, _spline_value)
         return _atrans_spline(self.wavelength_array)
     
-    def _spectral_response_psc_110_nm(self):
-        """ Will compute the spectral response function using tabulated EQE values measured for 200 nm thickness
+    def _full_spectral_response(self.psc_value_thickness):
+        """ Will compute the spectral response function using tabulated EQE values for user input thickness
             from *INSERT REFERENCE* on *INSERT SPECIFICS OF PEROVSKITE*
 
             Using formula SR = q * EQE * \lambda / (h * c)
         
         """
-        # wavelength array for known values of EQE 
-        _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-        
-        # known values of EQE 
-        _eqe_array = np.array([0, 0, 22, 46, 58, 59, 54, 40, 24, 18, 4,	0, 0]) * 0.01
 
-        # compute values of spectral response from known EQE values
+        # Initialize wavelength array and variable for thickness
+        _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
+        self.psc_value_thickness
+
+        # Check for psc values
+        if self.psc_value_thickness == 110:
+            _eqe_array = np.array([0, 0, 22, 46, 58, 59, 54, 40, 24, 18, 4,	0, 0]) * 0.01
+        else if self.psc_value_thickness == 200:
+            _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0]) * 0.01
+        else if self.psc_value_thickness == 250:
+            _eqe_array = np.array([0, 0, 20, 40, 54, 59, 58, 48, 39, 32, 14, 0,	0]) * 0.01
+        else if self.psc_value_thickness == 410:
+            _eqe_array = np.array([0, 0, 16, 27, 33, 36, 35, 32, 31, 24, 7, 0, 0]) * 0.01
+        
         _sr_array = constants.e * _eqe_array * _wavelength_array / (constants.h * constants.c)
 
         
@@ -1489,88 +1497,3 @@ class Materials:
         self.perovskite_eqe = _eqe_spline(self.wavelength_array)
         self.perovskite_spectral_response = _sr_spline(self.wavelength_array)
     
-    
-    def _spectral_response_psc_200_nm(self):
-        """ Will compute the spectral response function using tabulated EQE values measured for 200 nm thickness
-            from *INSERT REFERENCE* on *INSERT SPECIFICS OF PEROVSKITE*
-
-            Using formula SR = q * EQE * \lambda / (h * c)
-        
-        """
-        # wavelength array for known values of EQE 
-        _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-        
-        # known values of EQE 
-        _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0]) * 0.01
-
-        # compute values of spectral response from known EQE values
-        _sr_array = constants.e * _eqe_array * _wavelength_array / (constants.h * constants.c)
-
-        
-        _eqe_spline = InterpolatedUnivariateSpline(
-            _wavelength_array, _eqe_array, k=1
-        )
-
-        _sr_spline = InterpolatedUnivariateSpline(
-                _wavelength_array, _sr_array, k=1
-            )
-        
-        self.perovskite_eqe = _eqe_spline(self.wavelength_array)
-        self.perovskite_spectral_response = _sr_spline(self.wavelength_array)
-    
-    def _spectral_response_psc_250_nm(self):
-        """ Will compute the spectral response function using tabulated EQE values measured for 200 nm thickness
-            from *INSERT REFERENCE* on *INSERT SPECIFICS OF PEROVSKITE*
-
-            Using formula SR = q * EQE * \lambda / (h * c)
-        
-        """
-        # wavelength array for known values of EQE 
-        _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-        
-        # known values of EQE 
-        _eqe_array = np.array([0, 0, 20, 40, 54, 59, 58, 48, 39, 32, 14, 0,	0]) * 0.01
-
-        # compute values of spectral response from known EQE values
-        _sr_array = constants.e * _eqe_array * _wavelength_array / (constants.h * constants.c)
-
-        
-        _eqe_spline = InterpolatedUnivariateSpline(
-            _wavelength_array, _eqe_array, k=1
-        )
-
-        _sr_spline = InterpolatedUnivariateSpline(
-                _wavelength_array, _sr_array, k=1
-            )
-        
-        self.perovskite_eqe = _eqe_spline(self.wavelength_array)
-        self.perovskite_spectral_response = _sr_spline(self.wavelength_array)
-    
-    def _spectral_response_psc_410_nm(self):
-        """ Will compute the spectral response function using tabulated EQE values measured for 200 nm thickness
-            from *INSERT REFERENCE* on *INSERT SPECIFICS OF PEROVSKITE*
-
-            Using formula SR = q * EQE * \lambda / (h * c)
-        
-        """
-        # wavelength array for known values of EQE 
-        _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-        
-        # known values of EQE 
-        _eqe_array = np.array([0, 0, 16, 27, 33, 36, 35, 32, 31, 24, 7,	0, 0]) * 0.01
-
-        # compute values of spectral response from known EQE values
-        _sr_array = constants.e * _eqe_array * _wavelength_array / (constants.h * constants.c)
-
-        
-        _eqe_spline = InterpolatedUnivariateSpline(
-            _wavelength_array, _eqe_array, k=1
-        )
-
-        _sr_spline = InterpolatedUnivariateSpline(
-                _wavelength_array, _sr_array, k=1
-            )
-        
-        self.perovskite_eqe = _eqe_spline(self.wavelength_array)
-        self.perovskite_spectral_response = _sr_spline(self.wavelength_array)
-
