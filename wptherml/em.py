@@ -1211,6 +1211,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _a = -1 * _ci * phil
         _b = _ci * phil
 
+        # should we check something here!
         _pm[0, 0] = np.exp(_a)
         _pm[1, 1] = np.exp(_b)
 
