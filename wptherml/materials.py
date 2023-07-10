@@ -1148,6 +1148,106 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
+    def material_SiO2_UDM(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be SiO2 using a universal dispersion model (UDM)
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as SiO2 udm
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_SiO2_UDM(1, wavelength_range="visible") -> layer 1 will be SiO2 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the tin data file
+            file_path = path + "data/SiO2_udm.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+            
+    def material_Al2O3_UDM(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be ZrO2
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as ZrO2
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_SiO2_UDM(1, wavelength_range="visible") -> layer 1 will be SiO2 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the tin data file
+            file_path = path + "data/Al2O3_udm.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
     def material_Re(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Re

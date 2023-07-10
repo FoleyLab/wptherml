@@ -329,6 +329,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Al(i)
             elif _lm == "al2o3":
                 self.material_Al2O3(i)
+            elif _lm == "al2o3_udm":
+                self.material_Al2O3_UDM(i)
             elif _lm == "aln":
                 self.material_AlN(i)
             elif _lm == "au":
@@ -351,6 +353,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Si(i)
             elif _lm == "sio2":
                 self.material_SiO2(i)
+            elif _lm == "sio2_udm":
+                self.material_SiO2_UDM(i)
             elif _lm == "ta2o5":
                 self.material_Ta2O5(i)
             elif _lm == "tin":
