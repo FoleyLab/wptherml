@@ -464,3 +464,59 @@ def test_tm_grad():
     )
 
     assert np.allclose(M, expected_M0)
+
+
+def test_selective_mirror_fom_gradient():
+
+    # guess thickness for glass
+    d1 = 5000e-9 / (4 * 1.5)
+    
+    # guess thickness for Al2O3
+    d2 = 5000e-9 / (4 * 1.85)
+
+    test_args = {
+        "wavelength_list": [300e-9, 6000e-9, 1000],
+        "Material_List": ["Air","SiO2", "Al2O3","SiO2", "Al2O3", "SiO2", "Al2O3" ,"SiO2", "Al2O3", "SiO2", "Al2O3" , "Air"],
+        "Thickness_List": [0,  d1, d2, d1, d2, d1, d2, d1, d2, d1, d2, 0],
+        "reflective_window_wn" : [2000, 2400],
+        "transmissive_window_nm" : [350, 700],
+    }
+    
+    sf = wptherml.SpectrumFactory()
+    
+    # create an instance of the DBR called test
+    test = sf.spectrum_factory('Tmm', test_args)
+    # compute FOM
+    test.compute_selective_mirror_fom()
+    # compute FOM gradients
+    test.compute_selective_mirror_fom_gradient()
+
+    dx = 0.01e-9
+
+    # now do numerical gradients
+    test.thickness_array[1] += dx
+    test.compute_spectrum()
+    test.compute_selective_mirror_fom()
+    _r_fom_f = test.reflection_efficiency
+    _t_fom_f = test.transmission_efficiency
+
+    test.thickness_array[1] -= 2 * dx
+    test.compute_spectrum()
+    test.compute_selective_mirror_fom()
+    _r_fom_b = test.reflection_efficiency
+    _t_fom_b = test.transmission_efficiency
+
+    _r_grad = (_r_fom_f - _r_fom_b) / (2 * dx)
+    _t_grad = (_t_fom_f - _t_fom_b) / (2 * dx)
+
+    relative_error_r = (np.abs(_r_grad - test.reflection_efficiency_gradient[1])) / test.reflection_efficiency_gradient[1]
+    relative_error_t = (np.abs(_t_grad - test.transmission_efficiency_gradient[1])) / test.transmission_efficiency_gradient[1]
+
+    np.isclose(_r_grad, test.reflection_efficiency_gradient[1])
+    np.isclose(_r_grad, test.transmission_efficiency_gradient[1])
+
+    #assert np.isclose(relative_error_r, 0., 1.)
+    #assert np.isclose(relative_error_t, 0., 1.)
+
+
+    

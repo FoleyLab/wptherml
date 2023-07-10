@@ -1495,40 +1495,12 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
            ----------------
            useful_transmitted_power = \int T(\lambda) * transmission_envelope d\lambda 
 
-           total_transmitted_power = \int T(\lambda) d\lambda
+           transmission_denom = \int transmission_envelope(\lambda) d\lambda
 
            useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
 
            total_reflected_power = \int R(\lambda) d\lambda
         
-
-        _diff = self.reflective_envelope - self.reflectivity_array
-
-        # try to weight the reflectivity band more than the outside region
-        _diffscale = (self.reflective_envelope + 0.1) * _diff
-
-        #_diff_s = _diff ** 2
-        _diffscale_s = _diffscale ** 2
-
-        #self.normalized_squared_reflectivity_error = np.sum(_diff_s / np.max(_diff_s))
-        self.normalized_scaled_squared_reflectivity_error = np.sum(_diffscale_s / np.max(_diffscale_s))
-
-        self.mean_squared_reflectivity_error = np.mean(_diff_s / np.max(_diff_s))
-        self.mean_scaled_squared_reflectivity_error = np.mean(_diffscale_s / np.max(_diffscale_s))
-
-
-        _diff = self.transmissive_envelope - self.transmissivity_array
-        # try to weight the reflectivity band more than the outside region
-        _diffscale = (self.transmissive_envelope + 0.1) * _diff
-
-        _diff_s = _diff ** 2
-        _diffscale_s = _diffscale ** 2
-
-        self.normalized_squared_transmissivity_error = np.sum( _diff_s / np.max(_diff_s) )
-        self.normalized_scaled_squared_transmissivity_error = np.sum(_diffscale_s / np.max(_diffscale_s))
-
-        self.mean_squared_transmissivity_error = np.mean( _diff_s / np.max(_diff_s) )
-        self.mean_scaled_squared_transmissivity_error = np.mean(_diffscale_s / np.max(_diffscale_s))
 
         """
         # numerators are both the actual spectra times the envelope
@@ -1542,10 +1514,62 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # we have high transmissivity outside as well
         self.useful_transmitted_power = np.trapz(_utp_array, self.wavelength_array)
         self.useful_reflected_power = np.trapz(_urp_array, self.wavelength_array)
-        self.total_transmitted_power = np.trapz(self.transmissive_envelope, self.wavelength_array)
+        self.transmission_denom = np.trapz(self.transmissive_envelope, self.wavelength_array)
         self.total_reflected_power = np.trapz(self.reflectivity_array, self.wavelength_array)
 
-        self.transmission_efficiency = self.useful_transmitted_power / self.total_transmitted_power
+        self.transmission_efficiency = self.useful_transmitted_power / self.transmission_denom
         self.reflection_efficiency = self.useful_reflected_power / self.total_reflected_power
         self.selective_mirror_fom = 0.5 * (self.transmission_efficiency + self.reflection_efficiency)
+
+    def compute_selective_mirror_fom_gradient(self):
+        """compute the figure of merit for selective tranmission and reflection according
+           to the transmissive_envelope and reflective_envelope functions
+
+           Working Equation
+           ----------------
+           useful_transmitted_power = \int T(\lambda) * transmission_envelope d\lambda 
+
+           transmission_denom = \int transmission_envelope(\lambda) d\lambda
+
+           useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
+
+           total_reflected_power = \int R(\lambda) d\lambda
+
+           \eta_T' = \int T'(\lambda) * transmission_envelope d\lambda / transmission_denom
+
+           \eta_R' = g(\lambda) f'(\lambda) - f(\lambda) g'(\lambda)  / g(\lambda) ^ 2
+
+           where g(\lambda) = \int R(\lambda) d\lambda
+                 f(\lambda) = \int reflectivity_envelope R(\lambda) d\lambda
+                 g'(\lambda) = \int R'(\lambda) d\lambda
+                 f'(\lambda) = \int reflectivity_envelope R'(\lambda) d\lambda
+        
+        """
+        # \eta_T' = \Pi(\lambda) * T'(\lambda) / \Pi(\lambda)
+        self.compute_spectrum_gradient()
+
+        _ngr = len(self.transmissivity_gradient_array[0, :])
+        # integrate the thermal emission spectrum over wavelength using np.trapz
+        self.transmission_efficiency_gradient = np.zeros(_ngr)
+        self.reflection_efficiency_gradient = np.zeros(_ngr)
+
+        # this term is in the denominator of each of the \eta_T' elements
+        _eta_T_denom = np.trapz(self.transmissive_envelope, self.wavelength_array)
+
+        # these terms are in each of the \eta_R' elements
+        _f_l = np.trapz(self.reflective_envelope * self.reflectivity_array, self.wavelength_array)
+        _g_l = np.trapz(self.reflectivity_array, self.wavelength_array)
+
+        for i in range(_ngr):
+            # can compute \eta_T' in one shot
+            self.transmission_efficiency_gradient[i] = np.trapz(self.transmissive_envelope * self.transmissivity_gradient_array[:,i], self.wavelength_array) / _eta_T_denom
+
+            # need to get parts of g'(\lambda) and f'(\lambda) terms
+            _gp_l = np.trapz(self.reflectivity_gradient_array[:,i], self.wavelength_array)
+            _fp_l = np.trapz(self.reflective_envelope * self.reflectivity_gradient_array[:,i], self.wavelength_array)
+
+            self.reflection_efficiency_gradient[i] = (_g_l * _fp_l - _f_l * _gp_l) / _g_l ** 2
+
+        
+
 
