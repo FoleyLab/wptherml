@@ -1461,6 +1461,7 @@ class Materials:
         assert np.isclose(_expected_value, _spline_value)
         return _atrans_spline(self.wavelength_array)
     
+
     def _full_spectral_response(self):
         """ Will compute the spectral response function using tabulated EQE values for user input thickness
             from *INSERT REFERENCE* on *INSERT SPECIFICS OF PEROVSKITE*
@@ -1471,24 +1472,26 @@ class Materials:
 
         # Initialize wavelength array and variable for thickness
         _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-        self.psc_value_thickness = 250
+        self.psc_thickness = 200
 
         # Check for psc values
-        if self.psc_value_thickness == 110:
-            _eqe_array = np.array([0, 0, 22, 46, 58, 59, 54, 40, 24, 18, 4,	0, 0]) * 0.01
+        if self.psc_thickness == 110:
+            _eqe_array = np.array([0, 0, 22, 46, 58, 59, 54, 40, 24, 18, 4,	0, 0])
             
-        if self.psc_value_thickness == 200:
-            _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0]) * 0.01
+        if self.psc_thickness == 200:
+            _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0])
 
-        if self.psc_value_thickness == 250:
-            _eqe_array = np.array([0, 0, 20, 40, 54, 59, 58, 48, 39, 32, 14, 0,	0]) * 0.01
+        if self.psc_thickness == 250:
+            _eqe_array = np.array([0, 0, 20, 40, 54, 59, 58, 48, 39, 32, 14, 0,	0])
         
-        if self.psc_value_thickness == 410:
-            _eqe_array = np.array([0, 0, 16, 27, 33, 36, 35, 32, 31, 24, 7, 0, 0]) * 0.01
-        
+        if self.psc_thickness == 410:
+            _eqe_array = np.array([0, 0, 16, 27, 33, 36, 35, 32, 31, 24, 7, 0, 0])
+
+        # Transferring from percentages and SR calculation
+        _eqe_array = _eqe_array * 0.01
         _sr_array = constants.e * _eqe_array * _wavelength_array / (constants.h * constants.c)
 
-        
+        # Spline for line of best fit based on current data
         _eqe_spline = InterpolatedUnivariateSpline(
             _wavelength_array, _eqe_array, k=1
         )
