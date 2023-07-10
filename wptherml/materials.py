@@ -1462,11 +1462,37 @@ class Materials:
         return _atrans_spline(self.wavelength_array)
     
 
-    def _full_spectral_response(self):
-        """ Will compute the spectral response function using tabulated EQE values for user input thickness
-            from *INSERT REFERENCE* on *INSERT SPECIFICS OF PEROVSKITE*
+    def _EQE_spectral_response(self):
+        """ 
+        Will compute the spectral response function using tabulated EQE values for user input thickness
+            from 
+
+            "Optical Properties and Modeling of 2D Perovskite Solar Cells",
+            Bin Liu, Chan Myae Myae Soe, Constantinos C. Stoumpos, Wanyi Nie, Hsinhan Tsai, Kimin
+            Lim, Aditya D. Mohite, Mercouri G. Kanatzidis, Tobin J. Marks, Kenneth D. Singer
+            Advanced Materials, (34), 1. January 6, 2022 
+            https://doi.org/10.1002/adma.202107211
+
+            on EQE curves of Pb5 perovskite-based devices.
 
             Using formula SR = q * EQE * \lambda / (h * c)
+
+        Attributes
+        ----------
+        psc_thickness : 
+                        User-input thickess in nm of PSC.
+        _eqe_array :
+                        Table of EQE values extrapolated from graph.
+        _sr_array : 
+                        Calculated spectral response based on formula, wavelength, tabulated values, and constants.
+        _eqe_spline :
+                        Spline best fit based on wavelength array and EQE data.
+        _sr_spline :
+                        Spline best fit based on SR array and wavelength array.
+                          
+        Returns
+        -------
+        None
         
         """
 
