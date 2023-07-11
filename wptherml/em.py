@@ -188,10 +188,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # see if we want to specify certain layers to randomize the thickness of
         if "random_thickness_layers" in args:
-            self.random_thickness_list = np.array(args["random_thickness_layers"], dtype=int)
+            self.random_thickness_list = np.array(
+                args["random_thickness_layers"], dtype=int
+            )
         else:
             # default is that all layers can be randomized in thickness
-            self.random_thickness_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
+            self.random_thickness_list = np.linspace(
+                1, self.number_of_layers - 2, self.number_of_layers - 2, dtype=int
+            )
 
         # do we want to put bounds on the random thicknesses (specified in nanometers)
         if "random_thickness_bounds_nm" in args:
@@ -206,11 +210,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # see if we want to specifiy only certain layers with materials
         # that can be randomized
         if "random_material_layers" in args:
-            self.random_materials_list = np.array(args["random_material_layers"], dtype=int)
+            self.random_materials_list = np.array(
+                args["random_material_layers"], dtype=int
+            )
 
         # default is that all layers can be randomized
         else:
-            self.random_materials_list = np.linspace(1, self.number_of_layers-2, self.number_of_layers-2, dtype=int)
+            self.random_materials_list = np.linspace(
+                1, self.number_of_layers - 2, self.number_of_layers - 2, dtype=int
+            )
 
         # see if there are specific materials we would like to draw from
         if "possible_random_materials" in args:
@@ -218,8 +226,21 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         else:
             # default materials to draw from
             self.possible_materials = ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
-                                                  
 
+        if "transmission_efficiency_weight" in args:
+            self.transmission_efficiency_weight = args["transmission_efficiency_weight"]
+        else:
+            self.transmission_efficiency_weight = 0.5
+        if "reflection_efficiency_weight" in args:
+            self.reflection_efficiency_weight = args["reflection_efficiency_weight"]
+        else:
+            self.reflection_efficiency_weight = 0.5
+
+        _tot_weight = (
+            self.transmission_efficiency_weight + self.reflection_efficiency_weight
+        )
+        self.transmission_efficiency_weight /= _tot_weight
+        self.reflection_efficiency_weight /= _tot_weight
 
         # user can specify which layers to compute gradients with respect to
         # i.e. for a structure like ['Air', 'SiO2', 'Ag', 'TiO2', 'Air]
@@ -245,23 +266,26 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.number_of_angles = 7
 
         # some keywords for the visible transmissive and IR reflective Stacks for Blake and Michael
-        # 
+        #
         if "transmissive_window_nm" in args:
             lamlist = args["transmissive_window_nm"]
             # in nanometers
             self.transmissive_window_start_nm = lamlist[0]
             self.transmissive_window_stop_nm = lamlist[1]
             # in SI units
-            self.transmissive_window_start =  lamlist[0] * 1e-9
+            self.transmissive_window_start = lamlist[0] * 1e-9
             self.transmissive_window_stop = lamlist[1] * 1e-9
         else:
             # default to visible
             self.transmissive_window_start = 350e-9
             self.transmissive_window_stop = 700e-9
-        
+
         self.transmissive_envelope = np.zeros_like(self.wavelength_array)
         for i in range(self.number_of_wavelengths):
-            if self.wavelength_array[i] >= self.transmissive_window_start and self.wavelength_array[i] <= self.transmissive_window_stop:
+            if (
+                self.wavelength_array[i] >= self.transmissive_window_start
+                and self.wavelength_array[i] <= self.transmissive_window_stop
+            ):
                 self.transmissive_envelope[i] = 1.0
 
         if "reflective_window_wn" in args:
@@ -282,9 +306,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         self.reflective_envelope = np.zeros_like(self.wavelength_array)
         for i in range(self.number_of_wavelengths):
-            if self.wavelength_array[i] >= self.reflective_window_start and self.wavelength_array[i] <= self.reflective_window_stop:
-                self.reflective_envelope[i] = 1.0        
-    
+            if (
+                self.wavelength_array[i] >= self.reflective_window_start
+                and self.wavelength_array[i] <= self.reflective_window_stop
+            ):
+                self.reflective_envelope[i] = 1.0
 
         # for now always get solar spectrum!
         self._solar_spectrum = self._read_AM()
@@ -386,8 +412,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._refractive_index_array = np.flip(_ri, axis=1)
         self.thickness_array = np.flip(_ta)
 
-
-
     def remove_layer(self, layer_number):
         """remove layer number layer_number from your stack.
         e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air
@@ -455,19 +479,18 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         )
 
     def randomize_thickness_array(self):
-        """ Function to randomize the thickness array
-        
-        """
+        """Function to randomize the thickness array"""
         N = len(self.random_thickness_list)
         for i in range(N):
             _idx = self.random_thickness_list[i]
-            _d = np.random.randint(self.minimum_thickness_nm, self.maximum_thickness_nm) * 1e-9
-            self.thickness_array[_idx] = _d 
+            _d = (
+                np.random.randint(self.minimum_thickness_nm, self.maximum_thickness_nm)
+                * 1e-9
+            )
+            self.thickness_array[_idx] = _d
 
     def randomize_materials_array(self):
-        """ Function to randomize the materials array
-        
-        """
+        """Function to randomize the materials array"""
         # randomize the materials array
         N = len(self.random_materials_list)
         M = len(self.possible_materials)
@@ -480,7 +503,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # reset the refractive index array
         self.set_refractive_index_array()
-         
+
     def compute_spectrum(self):
         """computes the following attributes:
         Attributes
@@ -937,40 +960,42 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # reverse stack and get thermal emission spectrum of the stack INTO the active layer
         self.reverse_stack()
         self.compute_spectrum()
-        emissivity_1_B = self.emissivity_array 
+        emissivity_1_B = self.emissivity_array
         # get Blackbody spectrum at the default temperature - this is tentative
         self._compute_therml_spectrum()
 
-        # now add perovskite layer to the stack and get the emissivity/absorptivity towards the sky 
+        # now add perovskite layer to the stack and get the emissivity/absorptivity towards the sky
         self.reverse_stack()
 
         # get terminal layer number
-        _ln = len(self.thickness_array)-1
+        _ln = len(self.thickness_array) - 1
         # insert thick active layer as the bottom-most layer
         self.insert_layer(_ln, 1000e-9)
         # make sure the active layer has RI of 2D perovskite
         self.material_2D_HOIP(_ln)
         self.compute_spectrum()
         absorptivity_2_T = self.emissivity_array
-        
+
         # get the absorbed power
         P_abs = np.trapz(absorptivity_2_T * self._solar_spectrum, self.wavelength_array)
 
         # loop over temperature to try to find the temperature of the stack that balances emitted
         # power with absorbed power
         _kill = 1
-        while(_kill):
+        while _kill:
             _T = 300
             _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
-            P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_1_B + emissivity_1_T), self.wavelength_array)
+            P_emit = np.trapz(
+                np.pi / 2 * _bbs * (emissivity_1_B + emissivity_1_T),
+                self.wavelength_array,
+            )
             _T += 1
             if P_emit > P_abs:
                 _kill = 0
-        
+
         self._compute_pv_stpv_power_density(self.wavelength_array)
         # reverse stack again and add active layer and get absorbed power into the structure
         self.reverse_stack()
-
 
         # approximate ideal spectral response assuming \lambda_bg = 700 nm
         self.lambda_bandgap = 700e-9
@@ -978,8 +1003,12 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # make sure we have the solar spectrum
         self._solar_spectrum = self._read_AM()
         # now compute pv_stpv short circuit current
-        self._compute_pv_short_circuit_current(self.wavelength_array, self.emissivity_array, self.spectral_response, self._solar_spectrum)
-        
+        self._compute_pv_short_circuit_current(
+            self.wavelength_array,
+            self.emissivity_array,
+            self.spectral_response,
+            self._solar_spectrum,
+        )
 
     def compute_cooling(self):
         """Method to compute the radiative cooling figures of merit
@@ -1046,7 +1075,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         )
 
     def compute_cooling_gradient(self):
-
         # get the gradient of the emissivity vs angle and wavelength
         self.compute_explicit_angle_spectrum_gradient()
         self.radiative_cooling_power_gradient = (
@@ -1258,7 +1286,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         return _tm, _THETA, _CTHETA
 
     def _compute_dm(self, refractive_index, cosine_theta):
-
         """compute the D and D_inv matrices for each layer and wavelength
         Arguments
         ---------
@@ -1354,7 +1381,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         return _pm_analytical_gradient
 
     def _compute_rgb(self, colorblindness="False"):
-
         # get color response functions
         self._read_CIE()
         # plt.plot(self.wavelength_array * 1e9, self.reflectivity_array, label="Reflectivity")
@@ -1464,7 +1490,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         return rgblist
 
     def render_color(self, string, colorblindness="False"):
-
         fig, ax = plt.subplots()
         # The grid of visible wavelengths corresponding to the grid of colour-matching
         # functions used by the ColourSystem instance.
@@ -1493,18 +1518,18 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     def compute_selective_mirror_fom(self):
         """compute the figure of merit for selective tranmission and reflection according
-           to the transmissive_envelope and reflective_envelope functions
+        to the transmissive_envelope and reflective_envelope functions
 
-           Working Equation
-           ----------------
-           useful_transmitted_power = \int T(\lambda) * transmission_envelope d\lambda 
+        Working Equation
+        ----------------
+        useful_transmitted_power = \int T(\lambda) * transmission_envelope d\lambda
 
-           transmission_denom = \int transmission_envelope(\lambda) d\lambda
+        transmission_denom = \int transmission_envelope(\lambda) d\lambda
 
-           useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
+        useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
 
-           total_reflected_power = \int R(\lambda) d\lambda
-        
+        total_reflected_power = \int R(\lambda) d\lambda
+
 
         """
         # numerators are both the actual spectra times the envelope
@@ -1518,36 +1543,47 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # we have high transmissivity outside as well
         self.useful_transmitted_power = np.trapz(_utp_array, self.wavelength_array)
         self.useful_reflected_power = np.trapz(_urp_array, self.wavelength_array)
-        self.transmission_denom = np.trapz(self.transmissive_envelope, self.wavelength_array)
-        self.total_reflected_power = np.trapz(self.reflectivity_array, self.wavelength_array)
+        self.transmission_denom = np.trapz(
+            self.transmissive_envelope, self.wavelength_array
+        )
+        self.total_reflected_power = np.trapz(
+            self.reflectivity_array, self.wavelength_array
+        )
 
-        self.transmission_efficiency = self.useful_transmitted_power / self.transmission_denom
-        self.reflection_efficiency = self.useful_reflected_power / self.total_reflected_power
-        self.selective_mirror_fom = 0.5 * (self.transmission_efficiency + self.reflection_efficiency)
+        self.transmission_efficiency = (
+            self.useful_transmitted_power / self.transmission_denom
+        )
+        self.reflection_efficiency = (
+            self.useful_reflected_power / self.total_reflected_power
+        )
+        self.selective_mirror_fom = (
+            self.transmission_efficiency_weight * self.transmission_efficiency
+            + self.reflection_efficiency_weight * self.reflection_efficiency
+        )
 
     def compute_selective_mirror_fom_gradient(self):
         """compute the figure of merit for selective tranmission and reflection according
-           to the transmissive_envelope and reflective_envelope functions
+        to the transmissive_envelope and reflective_envelope functions
 
-           Working Equation
-           ----------------
-           useful_transmitted_power = \int T(\lambda) * transmission_envelope d\lambda 
+        Working Equation
+        ----------------
+        useful_transmitted_power = \int T(\lambda) * transmission_envelope d\lambda
 
-           transmission_denom = \int transmission_envelope(\lambda) d\lambda
+        transmission_denom = \int transmission_envelope(\lambda) d\lambda
 
-           useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
+        useful_reflected_power = \int R(\lambda) * reflection_envelope d\lambda
 
-           total_reflected_power = \int R(\lambda) d\lambda
+        total_reflected_power = \int R(\lambda) d\lambda
 
-           \eta_T' = \int T'(\lambda) * transmission_envelope d\lambda / transmission_denom
+        \eta_T' = \int T'(\lambda) * transmission_envelope d\lambda / transmission_denom
 
-           \eta_R' = g(\lambda) f'(\lambda) - f(\lambda) g'(\lambda)  / g(\lambda) ^ 2
+        \eta_R' = g(\lambda) f'(\lambda) - f(\lambda) g'(\lambda)  / g(\lambda) ^ 2
 
-           where g(\lambda) = \int R(\lambda) d\lambda
-                 f(\lambda) = \int reflectivity_envelope R(\lambda) d\lambda
-                 g'(\lambda) = \int R'(\lambda) d\lambda
-                 f'(\lambda) = \int reflectivity_envelope R'(\lambda) d\lambda
-        
+        where g(\lambda) = \int R(\lambda) d\lambda
+              f(\lambda) = \int reflectivity_envelope R(\lambda) d\lambda
+              g'(\lambda) = \int R'(\lambda) d\lambda
+              f'(\lambda) = \int reflectivity_envelope R'(\lambda) d\lambda
+
         """
         # \eta_T' = \Pi(\lambda) * T'(\lambda) / \Pi(\lambda)
         self.compute_spectrum_gradient()
@@ -1561,19 +1597,36 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _eta_T_denom = np.trapz(self.transmissive_envelope, self.wavelength_array)
 
         # these terms are in each of the \eta_R' elements
-        _f_l = np.trapz(self.reflective_envelope * self.reflectivity_array, self.wavelength_array)
+        _f_l = np.trapz(
+            self.reflective_envelope * self.reflectivity_array, self.wavelength_array
+        )
         _g_l = np.trapz(self.reflectivity_array, self.wavelength_array)
 
         for i in range(_ngr):
             # can compute \eta_T' in one shot
-            self.transmission_efficiency_gradient[i] = np.trapz(self.transmissive_envelope * self.transmissivity_gradient_array[:,i], self.wavelength_array) / _eta_T_denom
+            self.transmission_efficiency_gradient[i] = (
+                np.trapz(
+                    self.transmissive_envelope
+                    * self.transmissivity_gradient_array[:, i],
+                    self.wavelength_array,
+                )
+                / _eta_T_denom
+            )
 
             # need to get parts of g'(\lambda) and f'(\lambda) terms
-            _gp_l = np.trapz(self.reflectivity_gradient_array[:,i], self.wavelength_array)
-            _fp_l = np.trapz(self.reflective_envelope * self.reflectivity_gradient_array[:,i], self.wavelength_array)
+            _gp_l = np.trapz(
+                self.reflectivity_gradient_array[:, i], self.wavelength_array
+            )
+            _fp_l = np.trapz(
+                self.reflective_envelope * self.reflectivity_gradient_array[:, i],
+                self.wavelength_array,
+            )
 
-            self.reflection_efficiency_gradient[i] = (_g_l * _fp_l - _f_l * _gp_l) / _g_l ** 2
+            self.reflection_efficiency_gradient[i] = (
+                _g_l * _fp_l - _f_l * _gp_l
+            ) / _g_l**2
 
-        
-
-
+        self.selective_mirror_fom_gradient = (
+            self.transmission_efficiency_weight * self.transmission_efficiency_gradient
+            + self.reflection_efficiency_weight * self.reflection_efficiency_gradient
+        )
