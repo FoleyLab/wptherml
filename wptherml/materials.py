@@ -1498,7 +1498,7 @@ class Materials:
 
         # Initialize wavelength array and variable for thickness
         _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-        self.psc_thickness = 200
+        self.psc_thickness = 250
 
         # Check for psc values
         if self.psc_thickness == 110:
