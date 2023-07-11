@@ -209,11 +209,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             # Gauss-Legendre quadrature is used for angular spectra
             self.number_of_angles = 7
 
+        if "psc_thickness_option" in args:
+            self.psc_thickness_option = args["psc_thickness_option"]
+
         # for now always get solar spectrum!
         self._solar_spectrum = self._read_AM()
 
         # for now always get atmospheric transmissivity spectru
         self._atmospheric_transmissivity = self._read_Atmospheric_Transmissivity()
+
 
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
