@@ -1463,6 +1463,7 @@ class Materials:
     
 
     def _EQE_spectral_response(self):
+        
         """ 
         Will compute the spectral response function using tabulated EQE values for user input thickness
             from 
