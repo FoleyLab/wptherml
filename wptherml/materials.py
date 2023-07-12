@@ -1498,19 +1498,18 @@ class Materials:
 
         # Initialize wavelength array and variable for thickness
         _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-        self.psc_thickness = 250
 
         # Check for psc values
-        if self.psc_thickness == 110:
+        if self.psc_thickness_option == 110:
             _eqe_array = np.array([0, 0, 22, 46, 58, 59, 54, 40, 24, 18, 4,	0, 0])
             
-        if self.psc_thickness == 200:
+        if self.psc_thickness_option == 200:
             _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0])
 
-        if self.psc_thickness == 250:
+        if self.psc_thickness_option == 250:
             _eqe_array = np.array([0, 0, 20, 40, 54, 59, 58, 48, 39, 32, 14, 0,	0])
         
-        if self.psc_thickness == 410:
+        if self.psc_thickness_option == 410:
             _eqe_array = np.array([0, 0, 16, 27, 33, 36, 35, 32, 31, 24, 7, 0, 0])
 
         # Transferring from percentages and SR calculation
