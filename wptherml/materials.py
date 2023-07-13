@@ -1,6 +1,7 @@
 import numpy as np
 from scipy.interpolate import InterpolatedUnivariateSpline
 import os
+from scipy import constants
 
 path_and_file = os.path.realpath(__file__)
 path = path_and_file[:-12]

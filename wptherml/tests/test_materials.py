@@ -127,9 +127,6 @@ def test_material_zro2():
     assert np.isclose(result_n, expected_n, 1e-3)
     assert np.isclose(result_k, expected_k, 1e-3)
 
-
-
-
 def test_material_h2o():
     """tests material_H2O method using the fact that n = 1.33 + 0j for all lambda"""
 

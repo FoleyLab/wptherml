@@ -1,5 +1,6 @@
-wptherml v1.1.0
-==============================
+WPTherml v1.1.0
+===============================
+
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/FoleyLab/wptherml/workflows/CI/badge.svg)](https://github.com/FoleyLab/wptherml/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/FoleyLab/wptherml/branch/main/graph/badge.svg)](https://codecov.io/gh/FoleyLab/wptherml/branch/main)

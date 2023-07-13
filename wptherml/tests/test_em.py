@@ -348,6 +348,7 @@ def test_pm_grad():
 
 
 def test_compute_spectrum_gradient():
+
     # simple structure - just glass layer
     test_args_1 = {
         "wavelength_list": [600e-9, 602e-9, 3],
@@ -464,7 +465,7 @@ def test_tm_grad():
 
     assert np.allclose(M, expected_M0)
 
-
+    
 def test_selective_mirror_fom():
     """
     Test the computation of the selective mirror figure of merit against the following cases:
