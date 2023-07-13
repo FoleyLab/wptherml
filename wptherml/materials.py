@@ -1220,7 +1220,7 @@ class Materials:
 
             Examples
             --------
-            >>> material_SiO2_UDM(1, wavelength_range="visible") -> layer 1 will be SiO2 from the UDM data set good from 0.01 to 100 eV
+            >>> material_Al2O3_UDM(1, wavelength_range="visible") -> layer 1 will be Al2O3 from the UDM data set good from 0.01 to 100 eV
             """
             # get path to the tin data file
             file_path = path + "data/Al2O3_udm.txt"

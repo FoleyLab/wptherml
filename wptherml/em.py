@@ -228,6 +228,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.possible_materials = ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
 
         if "transmission_efficiency_weight" in args:
+            #print("Found transmission efficiency arg")
             self.transmission_efficiency_weight = args["transmission_efficiency_weight"]
         else:
             self.transmission_efficiency_weight = 0.5
@@ -239,6 +240,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _tot_weight = (
             self.transmission_efficiency_weight + self.reflection_efficiency_weight
         )
+        print(_tot_weight)
         self.transmission_efficiency_weight /= _tot_weight
         self.reflection_efficiency_weight /= _tot_weight
 
@@ -1556,7 +1558,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _ut = np.trapz(_ut_array, self.wavelength_array)
         _ur = np.trapz(_ur_array, self.wavelength_array)
 
-        # denominators are slightly different between R and T
+        # denominators are slightly different between R and T.
 
         # T_denom -> integrate transmissive envelope
         _t_denom = np.trapz(
@@ -1568,19 +1570,29 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.reflectivity_array, self.wavelength_array
         )
 
-        self.transmission_efficiency = (
-            _ut / _t_denom
-        )
-        self.reflection_efficiency = (
-            _ur / _r_denom
-        )
+        # if transmissivity_envelope is zero everywhere, this will give nan.. handle
+        # by just giving value of zero the transmission_efficiency
+
+        if _t_denom == 0.0:
+            self.transmission_efficiency = 0.0
+        else:
+            self.transmission_efficiency = (_ut / _t_denom)
+
+        # if reflectivity is zero everywhere, this will give nan - handle
+        # by just giving value of zero to reflection_efficiency
+        
+        if _r_denom == 0.0:
+            self.reflection_efficiency = 0.0
+        else: 
+            self.reflection_efficiency = (_ur / _r_denom)
+
         self.selective_mirror_fom = (
             self.transmission_efficiency_weight * self.transmission_efficiency
             + self.reflection_efficiency_weight * self.reflection_efficiency
         )
 
     def compute_selective_mirror_fom_gradient(self):
-                """compute the figure of merit for selective tranmission and reflection according
+        """compute the figure of merit for selective tranmission and reflection according
            to the transmissive_envelope and reflective_envelope functions
         
         Attributes

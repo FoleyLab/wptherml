@@ -501,7 +501,7 @@ def test_selective_mirror_fom():
         "transmission_efficiency_weight": T_weight_1,
         "reflection_efficiency_weight": R_weight_1,
     }
-    test_args2 = test_args1 = {
+    test_args2 = {
         "wavelength_list": [300e-9, 6000e-9, 1000],
         "Material_List": ["Air", "SiO2", "Al2O3", "SiO2", "Al2O3", "Air"],
         "Thickness_List": [0, d1, d2, d1, d2, 0],
@@ -510,7 +510,7 @@ def test_selective_mirror_fom():
         "transmission_efficiency_weight": T_weight_2,
         "reflection_efficiency_weight": R_weight_2,
     }
-    test_args3 = test_args1 = {
+    test_args3 = {
         "wavelength_list": [300e-9, 6000e-9, 1000],
         "Material_List": ["Air", "SiO2", "Al2O3", "SiO2", "Al2O3", "Air"],
         "Thickness_List": [0, d1, d2, d1, d2, 0],
@@ -571,6 +571,15 @@ def test_selective_mirror_fom():
     _expected_SM_fom_3 = (T_weight_3 / _norm_3) * _expected_T_fom_3 + (
         R_weight_3 / _norm_3
     ) * _expected_R_fom_3
+
+    # check the weights
+    assert np.isclose(test1.transmission_efficiency_weight, T_weight_1 / _norm_1)
+    assert np.isclose(test2.transmission_efficiency_weight, T_weight_2 / _norm_2)
+    assert np.isclose(test3.transmission_efficiency_weight, T_weight_3 / _norm_3)
+
+    assert np.isclose(test1.reflection_efficiency_weight, R_weight_1 / _norm_1)
+    assert np.isclose(test2.reflection_efficiency_weight, R_weight_2 / _norm_2)
+    assert np.isclose(test3.reflection_efficiency_weight, R_weight_3 / _norm_3)
 
     # compare expected to computed values for all 9 foms
     assert np.isclose(test1.transmission_efficiency, _expected_T_fom_1)
