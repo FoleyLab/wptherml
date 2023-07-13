@@ -348,7 +348,6 @@ def test_pm_grad():
 
 
 def test_compute_spectrum_gradient():
-
     # simple structure - just glass layer
     test_args_1 = {
         "wavelength_list": [600e-9, 602e-9, 3],
@@ -466,57 +465,205 @@ def test_tm_grad():
     assert np.allclose(M, expected_M0)
 
 
+def test_selective_mirror_fom():
+    """
+    Test the computation of the selective mirror figure of merit against the following cases:
+
+    1. The transmission exactly matches the transmissive_envelope, the reflectivity is zero everywhere
+       and the weights are 0.6, 0.4 for transmission_efficiency and reflection_efficiency, respectively
+
+    2. The transmission is zero everywhere, the reflectivity exactly matches the reflective_envelope
+       and the weights are 0.25, 0.75 for transmission_efficiency and reflection_efficiency, respectively
+
+    3. The transmission and reflectivity exactly match the windows and the weights are 0.5/0.5
+    """
+    # guess thickness for glass - totally arbitrary
+    d1 = 500e-9
+
+    # guess thickness for Al2O3 - totally arbitrary
+    d2 = 500e-9
+
+    # set weights for T and R for each test
+    T_weight_1 = 0.6
+    T_weight_2 = 0.25
+    T_weight_3 = 0.5
+
+    R_weight_1 = 0.4
+    R_weight_2 = 0.75
+    R_weight_3 = 0.5
+
+    test_args1 = {
+        "wavelength_list": [300e-9, 6000e-9, 1000],
+        "Material_List": ["Air", "SiO2", "Al2O3", "SiO2", "Al2O3", "Air"],
+        "Thickness_List": [0, d1, d2, d1, d2, 0],
+        "reflective_window_wn": [2000, 2400],
+        "transmissive_window_nm": [350, 700],
+        "transmission_efficiency_weight": T_weight_1,
+        "reflection_efficiency_weight": R_weight_1,
+    }
+    test_args2 = test_args1 = {
+        "wavelength_list": [300e-9, 6000e-9, 1000],
+        "Material_List": ["Air", "SiO2", "Al2O3", "SiO2", "Al2O3", "Air"],
+        "Thickness_List": [0, d1, d2, d1, d2, 0],
+        "reflective_window_wn": [2000, 2400],
+        "transmissive_window_nm": [350, 700],
+        "transmission_efficiency_weight": T_weight_2,
+        "reflection_efficiency_weight": R_weight_2,
+    }
+    test_args3 = test_args1 = {
+        "wavelength_list": [300e-9, 6000e-9, 1000],
+        "Material_List": ["Air", "SiO2", "Al2O3", "SiO2", "Al2O3", "Air"],
+        "Thickness_List": [0, d1, d2, d1, d2, 0],
+        "reflective_window_wn": [2000, 2400],
+        "transmissive_window_nm": [350, 700],
+        "transmission_efficiency_weight": T_weight_3,
+        "reflection_efficiency_weight": R_weight_3,
+    }
+
+    # instantiate the factory
+    sf = wptherml.SpectrumFactory()
+
+    # create 3 test instances
+    test1 = sf.spectrum_factory("Tmm", test_args1)
+    test2 = sf.spectrum_factory("Tmm", test_args2)
+    test3 = sf.spectrum_factory("Tmm", test_args3)
+
+    # set T spectra for each test case
+    test1.transmissivity_array = np.copy(test1.transmissive_envelope)  # <== perfect T
+    test2.transmissivity_array = np.copy(
+        np.zeros_like(test2.wavelength_array)
+    )  # <== zeros everywhere
+    test3.transmissivity_array = np.copy(test2.transmissive_envelope)  # <== perfect T
+
+    # set R spectra for each test case
+    test1.reflectivity_array = np.copy(
+        np.zeros_like(test1.wavelength_array)
+    )  # <== zeros everywhere
+    test2.reflectivity_array = np.copy(test2.reflective_envelope)  # <== perfect R
+    test3.reflectivity_array = np.copy(test2.reflective_envelope)  # <== perfect R
+
+    # compute foms for each case
+    test1.compute_selective_mirror_fom()
+    test2.compute_selective_mirror_fom()
+    test3.compute_selective_mirror_fom()
+
+    # set the expected values
+    # test 1
+    _norm_1 = 1 / (T_weight_1 + R_weight_1)
+    _expected_T_fom_1 = 1.0
+    _expected_R_fom_1 = 0.0
+    _expected_SM_fom_1 = (T_weight_1 / _norm_1) * _expected_T_fom_1 + (
+        R_weight_1 / _norm_1
+    ) * _expected_R_fom_1
+
+    # test 2
+    _norm_2 = 1 / (T_weight_2 + R_weight_2)
+    _expected_T_fom_2 = 0.0
+    _expected_R_fom_2 = 1.0
+    _expected_SM_fom_2 = (T_weight_2 / _norm_2) * _expected_T_fom_2 + (
+        R_weight_2 / _norm_2
+    ) * _expected_R_fom_2
+
+    # test 3
+    _norm_3 = 1 / (T_weight_3 + R_weight_3)
+    _expected_T_fom_3 = 1.0
+    _expected_R_fom_3 = 1.0
+    _expected_SM_fom_3 = (T_weight_3 / _norm_3) * _expected_T_fom_3 + (
+        R_weight_3 / _norm_3
+    ) * _expected_R_fom_3
+
+    # compare expected to computed values for all 9 foms
+    assert np.isclose(test1.transmission_efficiency, _expected_T_fom_1)
+    assert np.isclose(test2.transmission_efficiency, _expected_T_fom_2)
+    assert np.isclose(test3.transmission_efficiency, _expected_T_fom_3)
+
+    assert np.isclose(test1.reflection_efficiency, _expected_R_fom_1)
+    assert np.isclose(test2.reflection_efficiency, _expected_R_fom_2)
+    assert np.isclose(test3.reflection_efficiency, _expected_R_fom_3)
+
+    assert np.isclose(test1.selective_mirror_fom, _expected_SM_fom_1)
+    assert np.isclose(test2.selective_mirror_fom, _expected_SM_fom_2)
+    assert np.isclose(test3.selective_mirror_fom, _expected_SM_fom_3)
+
+
 def test_selective_mirror_fom_gradient():
+    """
+    Test the gradient of the selective mirror foms against finite differences for
+    layer 4 for a small DBR structure
+    """
 
     # guess thickness for glass
     d1 = 5000e-9 / (4 * 1.5)
-    
+
     # guess thickness for Al2O3
     d2 = 5000e-9 / (4 * 1.85)
 
     test_args = {
         "wavelength_list": [300e-9, 6000e-9, 1000],
-        "Material_List": ["Air","SiO2", "Al2O3","SiO2", "Al2O3", "SiO2", "Al2O3" ,"SiO2", "Al2O3", "SiO2", "Al2O3" , "Air"],
-        "Thickness_List": [0,  d1, d2, d1, d2, d1, d2, d1, d2, d1, d2, 0],
-        "reflective_window_wn" : [2000, 2400],
-        "transmissive_window_nm" : [350, 700],
+        "Material_List": [
+            "Air",
+            "SiO2",
+            "Al2O3",
+            "SiO2",
+            "Al2O3",
+            "SiO2",
+            "Al2O3",
+            "SiO2",
+            "Al2O3",
+            "SiO2",
+            "Al2O3",
+            "Air",
+        ],
+        "Thickness_List": [0, d1, d2, d1, d2, d1, d2, d1, d2, d1, d2, 0],
+        "reflective_window_wn": [2000, 2400],
+        "transmissive_window_nm": [350, 700],
     }
-    
+
     sf = wptherml.SpectrumFactory()
-    
+
     # create an instance of the DBR called test
-    test = sf.spectrum_factory('Tmm', test_args)
-    # compute FOM
+    test = sf.spectrum_factory("Tmm", test_args)
+    # compute FOMs
     test.compute_selective_mirror_fom()
     # compute FOM gradients
     test.compute_selective_mirror_fom_gradient()
 
+    # select layer corresponding to the gradient element to check
+    _n_layer = 4  # <== layer 4
+
+    # set step size for finite differences
     dx = 0.01e-9
 
     # now do numerical gradients
-    test.thickness_array[1] += dx
+    test.thickness_array[_n_layer] += dx
     test.compute_spectrum()
     test.compute_selective_mirror_fom()
+
+    # store the foms from the forward-displaced structure
     _r_fom_f = test.reflection_efficiency
     _t_fom_f = test.transmission_efficiency
 
-    test.thickness_array[1] -= 2 * dx
+    # move to backwards-displaced structure
+    test.thickness_array[_n_layer] -= 2 * dx
     test.compute_spectrum()
     test.compute_selective_mirror_fom()
+
+    # store the foms from the backward-displaced structure
     _r_fom_b = test.reflection_efficiency
     _t_fom_b = test.transmission_efficiency
 
+    # compute centered-finite-difference (cfd) approximation to the gradient elements for _n_layer
     _r_grad = (_r_fom_f - _r_fom_b) / (2 * dx)
     _t_grad = (_t_fom_f - _t_fom_b) / (2 * dx)
 
-    relative_error_r = (np.abs(_r_grad - test.reflection_efficiency_gradient[1])) / test.reflection_efficiency_gradient[1]
-    relative_error_t = (np.abs(_t_grad - test.transmission_efficiency_gradient[1])) / test.transmission_efficiency_gradient[1]
+    # compute the relative error - not used for test currently
+    relative_error_r = (
+        np.abs(_r_grad - test.reflection_efficiency_gradient[_n_layer])
+    ) / test.reflection_efficiency_gradient[_n_layer]
+    relative_error_t = (
+        np.abs(_t_grad - test.transmission_efficiency_gradient[_n_layer])
+    ) / test.transmission_efficiency_gradient[_n_layer]
 
-    np.isclose(_r_grad, test.reflection_efficiency_gradient[1])
-    np.isclose(_r_grad, test.transmission_efficiency_gradient[1])
-
-    #assert np.isclose(relative_error_r, 0., 1.)
-    #assert np.isclose(relative_error_t, 0., 1.)
-
-
-    
+    # compare cfd to analytic gradient
+    np.isclose(_r_grad, test.reflection_efficiency_gradient[_n_layer])
+    np.isclose(_r_grad, test.transmission_efficiency_gradient[_n_layer])
