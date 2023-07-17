@@ -1089,7 +1089,7 @@ class Materials:
             --------
             >>> material_Si3N4(1, wavelength_range="visible") -> layer 1 will be Si3N4 from the Si3N4_Luke.txt data set good from visible to 5 microns (0.361-5.14)
             """
-            # get path to the tin data file
+            # get path to the Si3N4 data file
             file_path = path + "data/Si3N4_Luke.txt"
             # now read Tin data into a numpy array
             file_data = np.loadtxt(file_path)
@@ -1131,7 +1131,7 @@ class Materials:
             --------
             >>> material_ZrO2(1, wavelength_range="visible") -> layer 1 will be ZrO2 from the ZrO2_Wood.txt data set good from visible to 5.5 microns (0.31-5.504)
             """
-            # get path to the tin data file
+            # get path to the Zr02 data file
             file_path = path + "data/ZrO2_Wood.txt"
             # now read Tin data into a numpy array
             file_data = np.loadtxt(file_path)
@@ -1173,7 +1173,7 @@ class Materials:
             --------
             >>> material_SiO2_UDM(1, wavelength_range="visible") -> layer 1 will be SiO2 from the UDM data set good from 0.01 to 100 eV
             """
-            # get path to the tin data file
+            # get path to the Si02 data file
             file_path = path + "data/SiO2_udm.txt"
             # now read Tin data into a numpy array
             file_data = np.loadtxt(file_path)
@@ -1201,12 +1201,12 @@ class Materials:
             
     def material_Al2O3_UDM(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
-            """defines the refractive index of layer layer_number to be ZrO2
+            """defines the refractive index of layer layer_number to be Al203
 
             Arguments
             ----------
             layer_number : int
-            specifies the layer of the stack that will be modelled as ZrO2
+            specifies the layer of the stack that will be modelled as Al203
 
             wavelength_range (optional) : str
             specifies wavelength regime that is desired for modelling the material
@@ -1223,7 +1223,7 @@ class Materials:
             --------
             >>> material_Al2O3_UDM(1, wavelength_range="visible") -> layer 1 will be Al2O3 from the UDM data set good from 0.01 to 100 eV
             """
-            # get path to the tin data file
+            # get path to the Al203 data file
             file_path = path + "data/Al2O3_udm.txt"
             # now read Tin data into a numpy array
             file_data = np.loadtxt(file_path)
