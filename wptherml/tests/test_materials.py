@@ -74,7 +74,7 @@ def test_material_sio2_udm():
     central_wavelength_nm = 1.2398e+3 / central_energy_ev 
     central_wavelength_m = central_wavelength_nm * 1e-9
 
-    # create test multilayer that has 3 layers and wavelength array centered at 636 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 0.01207 eV
     material_test._create_test_multilayer(central_wavelength=central_wavelength_m)
     # define central layer as siO2
     material_test.material_SiO2_UDM(1)
@@ -95,9 +95,9 @@ def test_material_si3n4():
 
     central_wavelength_m = 0.000003738
 
-    # create test multilayer that has 3 layers and wavelength array centered at 636 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 3.3738 microns
     material_test._create_test_multilayer(central_wavelength=central_wavelength_m)
-    # define central layer as siO2
+    # define central layer as si3n4
     material_test.material_Si3N4(1)
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
@@ -116,9 +116,9 @@ def test_material_zro2():
 
     central_wavelength_m = 6.952E-07
 
-    # create test multilayer that has 3 layers and wavelength array centered at 636 nm
+    # create test multilayer that has 3 layers and wavelength array centered at 695.2 nm
     material_test._create_test_multilayer(central_wavelength=central_wavelength_m)
-    # define central layer as siO2
+    # define central layer as Zr02
     material_test.material_ZrO2(1)
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
@@ -135,7 +135,7 @@ def test_material_h2o():
 
     # create test multilayer that has 3 layers and wavelength array centered at 636 nm
     material_test._create_test_multilayer(central_wavelength=636e-9)
-    # define central layer as siO2
+    # define central layer as H20
     material_test.material_H2O(1)
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
@@ -371,7 +371,7 @@ def test_material_al2o3_udm():
 
     # create test multilayer that has 3 layers and wavelength array centered at 636 nm
     material_test._create_test_multilayer(central_wavelength=central_wavelength_m)
-    # define central layer as siO2
+    # define central layer as Al203
     material_test.material_Al2O3_UDM(1)
 
     result_n = np.real(material_test._refractive_index_array[1, 1])
@@ -715,7 +715,7 @@ def test_material_pb():
 
     # create test multilayer for data1
     material_test._create_test_multilayer(central_wavelength=wavelength_1)
-    # define central layer as Re using data1
+    # define central layer as Pb using data1
     material_test.material_Pb(1)
 
     result_n_1 = np.real(material_test._refractive_index_array[1, 1])
@@ -723,7 +723,7 @@ def test_material_pb():
 
     # update test multilayer for data2
     material_test._create_test_multilayer(central_wavelength=wavelength_2)
-    # define central layer as Re using data2
+    # define central layer as Pb using data2
     material_test.material_Pb(1)
 
     result_n_2 = np.real(material_test._refractive_index_array[1, 1])
