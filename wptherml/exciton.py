@@ -83,14 +83,14 @@ class ExcitonDriver(SpectrumDriver):
         Arguments
         ---------
         n : int
-            the index of site n offset by +1 relative to the python index
+            the index of site n 
         m : int
-            the index of site m offset by +1 relative to the python index
+            the index of site m 
 
         Returns
         -------
         H_nm : float
-            The matrix elements corresponding to
+            The matrix elements corresponding to the interactions between sites n and m
         """
      
         H_nm = self.exciton_energy * (n == m)
@@ -102,9 +102,9 @@ class ExcitonDriver(SpectrumDriver):
         Arguments
         ---------
         n : int
-            the index of site n offset by +1 relative to the python index
+            the index of site n 
         m : int
-            the index of site m offset by +1 relative to the python index
+            the index of site m 
 
         Attributes
         ----------
@@ -119,9 +119,6 @@ class ExcitonDriver(SpectrumDriver):
         V_nm : float
              the dipole-dipole potential between exciton on site n and m
         """
-        # offset the indices for python
-        _n = n - 1
-        _m = m - 1
 
         # calculate separation vector between site m and site n
         _r_vec = self.coords[:, m] - self.coords[:, n]
@@ -222,9 +219,12 @@ class ExcitonDriver(SpectrumDriver):
     def build_2D_hamiltonian(self):
         """ Function that builds the Hamailtonian which models the time evolution of an excitonic system based upon the
         field free energy of the system and the dipole dipole coupling of the sysetem
-        
-        Arguments
+         
+        Attribute
         ---------
+        exciton_hamiltonian : number_of_monomers x number_of_monomers numpy array of floats
+            the exciton Hamiltonian, initialized by init and to-be-filled with appropriate values
+            by this function
         
         """
         _N = self.number_of_monomers
