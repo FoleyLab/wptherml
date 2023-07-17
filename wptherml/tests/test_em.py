@@ -666,14 +666,6 @@ def test_selective_mirror_fom_gradient():
     _r_grad = (_r_fom_f - _r_fom_b) / (2 * dx)
     _t_grad = (_t_fom_f - _t_fom_b) / (2 * dx)
 
-    # compute the relative error - not used for test currently
-    relative_error_r = (
-        np.abs(_r_grad - test.reflection_efficiency_gradient[_n_layer])
-    ) / test.reflection_efficiency_gradient[_n_layer]
-    relative_error_t = (
-        np.abs(_t_grad - test.transmission_efficiency_gradient[_n_layer])
-    ) / test.transmission_efficiency_gradient[_n_layer]
-
     # compare cfd to analytic gradient
     np.isclose(_r_grad, test.reflection_efficiency_gradient[_n_layer])
     np.isclose(_r_grad, test.transmission_efficiency_gradient[_n_layer])
