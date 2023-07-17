@@ -1065,6 +1065,190 @@ class Materials:
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
 
+    def material_Si3N4(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be Si3N4
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as Si3N4
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_Si3N4(1, wavelength_range="visible") -> layer 1 will be Si3N4 from the Si3N4_Luke.txt data set good from visible to 5 microns (0.361-5.14)
+            """
+            # get path to the Si3N4 data file
+            file_path = path + "data/Si3N4_Luke.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+    def material_ZrO2(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be ZrO2
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as ZrO2
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_ZrO2(1, wavelength_range="visible") -> layer 1 will be ZrO2 from the ZrO2_Wood.txt data set good from visible to 5.5 microns (0.31-5.504)
+            """
+            # get path to the Zr02 data file
+            file_path = path + "data/ZrO2_Wood.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            n_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 1], k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                file_data[:, 0], file_data[:, 2], k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+    def material_SiO2_UDM(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be SiO2 using a universal dispersion model (UDM)
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as SiO2 udm
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_SiO2_UDM(1, wavelength_range="visible") -> layer 1 will be SiO2 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the Si02 data file
+            file_path = path + "data/SiO2_udm.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+            
+    def material_Al2O3_UDM(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be Al203
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as Al203
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_Al2O3_UDM(1, wavelength_range="visible") -> layer 1 will be Al2O3 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the Al203 data file
+            file_path = path + "data/Al2O3_udm.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
     def material_Re(self, layer_number, wavelength_range="visible", override="true"):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Re
@@ -1459,72 +1643,3 @@ class Materials:
         _spline_value = _atrans_spline(7.1034e-6)
         assert np.isclose(_expected_value, _spline_value)
         return _atrans_spline(self.wavelength_array)
-    
-    def _EQE_spectral_response(self):
-
-        """ 
-        Will compute the spectral response function using tabulated EQE values for user input thickness
-            from 
-
-            "Optical Properties and Modeling of 2D Perovskite Solar Cells",
-            Bin Liu, Chan Myae Myae Soe, Constantinos C. Stoumpos, Wanyi Nie, Hsinhan Tsai, Kimin
-            Lim, Aditya D. Mohite, Mercouri G. Kanatzidis, Tobin J. Marks, Kenneth D. Singer
-            Advanced Materials, (34), 1. January 6, 2022 
-            https://doi.org/10.1002/adma.202107211
-
-            on EQE curves of Pb5 perovskite-based devices.
-
-            Using formula SR = q * EQE * \lambda / (h * c)
-
-        Attributes
-        ----------
-        psc_thickness : 
-                        User-input thickness in nm of PSC.
-        _eqe_array :
-                        Table of EQE values extrapolated from graph.
-        _sr_array : 
-                        Calculated spectral response based on formula, wavelength, tabulated values, and constants.
-        _eqe_spline :
-                        Spline best fit based on wavelength array and EQE data.
-        _sr_spline :
-                        Spline best fit based on SR array and wavelength array.
-
-        Returns
-        -------
-        None
-        
-        """
-
-        # Initialize wavelength array and variable for thickness
-        _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
-
-        # Check for psc values
-        if self.psc_thickness_option == 110:
-            _eqe_array = np.array([0, 0, 22, 46, 58, 59, 54, 40, 24, 18, 4,	0, 0])
-            
-        if self.psc_thickness_option == 200:
-            _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0])
-
-        if self.psc_thickness_option == 250:
-            _eqe_array = np.array([0, 0, 20, 40, 54, 59, 58, 48, 39, 32, 14, 0,	0])
-        
-        if self.psc_thickness_option == 410:
-            _eqe_array = np.array([0, 0, 16, 27, 33, 36, 35, 32, 31, 24, 7, 0, 0])
-
-        # Transferring from percentages and SR calculation
-        _eqe_array = _eqe_array * 0.01
-        _sr_array = constants.e * _eqe_array * _wavelength_array / (constants.h * constants.c)
-
-        # Spline for line of best fit based on current data
-        _eqe_spline = InterpolatedUnivariateSpline(
-            _wavelength_array, _eqe_array, k=1
-        )
-
-        _sr_spline = InterpolatedUnivariateSpline(
-                _wavelength_array, _sr_array, k=1
-            )
-        
-        self.perovskite_eqe = _eqe_spline(self.wavelength_array)
-        self.perovskite_spectral_response = _sr_spline(self.wavelength_array)
-    
-
