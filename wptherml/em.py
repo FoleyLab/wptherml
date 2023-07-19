@@ -1149,6 +1149,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
     
     def compute_pv_stpv_splitting_power(self):
+        """  Method to compute the pv_stpv splitting power as defined in Eq. (46) of https://www.overleaf.com/project/648a0cfeae29e31e10afc075 
+
+        Attributes
+        ----------
+        TBD
+
+        Returns
+        -------
+        None
+
+        Notes:  The emissivity needs to be computed for the reversed original stack (meaning the stack *without the active layer*) before updating the 
+                thermal emission spectrum.
+
+                Steps:
+                1. Reverse the stack
+                2. Compute the optical spectra
+                3. Compute the thermal emission spectra
+                4. Define the integrand in Eq. (46)
+                5. Integrate the integrand and store to the attribute self.pv_stpv_splitting_power
+        
+        """
 
 
     def compute_pv_stpv_total_incident_power(self):
