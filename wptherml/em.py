@@ -983,13 +983,13 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.compute_self_consistent_temperature()
 
         # second compute short circuit current
-        self.compute_pv_stpv_jsc()
+        self.compute_pv_stpv_short_circuit_current()
 
         # third compute splitting power
         # <== self.compute_pv_stpv_splitting_power()
         # probably JSCself._compute_pv_stpv_power_density(self.wavelength_array)
 
-    def compute_pv_stpv_jsc(self):
+    def compute_pv_stpv_short_circuit_current(self):
         """
         Function to compute the f_C figure of merit for pv-stpv, Eq. (45) here: https://www.overleaf.com/project/648a0cfeae29e31e10afc075
         We will assume the base layer is the AR + Polystyrene stack so we
@@ -1016,7 +1016,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self._solar_spectrum * absorptivity_full_stack * env
         )
 
-        self.pv_stpv_jsc = np.trapz(
+        self.pv_stpv_short_circuit_current = np.trapz(
             power_density_array, self.wavelength_array
         )
 
@@ -1107,7 +1107,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
 
 
-    def compute_pv_stpv_jsc_gradient(self):
+    def compute_pv_stpv_short_circuit_current_gradient(self):
         """
         Computes the gradient of the pv-stpv short circuit current as defined 
 
