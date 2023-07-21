@@ -317,7 +317,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # Retrieve psc thickness for _EQE_spectral_response
         if "psc_thickness_option" in args:
             self.psc_thickness_option = args["psc_thickness_option"]
-        else 
+        else: 
             self.psc_thickness_option = 200
 
         # get pv lambda bandgap
