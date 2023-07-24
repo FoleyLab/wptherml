@@ -1196,9 +1196,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         
     
         # Store spectra 
-        emissivity_AR_polystyrene = self.emissivity_array
-        reflectivity_AR_polystyrene = self.reflectivity_array
-        transmissivity_AR_polystyrene = self.transmissivity_array
+        emissivity_AR_polystyrene = np.copy(self.emissivity_array)
 
         # Set integration limits to lambda 1 to lambda 2 (3 um and 3.5 um) and store
         x_lower_limit = 3e-6
