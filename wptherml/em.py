@@ -1071,6 +1071,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             power_density_array, self.wavelength_array
         )
 
+        # go back to original spectrum
+        self.remove_layer(_ln)
+        self.compute_spectrum()
+
         
 
 
@@ -1100,8 +1104,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # Need to iterate over emissivity_gradient_array for every value at a given wavelength.
         # Need to take the integral of this multiplied by _solar_spectrum and spectral_response (both precalculated), between 0 and lambda bandgap.
 
+        _ln = len(self.thickness_array) - 1
+        # insert thick active layer as the bottom-most layer
+        self.insert_layer(_ln, 1000e-9)
+        # make sure the active layer has RI of 2D perovskite
+        self.material_2D_HOIP(_ln)
         # Acquire necessary variables
         self._solar_spectrum = self._read_AM()
+        self.compute_spectrum()
         self.compute_spectrum_gradient()
 
         # Initialize short circuit current array
@@ -1122,6 +1132,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.wavelength_array,
             )  # Integrate for short circuit current
 
+        # go back to original spectrum
+        self.remove_layer(_ln)
+        self.compute_spectrum()
+        self.compute_spectrum_gradient()
     # Other figure of merit calculations here to be called in compute_pv_stpv
 
     def compute_pv_stpv_total_incident_power(self):
