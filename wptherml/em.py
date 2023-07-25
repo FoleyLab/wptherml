@@ -1,7 +1,7 @@
 from .spectrum_driver import SpectrumDriver
 from .materials import Materials
 from .therml import Therml
-frop .optdriver import OptDriver
+#from .optdriver import OptDriver
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
@@ -87,7 +87,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         if "optimization" in args:
             args = {k.lower(): v for k, v in args.items()}
-            self.parse
+            self.parse_optimization_input(args)
 
 
         # treat cooling specially because we need emissivity at lots of angles!

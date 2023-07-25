@@ -12,7 +12,8 @@ class SpectrumFactory:
             return MieDriver(args)
         elif spectrum_toolkit == "Tmm":
             return TmmDriver(args)
-
+        elif spectrum_toolkit == "Opt":
+            return OptDriver(args)
         else:
             raise TypeError("Toolkit not found")
 
