@@ -85,11 +85,6 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
             print(" Your therml spectra have been computed! \N{fire} ")
 
-        if "optimization" in args:
-            args = {k.lower(): v for k, v in args.items()}
-            self.parse_optimization_input(args)
-
-
         # treat cooling specially because we need emissivity at lots of angles!
         if "cooling" in args:
             args = {k.lower(): v for k, v in args.items()}
