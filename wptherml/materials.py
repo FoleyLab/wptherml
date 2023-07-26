@@ -1643,3 +1643,74 @@ class Materials:
         _spline_value = _atrans_spline(7.1034e-6)
         assert np.isclose(_expected_value, _spline_value)
         return _atrans_spline(self.wavelength_array)
+    
+    def _EQE_spectral_response(self):
+        """ 
+        Will compute the spectral response function using tabulated EQE values for user input thickness
+            from 
+
+            "Optical Properties and Modeling of 2D Perovskite Solar Cells",
+            Bin Liu, Chan Myae Myae Soe, Constantinos C. Stoumpos, Wanyi Nie, Hsinhan Tsai, Kimin
+            Lim, Aditya D. Mohite, Mercouri G. Kanatzidis, Tobin J. Marks, Kenneth D. Singer
+            Advanced Materials, (34), 1. January 6, 2022 
+            https://doi.org/10.1002/adma.202107211
+
+            on EQE curves of Pb5 perovskite-based devices.
+
+            Using formula SR = q * EQE * \lambda / (h * c)
+
+        Attributes
+        ----------
+        psc_thickness : 
+                        User-input thickness in nm of PSC.
+        _eqe_array :
+                        Table of EQE values extrapolated from graph.
+        _sr_array : 
+                        Calculated spectral response based on formula, wavelength, tabulated values, and constants.
+        _eqe_spline :
+                        Spline best fit based on wavelength array and EQE data.
+        _sr_spline :
+                        Spline best fit based on SR array and wavelength array.
+
+        Returns
+        -------
+        None
+        
+        """
+
+        # Initialize wavelength array and variable for thickness
+        _wavelength_array = np.array([250, 300, 350, 400, 450, 500, 550, 600, 650, 700, 750, 800, 850]) * 1e-9
+
+        # Check for psc values
+        if self.psc_thickness_option == 110:
+            _eqe_array = np.array([0, 0, 22, 46, 58, 59, 54, 40, 24, 18, 4,	0, 0])
+
+        elif self.psc_thickness_option == 200:
+            _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0])
+
+        elif self.psc_thickness_option == 250:
+            _eqe_array = np.array([0, 0, 20, 40, 54, 59, 58, 48, 39, 32, 14, 0,	0])
+        
+        elif self.psc_thickness_option == 410:
+            _eqe_array = np.array([0, 0, 16, 27, 33, 36, 35, 32, 31, 24, 7, 0, 0])
+                    
+        else:
+            _eqe_array = np.array([0, 0, 25, 52, 72, 74, 71, 59, 39, 22, 5, 0, 0])
+
+        # Transferring from percentages and SR calculation
+        _eqe_array = _eqe_array * 0.01
+        _sr_array = constants.e * _eqe_array * _wavelength_array / (constants.h * constants.c)
+
+        # Spline for line of best fit based on current data
+        _eqe_spline = InterpolatedUnivariateSpline(
+            _wavelength_array, _eqe_array, k=1
+        )
+
+        _sr_spline = InterpolatedUnivariateSpline(
+                _wavelength_array, _sr_array, k=1
+            )
+        
+        self.perovskite_eqe = _eqe_spline(self.wavelength_array)
+        self.perovskite_spectral_response = _sr_spline(self.wavelength_array)
+    
+
