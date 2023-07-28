@@ -320,12 +320,19 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # default to 200
         else:
             self.psc_thickness_option = 200
+
+        if "pv_lambda_bandgap" in args:
+            self.pv_lambda_bandgap = args["pv_lambda_bandgap"]
+        else:
+            self.pv_lambda_bandgap = 750e-9
             
         # for now always get solar spectrum!
         self._solar_spectrum = self._read_AM()
 
         # for now always get atmospheric transmissivity spectru
         self._atmospheric_transmissivity = self._read_Atmospheric_Transmissivity()
+
+        
 
     def set_refractive_index_array(self):
         """once materials are specified, define the refractive_index_array values"""
@@ -1095,6 +1102,30 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         """
         pass 
     
+    def compute_pv_stpv_splitting_power_spectrum(self):
+        """  
+        Docstring
+
+        Method to compute the pv_stpv splitting power spectrum as defined by 
+         the integrand of Eq. (46) of https://www.overleaf.com/project/648a0cfeae29e31e10afc075 
+        """
+
+        # reverse the stack
+        self.reverse_stack()
+        # update emissivity
+        self.compute_spectrum()
+               
+    
+        # Store thermal emission spectra into the active layer
+        self.pv_stpv_splitting_power_spectrum = self.blackbody_spectrum * self.emissivity_array
+
+        # reverse the stack back
+        self.reverse_stack()
+        # update the spectra for the normal direction
+        self.compute_spectrum()
+
+
+
     def compute_pv_stpv_splitting_power(self):
         
         """  
@@ -1131,13 +1162,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                
         # Reverse stack, active layer was removed in the last function
         # Compute the optical and thermal spectra
-        self.reverse_stack()
-        self.compute_spectrum()
-        self._compute_therml_spectrum()
-        
-    
-        # Store spectra 
-        emissivity_AR_polystyrene = np.copy(self.emissivity_array)
+        self.compute_pv_stpv_splitting_power_spectrum()
 
         # Set integration limits to lambda 1 to lambda 2 (3 um and 3.5 um) and store
         x_lower_limit = 3e-6
@@ -1148,15 +1173,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         wavelength_array_upper = np.abs(self.wavelength_array - x_upper_limit).argmin()
         
         sliced_wavelength_array = self.wavelength_array[wavelength_array_lower:wavelength_array_upper]
-        sliced_emissivity_array = emissivity_AR_polystyrene[wavelength_array_lower:wavelength_array_upper]
+        sliced_splitting_spectrum = self.pv_stpv_splitting_power_spectrum[wavelength_array_lower:wavelength_array_upper]
 
         # Integrate over these slices and store
-        self.pv_stpv_splitting_power = np.pi * np.trapz(sliced_emissivity_array, sliced_wavelength_array)
+        self.pv_stpv_splitting_power = np.pi * np.trapz(sliced_splitting_spectrum, sliced_wavelength_array)
 
-        # reverse back and re-compute spectra
-        self.reverse_stack()
-        self.compute_spectrum()
-        self._compute_therml_spectrum()
 
     def compute_self_consistent_temperature(self):
         """
