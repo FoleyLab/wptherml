@@ -76,6 +76,8 @@ class ExcitonDriver(SpectrumDriver):
 
         for i in range(self.number_of_monomers):
             self.coords[:, i] = self.displacement_between_monomers * i
+        
+        self.wvlngth_variable = np.arange(0, 400.001, 0.01)
 
     def _compute_H0_element(self, n, m):
         """Method to compute the matrix elements of H0
@@ -242,23 +244,6 @@ class ExcitonDriver(SpectrumDriver):
                 self.exciton_hamiltonian_2D[_n, _m] = (
                     H0 + V
                 )
-                
-        
-
-    def compute_spectrum(self):
-        """Will prepare the Frenkel Exciton Hamiltonian and use to compute an absorption spectrum
-
-        Attributes
-        ---------
-        TBD
-
-
-        Returns
-        -------
-        TBD
-
-        """
-        pass
 
     def compute_exciton_wavefunction_site_basis(self):
         """
@@ -469,18 +454,29 @@ class ExcitonDriver(SpectrumDriver):
                     msd_matrix[k] = prod1 - 2 * x_o * prod2 * x_o ** 2
         
         return msd_matrix
-        
-    def lorentzian(self, x, x0):
-        """
-        fill in
-         """
-        return 1 ** 2 / ((x - x0) ** 2 + 1 ** 2)
 
-    def abs_spectrum(self, x_values, wavelengths):
+
+    def lorentzian(self, lambda_0):
+        """Helper method that will take an x array and return a lorentzian function corresponding to that x array
+
+        Arguments
+        ---------
+        lambda_0 : np array of floats, 
+         """
+        
+
+        return 1 ** 2 / ((self.wvlngth_variable - lambda_0) ** 2 + 1 ** 2)
+
+    def abs_spectrum(self, wavelengths):
+        """Method that will return an array of values corresponding to a plotable spectrum
+
+        Arguments
+        ---------
+        wavelengths: numpy array of floats 
+
         """
-        fill in
-        """
-        result = np.zeros_like(x_values)
+
+        result = np.zeros_like(self.wvlngth_variable)
         for x0 in zip(wavelengths):
-            result += self.lorentzian(x_values, x0)
+            result += self.lorentzian(x0)
         return result
