@@ -467,7 +467,7 @@ class ExcitonDriver(SpectrumDriver):
 
         return 1 ** 2 / ((self.wvlngth_variable - lambda_0) ** 2 + 1 ** 2)
 
-    def abs_spectrum(self, wavelengths):
+    def compute_spectrum(self, wavelengths):
         """Method that will return an array of values corresponding to a plotable spectrum
 
         Arguments
