@@ -402,6 +402,7 @@ class OptDriver(TmmDriver):
             return arr
 
         def binary_to_int(self, bin):
+            #convert binary to an integer
             num = int("".join(str(x) for x in bin), 2)
             return num
 
@@ -476,7 +477,7 @@ class OptDriver(TmmDriver):
                     df = pd.concat([df, df_copy])
                             
 
-
+                #plot train data after a certain amount of iterations
                 if(plot_train_data and i % 200 == 0):
 
                     df_trimmed = df.drop('bitstrings', axis = 1)
@@ -495,28 +496,6 @@ class OptDriver(TmmDriver):
 
                     scaled_array = combined_scaled_array[:-1]
                     scaled_qubo_result = combined_scaled_array[-1:]
-
-    
-                    #plotting in matpllotlib
-                    """
-                    #create scatterplot
-                    fig = plt.figure(figsize = (10,7))
-                    ax = plt.axes(projection = "3d")
-                    #plot data
-                    ax.scatter3D(scaled_array[:,0], scaled_array[:,1], df.loc[:, 'FOM'])
-                    #plot best sample as green dot
-                    ax.scatter3D( scaled_qubo_result[:,0], scaled_qubo_result[:,1], qubo_result_df.loc[:, 'FOM'], color =  'red')
-
-
-                    #add axis labels
-                    ax.set_xlabel('Coordinate 1')
-                    ax.set_ylabel('Coordinate 2')
-                    ax.set_zlabel('FOM')
-
-                    plt.show()
-                    """
-
-
 
                     # plotting with plotly
                     plotly.offline.init_notebook_mode()
@@ -561,7 +540,7 @@ class OptDriver(TmmDriver):
 
 
 
-                #redo ranges every 50 iterations
+                #redo ranges every 400 iterations
                 if i != 0 and i % 400 == 0:
 
                     qubo_result_df  = df[df.FOM == df.FOM.min()]
@@ -623,8 +602,7 @@ class OptDriver(TmmDriver):
 
 
         def update_multilayer(self, bitstrings):
-            """ function to compute the STPV spectral efficiency of a structure with a top-most alloy 
-                layer with composition defined by the bitstring x
+            """ function to compute the FOM from bitstring
             
             Arguments
             ---------
@@ -632,7 +610,7 @@ class OptDriver(TmmDriver):
                 
             Returns
             -------
-            dataframe with stpv_spectral_efficiency for that bitstring and the values represented by the bitstring
+            dataframe with FOM for that bitstring and the values represented by the bitstring
             """
 
 
@@ -855,7 +833,7 @@ class OptDriver(TmmDriver):
                 for i in range(0, len(key)):
                     self.num_bits += int(math.log((len(self.optimization_dict[key])),2))
 
-
+                #need to store methods to switch materials in structure and evaluate new structures
                 for material in materials:
                     if material == "SiO2":
                         materials_methods_inner.append(self.outer_instance.material_SiO2)
@@ -879,6 +857,7 @@ class OptDriver(TmmDriver):
 
             self.materials = []
 
+            #store a list with strings of material names so that bitstrings can be mapped back to structures
             for key in optimization_dict:
                 materials_inner = []
 
@@ -934,8 +913,10 @@ class OptDriver(TmmDriver):
             
             """
 
+            #going to store all data generated in dataframe
             df = pd.DataFrame(columns = ['bitstrings', 'materials_list', 'FOM'])
             
+            #evaluate bitstrings to get figure of merit, FOM to create training data
             for j in range(0, len(bitstrings)):
                 bitstring = bitstrings[j]
                 data_from_bitstring = self.update_multilayer(bitstring)
@@ -946,9 +927,8 @@ class OptDriver(TmmDriver):
 
 
 
-
+            #loop where factorization machine is trained, minima is predicted, evaluated, and added to training data
             for i in range(0, num_iterations):
-
 
                 N = len((df.loc[:, 'bitstrings']).tolist()[0]) 
                 K = K
@@ -989,7 +969,6 @@ class OptDriver(TmmDriver):
 
                 bit_length = int(math.log((len(self.optimization_dict[key])),2))
 
-
                 for layer in key:
                     
                     bits = x[current_bit: current_bit + bit_length]
@@ -1013,6 +992,9 @@ class OptDriver(TmmDriver):
 
         
         def convert_qubo_result_to_df(self, best_sample):
+            """
+            take qubo hamiltonian minima and convert result back to multilayer and place date in dataframe
+            """
 
             new_dict = {}
             binary_list = []
@@ -1048,9 +1030,6 @@ class OptDriver(TmmDriver):
         class _TorchFM(nn.Module):
             def __init__(self, n=None, k=None):
                 super().__init__()
-                # Initially we fill V with random values sampled from Gaussian distribution
-                # NB: use nn.Parameter to compute gradients
-                #self.V = nn.Parameter(torch.rand(n, k, requires_grad=True))
                 self.V = nn.Parameter(torch.FloatTensor(n, k).uniform_(-0.1, 0.1), requires_grad=True)
 
                 self.lin = nn.Linear(n, 1)
@@ -1090,6 +1069,12 @@ class OptDriver(TmmDriver):
 
 
         def train(self, X, y, split_size = 0.7, batch_size = 1, n_epochs = 1, minmaxscale=True, standardscale = False, opt = 'LBFGS', LR = 0.01, l2_lambda = 0.001 , l1_lambda = 0):
+
+
+            """
+            trains the factorization machine model, using data X and y
+            
+            """
 
             # train-test split for model evaluation
             self.X_train_raw, self.X_test_raw, self.y_train_raw, self.y_test_raw = train_test_split(X, y, train_size=split_size, shuffle=True)
@@ -1215,6 +1200,8 @@ class OptDriver(TmmDriver):
 
 
         def eval(self, num_eval = 20):
+            #for testing the inference accuracy of the model after training 
+
             self.model.eval()
             with torch.no_grad():
                 # Test out inference with 5 samples from the original test set
@@ -1234,11 +1221,13 @@ class OptDriver(TmmDriver):
 
 
         def get_weights(self):
+            #get weights from model as list
             model_params = copy.deepcopy(self.best_weights)
             return_list =  [np.array(model_params['lin.bias']), np.array(model_params['lin.weight']), np.array(model_params['V'])]
             return return_list
 
         def return_weights(self):
+            #get weights from model
             params = self.get_weights()
             V = np.array( np.array(params[2]).tolist())
             W = np.array(list(list(np.array(params[1]))[0]), dtype = np.float64)
@@ -1275,7 +1264,7 @@ class OptDriver(TmmDriver):
 
 
         def get_qubo_hamiltonian_minima(self):
-                # define Q_ij = \sum_k V_ik V_jk
+            """convert factorization machine to qubo hamiltonian and solve the model, getting one result"""
 
             params = copy.deepcopy(self.get_weights())
 
@@ -1331,8 +1320,8 @@ class OptDriver(TmmDriver):
 
         
         def get_qubo_hamiltonian_minimas(self, num_samples):
-                # define Q_ij = \sum_k V_ik V_jk
-            #print('hi')
+            """convert factorization machine to qubo hamiltonian and solve the model, getting multiple results"""
+
             params = copy.deepcopy(self.get_weights())
 
             V = np.array(params[2], dtype = np.float64)
