@@ -470,3 +470,17 @@ class ExcitonDriver(SpectrumDriver):
         
         return msd_matrix
         
+    def lorentzian(self, x, x0):
+        """
+        fill in
+         """
+        return 1 ** 2 / ((x - x0) ** 2 + 1 ** 2)
+
+    def abs_spectrum(self, x_values, wavelengths):
+        """
+        fill in
+        """
+        result = np.zeros_like(x_values)
+        for x0 in zip(wavelengths):
+            result += self.lorentzian(x_values, x0)
+        return result
