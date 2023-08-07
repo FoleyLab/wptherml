@@ -244,6 +244,7 @@ class ExcitonDriver(SpectrumDriver):
                 self.exciton_hamiltonian_2D[_n, _m] = (
                     H0 + V
                 )
+        return self.exciton_hamiltonian_2D
 
     def compute_exciton_wavefunction_site_basis(self):
         """
@@ -475,9 +476,8 @@ class ExcitonDriver(SpectrumDriver):
         wavelengths: numpy array of floats 
 
         """
-
         result = np.zeros_like(self.wvlngth_variable)
         for x0 in zip(wavelengths):
             result += self.lorentzian(x0)
-            
+        
         return result
