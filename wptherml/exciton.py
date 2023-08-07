@@ -479,4 +479,5 @@ class ExcitonDriver(SpectrumDriver):
         result = np.zeros_like(self.wvlngth_variable)
         for x0 in zip(wavelengths):
             result += self.lorentzian(x0)
+            
         return result
