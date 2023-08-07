@@ -480,7 +480,7 @@ class ExcitonDriver(SpectrumDriver):
 
         """
 
-        test_eigenvalues = np.linalg.eigh(self.build_exciton_hamiltonian)
+        test_eigenvalues = np.linalg.eigh(self.build_exciton_hamiltonian())
 
         Hartree_to_J = 4.35974 * 10 ** (-18)
         h = 6.626 * 10 ** (-34)
