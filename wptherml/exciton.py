@@ -503,4 +503,4 @@ class ExcitonDriver(SpectrumDriver):
         test_spec = self.spectrum_array()
         spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
 
-        return spectrum_plot
+        return spectrum_plot 
