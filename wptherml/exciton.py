@@ -468,7 +468,7 @@ class ExcitonDriver(SpectrumDriver):
          """
         
 
-        return 0.00367493 ** 2 / ((self.wvlngth_variable - lambda_0) ** 2 + 0.00367493 ** 2)
+        return 5 ** 2 / ((self.wvlngth_variable - lambda_0) ** 2 + 5 ** 2)
 
     def compute_spectrum(self, wavelengths):
         """Method that will return an array of values corresponding to a plotable spectrum
