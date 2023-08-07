@@ -1,4 +1,5 @@
 import numpy as np
+import matplotlib as plt
 from .spectrum_driver import SpectrumDriver
 
 
@@ -478,8 +479,22 @@ class ExcitonDriver(SpectrumDriver):
         wavelengths: numpy array of floats 
 
         """
+
+        test_eigenvalues = np.linalg.eigh(self.build_exciton_hamiltonian)
+
+        Hartree_to_J = 4.35974 * 10 ** (-18)
+        h = 6.626 * 10 ** (-34)
+        lightspeed = 2.998 * 10 ** 8
+        m_to_nm = 10 ** 9
+
+        eigh_J = test_eigenvalues.eigenvalues * Hartree_to_J
+        eigh_wvl = m_to_nm * h * lightspeed / eigh_J
+
         result = np.zeros_like(self.wvlngth_variable)
         for x0 in zip(wavelengths):
             result += self.lorentzian(x0)
         
-        return result
+        test_spec = self.compute_spectrum(eigh_wvl)
+        spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
+
+        return spectrum_plot
