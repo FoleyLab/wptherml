@@ -138,7 +138,6 @@ from sklearn.preprocessing import MinMaxScaler
 import copy
 from pyqubo import Binary
 import neal
-import math
 import pandas as pd
 
 
@@ -766,7 +765,7 @@ class OptDriver(TmmDriver):
 
                 #store number of bits that are needed to represent the material
                 for i in range(0, len(key)):
-                    self.num_bits += int(math.log((len(self.optimization_dict[key])),2))
+                    self.num_bits += int(np.log((len(self.optimization_dict[key])),2))
 
                 #need to store methods to switch materials in structure and evaluate new structures
                 for material in materials:
@@ -902,7 +901,7 @@ class OptDriver(TmmDriver):
             i = 0
             for key in self.optimization_dict:
 
-                bit_length = int(math.log((len(self.optimization_dict[key])),2))
+                bit_length = int(np.log((len(self.optimization_dict[key])),2))
 
                 for layer in key:
                     
@@ -1128,7 +1127,7 @@ class OptDriver(TmmDriver):
             if self.verbose:
                 print("MSE: %.2f" % self.best_mse)
                 print("RMSE: %.2f" % np.sqrt(self.best_mse))
-                
+
 
         def eval(self, num_eval = 20):
             #for testing the inference accuracy of the model after training 
