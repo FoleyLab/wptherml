@@ -1,5 +1,5 @@
 import numpy as np
-import matplotlib as plt
+from matplotlib import pyplot as plt
 from .spectrum_driver import SpectrumDriver
 
 
