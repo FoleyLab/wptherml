@@ -471,7 +471,7 @@ class ExcitonDriver(SpectrumDriver):
 
         return 5 ** 2 / ((self.wvlngth_variable - lambda_0) ** 2 + 5 ** 2)
 
-    def compute_spectrum(self):
+    def spectrum_array(self):
         """Method that will return an array of values corresponding to a plotable spectrum
 
         Arguments
@@ -490,11 +490,17 @@ class ExcitonDriver(SpectrumDriver):
         eigh_J = test_eigenvalues.eigenvalues * Hartree_to_J
         eigh_wvl = m_to_nm * h * lightspeed / eigh_J
 
-        result = np.zeros_like(self.wvlngth_variable)
-        for x0 in zip(wavelengths):
-            result += self.lorentzian(x0)
+        abs_spec = np.zeros_like(self.wvlngth_variable)
+        for x0 in zip(eigh_wvl):
+            abs_spec += self.lorentzian(x0)
         
-        test_spec = self.compute_spectrum(eigh_wvl)
+        return abs_spec
+    
+    def plot_spectrum(self):
+        """method that will take values computed from spectrum_array and plot them vs wavelength
+    
+        """
+        test_spec = self.compute_spectrum()
         spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
 
         return spectrum_plot
