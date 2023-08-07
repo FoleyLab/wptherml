@@ -127,7 +127,6 @@ class _OptDriver(TmmDriver):
 import numpy as np
 from scipy.optimize import minimize
 from .em import TmmDriver
-import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -141,9 +140,6 @@ from pyqubo import Binary
 import neal
 import math
 import pandas as pd
-from sklearn.manifold import MDS
-import plotly.graph_objs as go
-import plotly
 
 
 class OptDriver(TmmDriver):
@@ -475,68 +471,7 @@ class OptDriver(TmmDriver):
                     df_copy  = pd.DataFrame(df_copy.iloc[0:bottom_25,:])
 
                     df = pd.concat([df, df_copy])
-                            
-
-                #plot train data after a certain amount of iterations
-                if(plot_train_data and i % 200 == 0):
-
-                    df_trimmed = df.drop('bitstrings', axis = 1)
-                    df_trimmed = df_trimmed.drop('FOM', axis = 1)
-                    mds = MDS(random_state=0)
-                    
-
-
-                    #transorm minima to mds 
-                    minima_df_trimmed = qubo_result_df.drop('bitstrings', axis = 1)
-                    minima_df_trimmed = minima_df_trimmed.drop('FOM', axis = 1)
-                    #scaled_qubo_result = mds.fit(minima_df_trimmed)
-
-                    combined_df = pd.concat([df_trimmed, minima_df_trimmed], axis=0)
-                    combined_scaled_array = mds.fit_transform(combined_df)
-
-                    scaled_array = combined_scaled_array[:-1]
-                    scaled_qubo_result = combined_scaled_array[-1:]
-
-                    # plotting with plotly
-                    plotly.offline.init_notebook_mode()
-
-                    # Configure the trace.
-                    trace = go.Scatter3d(
-                        x=scaled_array[:,0],  
-                        y=scaled_array[:,1],  
-                        z=df.loc[:, 'FOM'], 
-                        mode='markers',
-                        marker={
-                            'size': 5,
-                            'opacity': 0.7,
-                            'color':'blue'
-                        }
-                    )
-
-                    trace2 = go.Scatter3d(
-                        x=scaled_qubo_result[:,0], 
-                        y=scaled_qubo_result[:,1],  
-                        z=qubo_result_df.loc[:, 'FOM'], 
-                        mode='markers',
-                        marker={
-                            'size': 8,
-                            'opacity': 0.8,
-                            'color':'red'
-                        }
-                    )
-
-                    # Configure the layout.
-                    layout = go.Layout(
-                        margin={'l': 0, 'r': 0, 'b': 0, 't': 0}
-                    )
-
-                    data = [trace, trace2]
-
-                    plot_figure = go.Figure(data=data, layout=layout)
-
-                    # Render the plot.
-                    plotly.offline.iplot(plot_figure)
-
+                        
 
 
 
@@ -1193,11 +1128,7 @@ class OptDriver(TmmDriver):
             if self.verbose:
                 print("MSE: %.2f" % self.best_mse)
                 print("RMSE: %.2f" % np.sqrt(self.best_mse))
-                plt.plot(history, color = 'green')
-                plt.plot(history_train, color = 'red')
-                plt.legend(['test', 'train'])
-                plt.show()
-
+                
 
         def eval(self, num_eval = 20):
             #for testing the inference accuracy of the model after training 
