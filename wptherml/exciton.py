@@ -496,7 +496,7 @@ class ExcitonDriver(SpectrumDriver):
         
         return abs_spec
     
-    def plot_spectrum(self):
+    def compute_spectrum(self):
         """method that will take values computed from spectrum_array and plot them vs wavelength
     
         """
