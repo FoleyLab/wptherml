@@ -500,7 +500,7 @@ class ExcitonDriver(SpectrumDriver):
         """method that will take values computed from spectrum_array and plot them vs wavelength
     
         """
-        test_spec = self.compute_spectrum()
+        test_spec = self.spectrum_array()
         spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
 
         return spectrum_plot
