@@ -1,7 +1,6 @@
 from .spectrum_driver import SpectrumDriver
 from .materials import Materials
 from .therml import Therml
-#from .optdriver import OptDriver
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
