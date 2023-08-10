@@ -1,7 +1,17 @@
 import numpy as np
 from scipy.optimize import minimize
 from .em import TmmDriver
-
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import tqdm
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import MinMaxScaler
+import copy
+from pyqubo import Binary
+import neal
+import pandas as pd
 
 
 
@@ -118,27 +128,6 @@ class _OptDriver(TmmDriver):
         return fom, grad
 
 
-
-        
-
-
-
-
-import numpy as np
-from scipy.optimize import minimize
-from .em import TmmDriver
-import numpy as np
-import torch
-import torch.nn as nn
-import torch.optim as optim
-import tqdm
-from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import StandardScaler
-from sklearn.preprocessing import MinMaxScaler
-import copy
-from pyqubo import Binary
-import neal
-import pandas as pd
 
 
 class OptDriver(TmmDriver):
