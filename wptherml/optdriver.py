@@ -30,9 +30,6 @@ class OptDriver(TmmDriver):
     """
 
 
-
-    
-
     def __init__(self, args):
         #store args
         self.args = args
@@ -48,9 +45,6 @@ class OptDriver(TmmDriver):
         #self.optimize()
 
 
-
-
-    
     def parse_optimization_input(self, args):
         """ Parse additional options related to the optimization, including:
             - the objective function to be optimized 
