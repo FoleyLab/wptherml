@@ -66,10 +66,15 @@ class ExcitonDriver(SpectrumDriver):
         else: 
             self.vert_displacement_between_monomers = np.array([0, 19.633983, 0])
         
+        if "horiz_displacement_between_monomers" in args: 
+            self.vert_displacement_between_monomers = args["horiz_displacement_between_monomers"]
+        else: 
+            self.vert_displacement_between_monomers = np.array([-35.470157, 0, 0])
+        
         if "diag_displacement_between_monomers" in args:
             self.diag_displacement_between_monomers = args["diag_displacement_between_monomers"]
         else:
-            self.diag_displacement_between_monomers = np.array([-17.7348345, 19.633983, 0])
+            self.diag_displacement_between_monomers = np.array([-17.734835, 19.633983, 0])
         
 
 
@@ -236,6 +241,7 @@ class ExcitonDriver(SpectrumDriver):
         exciton_hamiltonian_2D = np.zeros((_N ** 2, _N ** 2))
         dd_p1 = self._compute_2D_dd_coupling(self.vert_displacement_between_monomers) * (9.8 / 8.8)
         dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers) * (9.8 / 8.8)
+        dd_h1 = self._compute_2D_dd_coupling(self.horiz_displacement_between_monomers) * (9.8 / 8.8)
         for _n in range(_N ** 2):
             for _m in range(_N ** 2):
                 H0 = self._compute_H0_element(_n, _m)
@@ -243,6 +249,8 @@ class ExcitonDriver(SpectrumDriver):
                 elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([1, 1])): V = dd_n1
                 elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([-1, 0])): V = dd_p1
                 elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([1, 0])): V = dd_p1
+                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([0, -1])): V = dd_h1
+                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([0, 1])): V = dd_h1
                 else: V = 0
                 exciton_hamiltonian_2D[_n, _m] = (
                     H0 + V
@@ -474,10 +482,6 @@ class ExcitonDriver(SpectrumDriver):
     def spectrum_array(self):
         """Method that will return an array of values corresponding to a plotable spectrum
 
-        Arguments
-        ---------
-        wavelengths: numpy array of floats 
-
         """
 
         test_eigenvalues = np.linalg.eigh(self.build_exciton_hamiltonian())
@@ -498,6 +502,36 @@ class ExcitonDriver(SpectrumDriver):
     
     def compute_spectrum(self):
         """method that will take values computed from spectrum_array and plot them vs wavelength
+    
+        """
+        test_spec = self.spectrum_array()
+        spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
+
+        return spectrum_plot 
+    
+    def spectrum_2D_array(self):
+        """Method that will return an array of values corresponding to a plotable spectrum
+
+        """
+
+        test_eigenvalues = np.linalg.eigh(self.build_2D_hamiltonian())
+
+        Hartree_to_J = 4.35974 * 10 ** (-18)
+        h = 6.626 * 10 ** (-34)
+        lightspeed = 2.998 * 10 ** 8
+        m_to_nm = 10 ** 9
+
+        eigh_J = test_eigenvalues.eigenvalues * Hartree_to_J
+        eigh_wvl = m_to_nm * h * lightspeed / eigh_J
+
+        abs_spec = np.zeros_like(self.wvlngth_variable)
+        for x0 in zip(eigh_wvl):
+            abs_spec += self.lorentzian(x0)
+        
+        return abs_spec
+    
+    def compute_2D_spectrum(self):
+        """method that will take values computed from spectrum_2D_array and plot them vs wavelength
     
         """
         test_spec = self.spectrum_array()
