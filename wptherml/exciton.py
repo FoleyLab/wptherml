@@ -25,6 +25,7 @@ class ExcitonDriver(SpectrumDriver):
         self.parse_input(args)
         # print("Exciton Energy is  ", self.exciton_energy)
         # allocate the exciton Hamiltonian
+
         self.exciton_hamiltonian = np.zeros(
             (self.number_of_monomers, self.number_of_monomers)
         )
@@ -32,6 +33,12 @@ class ExcitonDriver(SpectrumDriver):
             (self.number_of_monomers, 1),  dtype=complex
         )  # <== wavefunction coefficient vector
         
+        # define cartesian coordinates of each monomer
+        self._compute_cartesian_coordinates()
+
+        # build exciton Hamiltonian
+        self.build_exciton_hamiltonian()
+
         # Probably want to allow the user to specify an initial state!
         # but right now just have the initial state with exciton localized on site 1
         self.c_vector[0,0] = 1 + 0j
@@ -43,47 +50,94 @@ class ExcitonDriver(SpectrumDriver):
             self.exciton_energy = args["exciton_energy"]
         else:
             self.exciton_energy = 0.5
-        if "number_of_monomers" in args:
-            self.number_of_monomers = args["number_of_monomers"]
+
+        #############################################################
+        # going to change this to aggregate_shape 
+        #if "number_of_monomers" in args:
+        #    self.number_of_monomers = args["number_of_monomers"]
+        #else:
+        #    self.number_of_monomers = 2
+        #############################################################
+
+        if "aggregate_shape" in args:
+            self.aggregate_shape = args["aggregate_shape"]
+
+        # default shape is (2, 2, 1) -> 4 monomers total, 2 monomers displaced along x-axis and 2 along y-axis, all in plane (2D)
         else:
-            self.number_of_monomers = 2
-        if "displacement_between_monomers" in args:
-            self.displacement_between_monomers = args["displacement_between_monomers"]
+            self.aggregate_shape = (2, 2, 1)
+        
+        # user might accidentally make one element of the tuple zero
+        if self.aggregate_shape[0] == 0 or self.aggregate_shape[1] == 0 or self.aggregate_shape[2] == 0:
+            print(" Invalid shape!  All directions must have at least 1 layer!")
+            print(" Smallest possible shape (1,1,1) is a monomer - please check your input and try again")
+            exit
+
+        self.number_of_monomers = self.aggregate_shape[0] * self.aggregate_shape[1] * self.aggregate_shape[2]
+        # allow the user to specify the displacements along each axis (x, y, z) as a vector
+        if "displacement_vector" in args:
+            self.displacement_vector = args["displacement_vector"]
+
+        # default -> displacement along x = 35.47 a.u, displacement along y = 19.63 a.u., displacement along z = 19.63
         else:
-            self.displacement_between_monomers = np.array([1, 0, 0])
+            self.displacement_vector = [35.47, 19.63, 19.63]
 
         if "transition_dipole_moment" in args:
             self.transition_dipole_moment = args["transition_dipole_moment"]
         else:
             self.transition_dipole_moment = np.array([0, 0, 1])
+
         if "refractive_index" in args:
             self.refractive_index = args["refractive_index"]
         else:
             self.refractive_index = 1
-        
-        if "vert_displacement_between_monomers" in args: 
-            self.vert_displacement_between_monomers = args["vert_displacement_between_monomers"]
-        else: 
-            self.vert_displacement_between_monomers = np.array([0, 19.633983, 0])
-        
-        if "horiz_displacement_between_monomers" in args: 
-            self.vert_displacement_between_monomers = args["horiz_displacement_between_monomers"]
-        else: 
-            self.vert_displacement_between_monomers = np.array([-35.470157, 0, 0])
-        
-        if "diag_displacement_between_monomers" in args:
-            self.diag_displacement_between_monomers = args["diag_displacement_between_monomers"]
-        else:
-            self.diag_displacement_between_monomers = np.array([-17.734835, 19.633983, 0])
-        
 
 
-        self.coords = np.zeros((3, self.number_of_monomers))
-
-        for i in range(self.number_of_monomers):
-            self.coords[:, i] = self.displacement_between_monomers * i
-        
         self.wvlngth_variable = np.arange(0, 400.001, 0.01)
+
+    def _compute_cartesian_coordinates(self):
+        """ Method to assign cartesian coordinates to the monomers
+            
+        Arguments
+        ---------
+        None
+
+        Attributes
+        ----------
+        aggregate_shape : tuple
+            The number of monomers along each coordinate (Nx, Ny, Nz)
+
+        displacement_vector : numpy array of floats
+            The displacement along each coordinate [Dx, Dy, Dz]
+
+        number_of_monomers : int
+            The total number of monomers
+
+        coords : number_of_monomers x 3 numpy array of floats
+            X, Y, Z coordinates for each monomer        
+        """
+
+        # get number of monomers displaced along x, y, and z directions
+        _Nx = self.aggregate_shape[0]
+        _Ny = self.aggregate_shape[1]
+        _Nz = self.aggregate_shape[2]
+
+
+        # compute number of monomers from aggregate_shape
+        self.number_of_monomers = _Nx * _Ny * _Nz
+
+        # initialize coords
+        self.coords = np.zeros((self.number_of_monomers, 3))
+
+        _Nc = 0
+        for i in range(_Nx):
+            for j in range(_Ny):
+                for k in range(_Nz):
+                    self.coords[_Nc, 0] = i * self.displacement_vector[0]
+                    self.coords[_Nc, 1] = j * self.displacement_vector[1]
+                    self.coords[_Nc, 2] = k * self.displacement_vector[2]
+                    _Nc += 1
+
+
 
     def _compute_H0_element(self, n, m):
         """Method to compute the matrix elements of H0
@@ -129,7 +183,7 @@ class ExcitonDriver(SpectrumDriver):
         """
 
         # calculate separation vector between site m and site n
-        _r_vec = self.coords[:, m] - self.coords[:, n]
+        _r_vec = self.coords[m, :] - self.coords[n, :]
 
         # self.transition_dipole_moment is the transition dipole moment!
         if n != m:
@@ -202,7 +256,7 @@ class ExcitonDriver(SpectrumDriver):
                     H0 + V
                 )  # <= Note we will store the elements in hamiltonian attribute
         
-        return self.exciton_hamiltonian
+        
     
     def _find_indices(self, mon_int):
         """Helper function to designate indices of a a matrix element designated by an integer
