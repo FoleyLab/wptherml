@@ -10,7 +10,32 @@ class ExcitonDriver(SpectrumDriver):
     ----------
     radius : float
         the radius of the sphere
+    
+    c_vector : numpy array of flaots
+        vector coefficient associated with the weight of a state in an expansion of the wavefunction
 
+    density_matrix : numpy array of floats
+        Adjoint of a c_vector multiplied by the original c_vector
+
+    exciton_energy : float
+        energy of the monomer exciton in atomic units
+
+    number_of_monomers : int
+        the number of monomers ina  simulation
+
+    transition_dipole_moment : numpy array of floats
+        dipole associated with the transition from the ground state to the excited state in atomic units
+
+    refractice_index : float
+        refractive index of the monomer film
+
+    vertical_displacement_between_monomers : numpy array of floats
+        Displacement in the y direction between monomers in a film in atomic units
+
+    horizhorizhor_displacement_between_monomers_displacement_between_monomers : numpy array of floats
+        Displacement in the x direction between monomers in a film in atomic units
+    
+    
 
     Returns
     -------
@@ -64,6 +89,7 @@ class ExcitonDriver(SpectrumDriver):
 
         # default shape is (2, 2, 1) -> 4 monomers total, 2 monomers displaced along x-axis and 2 along y-axis, all in plane (2D)
         else:
+<<<<<<< Updated upstream
             self.aggregate_shape = (2, 2, 1)
         
         # user might accidentally make one element of the tuple zero
@@ -81,6 +107,9 @@ class ExcitonDriver(SpectrumDriver):
         else:
             self.displacement_vector = [35.47, 19.63, 19.63]
 
+=======
+            self.number_of_monomers = 2
+>>>>>>> Stashed changes
         if "transition_dipole_moment" in args:
             self.transition_dipole_moment = args["transition_dipole_moment"]
         else:
@@ -90,8 +119,34 @@ class ExcitonDriver(SpectrumDriver):
             self.refractive_index = args["refractive_index"]
         else:
             self.refractive_index = 1
+<<<<<<< Updated upstream
 
 
+=======
+        
+        if "vertical_displacement_between_monomers" in args: 
+            self.vertical_displacement_between_monomers = args["vertical_displacement_between_monomers"]
+        else: 
+            self.vertical_displacement_between_monomers = np.array([0, 19.633983, 0])
+        
+        if "horizhorizhor_displacement_between_monomers_displacement_between_monomers" in args: 
+            self.horizhorizhor_displacement_between_monomers_displacement_between_monomers = args["horizhorizhor_displacement_between_monomers_displacement_between_monomers"]
+        else: 
+            self.horizhor_displacement_between_monomers = np.array([-35.470157, 0, 0])
+        
+        if "diag_displacement_between_monomers" in args:
+            self.diag_displacement_between_monomers = args["diag_displacement_between_monomers"]
+        else:
+            self.diag_displacement_between_monomers = np.array([-17.734835, 19.633983, 0])
+        
+
+
+        self.coords = np.zeros((3, self.number_of_monomers))
+
+        for i in range(self.number_of_monomers):
+            self.coords[:, i] = self.vertical_displacement_between_monomers * i
+        
+>>>>>>> Stashed changes
         self.wvlngth_variable = np.arange(0, 400.001, 0.01)
 
     def _compute_cartesian_coordinates(self):
@@ -293,9 +348,9 @@ class ExcitonDriver(SpectrumDriver):
         """
         _N = self.number_of_monomers
         exciton_hamiltonian_2D = np.zeros((_N ** 2, _N ** 2))
-        dd_p1 = self._compute_2D_dd_coupling(self.vert_displacement_between_monomers) * (9.8 / 8.8)
+        dd_p1 = self._compute_2D_dd_coupling(self.vertical_displacement_between_monomers) * (9.8 / 8.8)
         dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers) * (9.8 / 8.8)
-        dd_h1 = self._compute_2D_dd_coupling(self.horiz_displacement_between_monomers) * (9.8 / 8.8)
+        dd_h1 = self._compute_2D_dd_coupling(self.horizhor_displacement_between_monomers) * (9.8 / 8.8)
         for _n in range(_N ** 2):
             for _m in range(_N ** 2):
                 H0 = self._compute_H0_element(_n, _m)
@@ -368,7 +423,7 @@ class ExcitonDriver(SpectrumDriver):
 
         for n in range(self.number_of_monomers):
             _x_n = self.coords[0, n]
-            self.phi[:, n] = _a * np.exp(-((self.x - _x_n) ** 2) / (2 * _c**2))
+            self.phi[:, n] = np.exp(-((self.x - _x_n) ** 2) / (2 * _c**2))
 
         self.x_max = _x_max
         self.x_min = -_dx
@@ -588,7 +643,7 @@ class ExcitonDriver(SpectrumDriver):
         """method that will take values computed from spectrum_2D_array and plot them vs wavelength
     
         """
-        test_spec = self.spectrum_array()
+        test_spec = self.spectrum_2D_array()
         spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
-
-        return spectrum_plot 
+        plt.plot(self.wvlngth_variable, test_spec, 'b-')
+        return spectrum_plot
