@@ -20,8 +20,11 @@ class ExcitonDriver(SpectrumDriver):
     exciton_energy : float
         energy of the monomer exciton in atomic units
 
-    number_of_monomers : int
-        the number of monomers ina  simulation
+        aggregate_shape : tuple
+            The number of monomers along each coordinate (Nx, Ny, Nz)
+
+    displacement_vector : numpy array of flaots
+        displacement between each monomer in cartesian coordinates
 
     transition_dipole_moment : numpy array of floats
         dipole associated with the transition from the ground state to the excited state in atomic units
@@ -29,12 +32,7 @@ class ExcitonDriver(SpectrumDriver):
     refractice_index : float
         refractive index of the monomer film
 
-    vertical_displacement_between_monomers : numpy array of floats
-        Displacement in the y direction between monomers in a film in atomic units
 
-    horizhorizhor_displacement_between_monomers_displacement_between_monomers : numpy array of floats
-        Displacement in the x direction between monomers in a film in atomic units
-    
     
 
     Returns
@@ -76,20 +74,11 @@ class ExcitonDriver(SpectrumDriver):
         else:
             self.exciton_energy = 0.5
 
-        #############################################################
-        # going to change this to aggregate_shape 
-        #if "number_of_monomers" in args:
-        #    self.number_of_monomers = args["number_of_monomers"]
-        #else:
-        #    self.number_of_monomers = 2
-        #############################################################
-
         if "aggregate_shape" in args:
             self.aggregate_shape = args["aggregate_shape"]
 
         # default shape is (2, 2, 1) -> 4 monomers total, 2 monomers displaced along x-axis and 2 along y-axis, all in plane (2D)
         else:
-<<<<<<< Updated upstream
             self.aggregate_shape = (2, 2, 1)
         
         # user might accidentally make one element of the tuple zero
@@ -103,13 +92,10 @@ class ExcitonDriver(SpectrumDriver):
         if "displacement_vector" in args:
             self.displacement_vector = args["displacement_vector"]
 
-        # default -> displacement along x = 35.47 a.u, displacement along y = 19.63 a.u., displacement along z = 19.63
+        # default -> displacement along x = 35.47 a.u, displacement along y = 19.63 a.u., displacement along z = 8.47
         else:
-            self.displacement_vector = [35.47, 19.63, 19.63]
+            self.displacement_vector = [35.47, 19.63, 8.47]
 
-=======
-            self.number_of_monomers = 2
->>>>>>> Stashed changes
         if "transition_dipole_moment" in args:
             self.transition_dipole_moment = args["transition_dipole_moment"]
         else:
@@ -119,34 +105,7 @@ class ExcitonDriver(SpectrumDriver):
             self.refractive_index = args["refractive_index"]
         else:
             self.refractive_index = 1
-<<<<<<< Updated upstream
 
-
-=======
-        
-        if "vertical_displacement_between_monomers" in args: 
-            self.vertical_displacement_between_monomers = args["vertical_displacement_between_monomers"]
-        else: 
-            self.vertical_displacement_between_monomers = np.array([0, 19.633983, 0])
-        
-        if "horizhorizhor_displacement_between_monomers_displacement_between_monomers" in args: 
-            self.horizhorizhor_displacement_between_monomers_displacement_between_monomers = args["horizhorizhor_displacement_between_monomers_displacement_between_monomers"]
-        else: 
-            self.horizhor_displacement_between_monomers = np.array([-35.470157, 0, 0])
-        
-        if "diag_displacement_between_monomers" in args:
-            self.diag_displacement_between_monomers = args["diag_displacement_between_monomers"]
-        else:
-            self.diag_displacement_between_monomers = np.array([-17.734835, 19.633983, 0])
-        
-
-
-        self.coords = np.zeros((3, self.number_of_monomers))
-
-        for i in range(self.number_of_monomers):
-            self.coords[:, i] = self.vertical_displacement_between_monomers * i
-        
->>>>>>> Stashed changes
         self.wvlngth_variable = np.arange(0, 400.001, 0.01)
 
     def _compute_cartesian_coordinates(self):
