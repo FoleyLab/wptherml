@@ -150,6 +150,7 @@ class ExcitonDriver(SpectrumDriver):
                     self.coords[_Nc, 1] = j * self.displacement_vector[1]
                     self.coords[_Nc, 2] = k * self.displacement_vector[2]
                     _Nc += 1
+        return self.coords
 
 
 
