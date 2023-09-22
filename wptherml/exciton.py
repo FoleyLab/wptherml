@@ -286,7 +286,7 @@ class ExcitonDriver(SpectrumDriver):
 
         """
         _N = self.number_of_monomers  # <== _N is just easier to type!
-
+        self.exciton_hamiltonian = np.zeros((self.number_of_monomers, self.number_of_monomers))
         # nested loop to build Hamiltonian
         for _n in range(_N):
             for _m in range(_N):
@@ -295,11 +295,12 @@ class ExcitonDriver(SpectrumDriver):
                 # <== call _compute_dipole_dipole_coupling and store value -> V
                 V = self._compute_dipole_dipole_coupling(
                     _n, _m
-                )  # <== Note self. notation
+                ) * (9.8 / 7.3)  # <== Note self. notation
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
                 self.exciton_hamiltonian[_n, _m] = (
                     H0 + V
                 )  # <= Note we will store the elements in hamiltonian attribute
+        return self.exciton_hamiltonian
         
 
     def build_2D_hamiltonian(self):
@@ -357,7 +358,7 @@ class ExcitonDriver(SpectrumDriver):
 
         """
         # get distance between sites
-        _dx = self.coords[0, 1] - self.coords[0, 0]
+        _dx = self.coords[1, 0] - self.coords[0, 0]
 
         # full-width at half-max based on distance between sites
         _fwhm = _dx / 2
@@ -372,7 +373,7 @@ class ExcitonDriver(SpectrumDriver):
         # get largest site index
         _N_max = self.number_of_monomers - 1
         # get x-value associated with largest site index
-        _x_max = self.coords[0, _N_max] + 3 * _fwhm
+        _x_max = self.coords[_N_max, 0] + 3 * _fwhm
         # create the x-grid from 0 to _x_max
         _len = 500
         self.x = np.linspace(-_dx, _x_max, _len)
@@ -380,7 +381,7 @@ class ExcitonDriver(SpectrumDriver):
         self.phi = np.zeros((_len, self.number_of_monomers))
 
         for n in range(self.number_of_monomers):
-            _x_n = self.coords[0, n]
+            _x_n = self.coords[n, 0]
             self.phi[:, n] = np.exp(-((self.x - _x_n) ** 2) / (2 * _c**2))
 
         self.x_max = _x_max
