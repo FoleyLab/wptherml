@@ -107,7 +107,7 @@ class ExcitonDriver(SpectrumDriver):
             self.refractive_index = 1
 
         self.wvlngth_variable = np.arange(0, 400.001, 0.01)
-
+        self.number_of_monomers = self.aggregate_shape[0] * self.aggregate_shape[1] * self.aggregate_shape[2]
     def _compute_cartesian_coordinates(self):
         """ Method to assign cartesian coordinates to the monomers
             
@@ -134,11 +134,7 @@ class ExcitonDriver(SpectrumDriver):
         _Nx = self.aggregate_shape[0]
         _Ny = self.aggregate_shape[1]
         _Nz = self.aggregate_shape[2]
-
-
-        # compute number of monomers from aggregate_shape
-        self.number_of_monomers = _Nx * _Ny * _Nz
-
+        
         # initialize coords
         self.coords = np.zeros((self.number_of_monomers, 3))
 
@@ -151,6 +147,30 @@ class ExcitonDriver(SpectrumDriver):
                     self.coords[_Nc, 2] = k * self.displacement_vector[2]
                     _Nc += 1
         return self.coords
+    
+    def _compute_r_vec(self):
+        """ Method to compute displacement between 2 monomers
+            
+        Arguments
+        ---------
+        None
+
+        Attributes
+        ----------
+      
+        """
+
+        self.coord_array = self._compute_cartesian_coordinates()
+
+        _Nc = 0
+        self.r_vec = np.zeros((self.number_of_monomers ** 2, 3))
+        for i in range(self.number_of_monomers):
+            for j in range(self.number_of_monomers):
+                self.r_vec[_Nc,:] = self.coord_array[i,:] - self.coord_array[j,:] 
+                _Nc += 1
+        return self.r_vec
+
+    
 
 
 
@@ -198,7 +218,8 @@ class ExcitonDriver(SpectrumDriver):
         """
 
         # calculate separation vector between site m and site n
-        _r_vec = self.coords[m, :] - self.coords[n, :]
+        self.coord_array = self._compute_cartesian_coordinates()
+        _r_vec = self.coord_array[n,:] - self.coord_array[m,:]
 
         # self.transition_dipole_moment is the transition dipole moment!
         if n != m:
@@ -220,8 +241,8 @@ class ExcitonDriver(SpectrumDriver):
 
         return V_nm
     
-    def _compute_2D_dd_coupling(self, r_vector):
-        """ Function that computes the dipole dipole coupling contribution of the total energy of a system based upon mu_d,
+    """def _compute_2D_dd_coupling(self):
+         Function that computes the dipole dipole coupling contribution of the total energy of a system based upon mu_d,
             the transition dipole moment of the donor, mu_a, the transition dipole moment of the acceptor, r_vector, the 
             distance separating the donor and acceptor, and the refractive index, a paremeter that describes the effect of 
             the system on light.
@@ -235,13 +256,22 @@ class ExcitonDriver(SpectrumDriver):
         r : numpy array of floats
             the distance separating the donor and acceptor
         n : float
-            refractive index of the medium
-        """
+            refractive index of the medium 
+        
+        self.r_vector = self._compute_r_vec(self)
 
-        r_scalar = np.sqrt(np.dot(r_vector, r_vector))
-    
-        return (1 / (self.refractive_index ** 2 * r_scalar ** 3)) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * (np.dot(self.transition_dipole_moment, r_vector) * np.dot(r_vector, self.transition_dipole_moment)) / r_scalar ** 2)
+        _Nl = 0
+        self.r_scalar = np.zeros((self.number_of_monomers ** 2, 1))
+        for i in range(self.number_of_monomers ** 2):
+            self.r_scalar[_Nl] = np.sqrt(np.dot(self.r_vector[i,:], self.r_vector[i,:]))
+            _Nl += 1
+        
 
+        _Nc = 0
+        for i in range(self.number_of_monomers ** 2):
+            for j in range(self.number_of_monomers ** 2):
+        return (1 / (self.refractive_index ** 2 * self.r_scalar ** 3)) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * (np.dot(self.transition_dipole_moment, self.r_vector) * np.dot(self.r_vector, self.transition_dipole_moment)) / self.r_scalar ** 2)
+"""
     def build_exciton_hamiltonian(self):
         """Method to build the Frenkel Exciton Hamiltonian
 
@@ -271,29 +301,6 @@ class ExcitonDriver(SpectrumDriver):
                     H0 + V
                 )  # <= Note we will store the elements in hamiltonian attribute
         
-        
-    
-    def _find_indices(self, mon_int):
-        """Helper function to designate indices of a a matrix element designated by an integer
-    
-        Arguments
-        ---------
-        mons : int
-            Integer value that creates n x n array that represents film dimentions
-        mon_int : int
-            Integer value thatg will find a target integer within the matrix which corresponds to a set of indices
-        """
-        film_matrix = np.zeros((self.number_of_monomers, self.number_of_monomers))
-        rows = self.number_of_monomers
-        cols = self.number_of_monomers
-        mon_range = range(self.number_of_monomers ** 2)
-        for r in range(rows):
-            for c in range(cols):
-                mon_idx = r * cols + c
-                film_matrix[r][c] = mon_range[mon_idx]
-    
-        indices = np.column_stack(np.where(film_matrix == mon_int))
-        return indices
 
     def build_2D_hamiltonian(self):
         """ Function that builds the Hamailtonian which models the time evolution of an excitonic system based upon the
@@ -307,20 +314,11 @@ class ExcitonDriver(SpectrumDriver):
         
         """
         _N = self.number_of_monomers
-        exciton_hamiltonian_2D = np.zeros((_N ** 2, _N ** 2))
-        dd_p1 = self._compute_2D_dd_coupling(self.vertical_displacement_between_monomers) * (9.8 / 8.8)
-        dd_n1 = self._compute_2D_dd_coupling(self.diag_displacement_between_monomers) * (9.8 / 8.8)
-        dd_h1 = self._compute_2D_dd_coupling(self.horizhor_displacement_between_monomers) * (9.8 / 8.8)
-        for _n in range(_N ** 2):
-            for _m in range(_N ** 2):
+        exciton_hamiltonian_2D = np.zeros((_N, _N))
+        for _n in range(_N):
+            for _m in range(_N):
                 H0 = self._compute_H0_element(_n, _m)
-                if np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([-1, -1])): V = dd_n1
-                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([1, 1])): V = dd_n1
-                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([-1, 0])): V = dd_p1
-                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([1, 0])): V = dd_p1
-                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([0, -1])): V = dd_h1
-                elif np.all(self._find_indices(_n) == self._find_indices(_m) + np.array([0, 1])): V = dd_h1
-                else: V = 0
+                V = self._compute_dipole_dipole_coupling(_n, _m)
                 exciton_hamiltonian_2D[_n, _m] = (
                     H0 + V
                 )
