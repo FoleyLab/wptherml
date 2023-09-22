@@ -106,7 +106,7 @@ class ExcitonDriver(SpectrumDriver):
         else:
             self.refractive_index = 1
 
-        self.wvlngth_variable = np.arange(0, 400.001, 0.01)
+        self.wvlngth_variable = np.arange(0, 650.001, 0.01)
         self.number_of_monomers = self.aggregate_shape[0] * self.aggregate_shape[1] * self.aggregate_shape[2]
     def _compute_cartesian_coordinates(self):
         """ Method to assign cartesian coordinates to the monomers
@@ -148,31 +148,6 @@ class ExcitonDriver(SpectrumDriver):
                     _Nc += 1
         return self.coords
     
-    def _compute_r_vec(self):
-        """ Method to compute displacement between 2 monomers
-            
-        Arguments
-        ---------
-        None
-
-        Attributes
-        ----------
-      
-        """
-
-        self.coord_array = self._compute_cartesian_coordinates()
-
-        _Nc = 0
-        self.r_vec = np.zeros((self.number_of_monomers ** 2, 3))
-        for i in range(self.number_of_monomers):
-            for j in range(self.number_of_monomers):
-                self.r_vec[_Nc,:] = self.coord_array[i,:] - self.coord_array[j,:] 
-                _Nc += 1
-        return self.r_vec
-
-    
-
-
 
     def _compute_H0_element(self, n, m):
         """Method to compute the matrix elements of H0
@@ -295,16 +270,16 @@ class ExcitonDriver(SpectrumDriver):
                 # <== call _compute_dipole_dipole_coupling and store value -> V
                 V = self._compute_dipole_dipole_coupling(
                     _n, _m
-                ) * (9.8 / 7.3)  # <== Note self. notation
+                )   # <== Note self. notation
                 # <== assign H0 + V to appropriate element of self.exciton_hamiltonian
                 self.exciton_hamiltonian[_n, _m] = (
-                    H0 + V
+                    H0 + V 
                 )  # <= Note we will store the elements in hamiltonian attribute
         return self.exciton_hamiltonian
         
 
-    def build_2D_hamiltonian(self):
-        """ Function that builds the Hamailtonian which models the time evolution of an excitonic system based upon the
+    """def build_2D_hamiltonian(self):
+        Function that builds the Hamailtonian which models the time evolution of an excitonic system based upon the
         field free energy of the system and the dipole dipole coupling of the sysetem
          
         Attribute
@@ -313,7 +288,7 @@ class ExcitonDriver(SpectrumDriver):
             the exciton Hamiltonian, initialized by init and to-be-filled with appropriate values
             by this function
         
-        """
+        
         _N = self.number_of_monomers
         exciton_hamiltonian_2D = np.zeros((_N, _N))
         for _n in range(_N):
@@ -324,7 +299,7 @@ class ExcitonDriver(SpectrumDriver):
                     H0 + V
                 )
         return exciton_hamiltonian_2D
-
+"""
     def compute_exciton_wavefunction_site_basis(self):
         """
         Will compute the single-exciton wavefunctions (approximated as Gaussians) for each site.
@@ -452,8 +427,8 @@ class ExcitonDriver(SpectrumDriver):
         
         return self.density_matrix
 
-    def _2D_rk_exciton(self, dt):
-        """Function that will take c(t0) and H and return c(t0 + dt)
+    """def _2D_rk_exciton(self, dt):
+        Function that will take c(t0) and H and return c(t0 + dt)
 
         Arguments
         ---------
@@ -468,13 +443,14 @@ class ExcitonDriver(SpectrumDriver):
         c_vector : 1xN numpy array of complex floats
             the current wavefunction vector that will be updated
 
-        """
+        
         ci = 0 + 1j
         k_1 = -ci * np.dot(self.exciton_hamiltonian_2D, self.c_vector)
         k_2 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_1 * dt / 2))
         k_3 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_2 * dt / 2))
         k_4 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_3 * dt))
         self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
+        """
 
     def msd_psi(self, dt, N_time):
         """Method that will take dt and a number of time steps and return the mean squared displacement
@@ -577,10 +553,10 @@ class ExcitonDriver(SpectrumDriver):
 
         return spectrum_plot 
     
-    def spectrum_2D_array(self):
-        """Method that will return an array of values corresponding to a plotable spectrum
+    """def spectrum_2D_array(self):
+        Method that will return an array of values corresponding to a plotable spectrum
 
-        """
+        
 
         test_eigenvalues = np.linalg.eigh(self.build_2D_hamiltonian())
 
@@ -599,10 +575,10 @@ class ExcitonDriver(SpectrumDriver):
         return abs_spec
     
     def compute_2D_spectrum(self):
-        """method that will take values computed from spectrum_2D_array and plot them vs wavelength
+        method that will take values computed from spectrum_2D_array and plot them vs wavelength
     
-        """
+        
         test_spec = self.spectrum_2D_array()
         spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
         plt.plot(self.wvlngth_variable, test_spec, 'b-')
-        return spectrum_plot
+        return spectrum_plot"""
