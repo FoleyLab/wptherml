@@ -16,12 +16,10 @@ import sys
 sf = wptherml.SpectrumFactory()
 args = {
 'exciton_energy': 1.5,
-'number_of_monomers' : 2,
-'displacement_between_monomers' : np.array([1, 0, 0]),
+'aggregate_shape': (2,1,1),
+'displacement_vector' : [100, 0, 0],  
 'transition_dipole_moment' : np.array([0, 0, 0.5]),
 'refractive_index' : 1.0,
-'vert_displacement_between_monomers' : [0,1,0],
-'diag_displacement_between_monomers' : [-1,1,0]
 }
 
 exciton_test = sf.spectrum_factory('Frenkel', args)
@@ -35,8 +33,8 @@ exciton_test = sf.spectrum_factory('Frenkel', args)
 """
 dynamics_args = {
 'exciton_energy': 1.5,
-'number_of_monomers' : 2,
-'displacement_between_monomers' : np.array([1, 0, 0]),
+'aggregate_shape': (2,1,1),
+'displacement_vector' : [100, 0, 0],  
 'transition_dipole_moment' : np.array([0, 0, 0.0]),
 'refractive_index' : 1.0,
 }
@@ -79,30 +77,6 @@ def test_build_exciton_hamiltonian():
 
     assert np.allclose(_H_expected, exciton_test.exciton_hamiltonian)
 
-def test_build_2D_hamiltonian():
-    # test case based on 2x2 system defined in args above
-    _H_expected = np.zeros((4,4))
-    _H_expected[0,0] = exciton_test.exciton_energy
-    _H_expected[1,1] = exciton_test.exciton_energy
-    _H_expected[2,2] = exciton_test.exciton_energy
-    _H_expected[3,3] = exciton_test.exciton_energy
-    _H_expected[0,1] = 0
-    _H_expected[0,2] = 0.27840909
-    _H_expected[0,3] = 0.09843248
-    _H_expected[1,0] = 0
-    _H_expected[1,2] = 0
-    _H_expected[1,3] = 0.27840909
-    _H_expected[2,0] = 0.27840909
-    _H_expected[2,1] = 0
-    _H_expected[2,3] = 0
-    _H_expected[3,0] = 0.09843248
-    _H_expected[3,1] = 0.27840909
-    _H_expected[3,2] = 0
-
-
-    exciton_test.build_2D_hamiltonian()
-
-    assert np.allclose(_H_expected, exciton_test.exciton_hamiltonian_2D)
 
 def test_rk_exciton():
     ci = 0+1j
@@ -122,3 +96,5 @@ def test_rk_exciton():
         dynamics_test._rk_exciton(dt1)
 
     assert np.allclose(c_analytical, dynamics_test.c_vector)
+
+
