@@ -216,37 +216,7 @@ class ExcitonDriver(SpectrumDriver):
 
         return V_nm
     
-    """def _compute_2D_dd_coupling(self):
-         Function that computes the dipole dipole coupling contribution of the total energy of a system based upon mu_d,
-            the transition dipole moment of the donor, mu_a, the transition dipole moment of the acceptor, r_vector, the 
-            distance separating the donor and acceptor, and the refractive index, a paremeter that describes the effect of 
-            the system on light.
-    
-        Arguments
-        ---------
-        mu_d : numpy array of floats
-         the transition dipole mooment of the donor
-        mu_a : numpy array of floats
-            the transition dipole moment of the acceptor
-        r : numpy array of floats
-            the distance separating the donor and acceptor
-        n : float
-            refractive index of the medium 
-        
-        self.r_vector = self._compute_r_vec(self)
 
-        _Nl = 0
-        self.r_scalar = np.zeros((self.number_of_monomers ** 2, 1))
-        for i in range(self.number_of_monomers ** 2):
-            self.r_scalar[_Nl] = np.sqrt(np.dot(self.r_vector[i,:], self.r_vector[i,:]))
-            _Nl += 1
-        
-
-        _Nc = 0
-        for i in range(self.number_of_monomers ** 2):
-            for j in range(self.number_of_monomers ** 2):
-        return (1 / (self.refractive_index ** 2 * self.r_scalar ** 3)) * (np.dot(self.transition_dipole_moment, self.transition_dipole_moment) - 3 * (np.dot(self.transition_dipole_moment, self.r_vector) * np.dot(self.r_vector, self.transition_dipole_moment)) / self.r_scalar ** 2)
-"""
     def build_exciton_hamiltonian(self):
         """Method to build the Frenkel Exciton Hamiltonian
 
@@ -427,31 +397,6 @@ class ExcitonDriver(SpectrumDriver):
         
         return self.density_matrix
 
-    """def _2D_rk_exciton(self, dt):
-        Function that will take c(t0) and H and return c(t0 + dt)
-
-        Arguments
-        ---------
-        dt : float
-            the increment in time in atomic units
-
-        Attributes
-        ----------
-        exciton_hamiltonian : NxN numpy array of floats
-            the Hamiltonian matrix that drives the dynamics
-
-        c_vector : 1xN numpy array of complex floats
-            the current wavefunction vector that will be updated
-
-        
-        ci = 0 + 1j
-        k_1 = -ci * np.dot(self.exciton_hamiltonian_2D, self.c_vector)
-        k_2 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_1 * dt / 2))
-        k_3 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_2 * dt / 2))
-        k_4 = -ci * np.dot(self.exciton_hamiltonian_2D, (self.c_vector + k_3 * dt))
-        self.c_vector = self.c_vector + (1 / 6) * (k_1 + 2 * k_2 + 2 * k_3 + k_4) * dt
-        """
-
     def msd_psi(self, dt, N_time):
         """Method that will take dt and a number of time steps and return the mean squared displacement
 
@@ -553,32 +498,3 @@ class ExcitonDriver(SpectrumDriver):
 
         return spectrum_plot 
     
-    """def spectrum_2D_array(self):
-        Method that will return an array of values corresponding to a plotable spectrum
-
-        
-
-        test_eigenvalues = np.linalg.eigh(self.build_2D_hamiltonian())
-
-        Hartree_to_J = 4.35974 * 10 ** (-18)
-        h = 6.626 * 10 ** (-34)
-        lightspeed = 2.998 * 10 ** 8
-        m_to_nm = 10 ** 9
-
-        eigh_J = test_eigenvalues.eigenvalues * Hartree_to_J
-        eigh_wvl = m_to_nm * h * lightspeed / eigh_J
-
-        abs_spec = np.zeros_like(self.wvlngth_variable)
-        for x0 in zip(eigh_wvl):
-            abs_spec += self.lorentzian(x0)
-        
-        return abs_spec
-    
-    def compute_2D_spectrum(self):
-        method that will take values computed from spectrum_2D_array and plot them vs wavelength
-    
-        
-        test_spec = self.spectrum_2D_array()
-        spectrum_plot = plt.plot(self.wvlngth_variable, test_spec, 'b-')
-        plt.plot(self.wvlngth_variable, test_spec, 'b-')
-        return spectrum_plot"""
