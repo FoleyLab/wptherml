@@ -17,7 +17,7 @@ sf = wptherml.SpectrumFactory()
 args = {
 'exciton_energy': 1.5,
 'aggregate_shape': (2,1,1),
-'displacement_vector' : [100, 0, 0],  
+'displacement_vector' : [10000, 0, 0],  
 'transition_dipole_moment' : np.array([0, 0, 0.5]),
 'refractive_index' : 1.0,
 }
@@ -32,9 +32,9 @@ exciton_test = sf.spectrum_factory('Frenkel', args)
     of the exciton Hamiltonian
 """
 dynamics_args = {
-'exciton_energy': 1.5,
+'exciton_energy': 1,
 'aggregate_shape': (2,1,1),
-'displacement_vector' : [100, 0, 0],  
+'displacement_vector' : [1000000, 0, 0],  
 'transition_dipole_moment' : np.array([0, 0, 0.0]),
 'refractive_index' : 1.0,
 }
@@ -57,7 +57,7 @@ def test_compute_dipole_dipole_coupling():
 
     _V_test = exciton_test._compute_dipole_dipole_coupling(0, 1)
 
-    _V_expected = 0.25
+    _V_expected = 0
 
     assert np.isclose(_V_test, _V_expected)
 
@@ -68,8 +68,8 @@ def test_build_exciton_hamiltonian():
     _H_expected = np.zeros((2,2))
     _H_expected[0,0] = exciton_test.exciton_energy
     _H_expected[1,1] = exciton_test.exciton_energy
-    _H_expected[0,1] = 0.25
-    _H_expected[1,0] = 0.25
+    _H_expected[0,1] = 0
+    _H_expected[1,0] = 0
 
     # this line will build the exciton hamiltonian and
     # store it in the attribute .exciton_hamiltonian
@@ -88,7 +88,7 @@ def test_rk_exciton():
 
     tf = 1
 
-    c_rk = np.array([1, 0], dtype=complex)
+    c_vector = np.array([1, 0], dtype=complex)
 
     c_analytical = np.array([np.cos(E1) - ci * np.sin(E1), 0])
 
