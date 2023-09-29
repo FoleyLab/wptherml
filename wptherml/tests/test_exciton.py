@@ -90,7 +90,7 @@ def test_rk_exciton():
 
     c_vector = np.array([1, 0], dtype=complex)
 
-    c_analytical = np.array([np.cos(E1) - ci * np.sin(E1), 0])
+    c_analytical = np.array([np.cos(E1) - ci * np.sin(E1), 0 + 0j])
 
     for i in range(1, 101):
         dynamics_test._rk_exciton(dt1)
