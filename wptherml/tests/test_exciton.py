@@ -88,8 +88,6 @@ def test_rk_exciton():
 
     tf = 1
 
-    c_vector = np.array([1, 0], dtype=complex)
-
     c_analytical = np.array([[np.cos(E1) - ci * np.sin(E1)], [0 + 0j]])
 
     for i in range(1, 101):
@@ -101,15 +99,15 @@ def test_rk_density_matrix():
     ci = 0+1j
 
     E1 = dynamics_test.exciton_energy
+    E2 = dynamics_test.exciton_energy
     dynamics_test.build_exciton_hamiltonian()
+
 
     dt1 = 0.01
 
     tf = 1
 
-    density_matrix = np.array([0, 1], [1, 0], dtype=complex)
-
-    D_analytical = np.array([0 + 0j, np.cos(E1) - ci * np.sin(E1)], [np.cos(E1) - ci * np.sin(E1), 0 + 0j])
+    D_analytical = np.array([[np.cos(E1-E2) - ci * np.sin(E1-E2), 0 + 0j], [0 + 0j, 0 + 0j]])
 
     for i in range(1, 101):
         dynamics_test._rk_exciton_density_matrix(dt1)
