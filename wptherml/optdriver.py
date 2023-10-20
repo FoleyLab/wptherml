@@ -36,6 +36,8 @@ class OptDriver(TmmDriver):
         # store args
         self.args = args
 
+        self.start_time = time.time()
+
         # ordinary tmm driver input
         args = {k.lower(): v for k, v in args.items()}
         self.parse_input(args)
@@ -175,10 +177,11 @@ class OptDriver(TmmDriver):
             func = self.compute_fom_and_gradient_from_thickness_array,
             x0 = x_start,
             minimizer_kwargs=minimizer_kwargs,
-            niter=100,
+            niter=50,
             take_step=self._take_step,
             callback=self._print_callback,
         )
+        return ret
 
     def _take_step(self,x):
         """ method to apply random perturbations to 
@@ -189,15 +192,28 @@ class OptDriver(TmmDriver):
 
         dim = len(_x_perturbed)
         for i in range(0,dim):
-            _x_range = int(_x_perturbed[i] * self.random_perturbation_scale)
+            _x_curr = _x_perturbed[i]
+            if _x_curr * self.random_perturbation_scale > 1.0:
+                _x_range = int(_x_curr * self.random_perturbation_scale)
+            else:
+                _x_range = 1
             _pert = np.random.randint(-_x_range, _x_range)
-            _x_perturbed[i] += _pert
+            # we don't want to perturb to less than the lower bound or greater than the upper bound
+            _x_try = _x_curr + _pert 
+            if _x_try > self.lower_bound and _x_try < self.upper_bound:
+                _x_perturbed[i] = _x_try
+            elif _x_try <= self.lower_bound: 
+                _x_perturbed[i] = _x_curr + np.abs(_pert) #<== increase in thickness
+            elif _x_try >= self.upper_bound:
+                _x_perturbed[i] = _x_curr - np.abs(_pert) #<== decrease in thickness
+            else:
+                _x_perturbed[i] = _x_curr #<== do not change
             
         return _x_perturbed
     
     def _print_callback(self,x, f, accepted):
         c_time = time.time()
-        print(f" Tims is {c_time}")
+        print(f"\n Time elapsed is {c_time-self.start_time}")
         print(f" Current structure is {x}")
         print(f" Current FOM is {f}")
 
@@ -215,8 +231,23 @@ class OptDriver(TmmDriver):
         # compute_selective_mirror_fom_gradient calls compute_spectrum_gradient()
         self.compute_selective_mirror_fom_gradient()
 
-        fom = self.reflection_efficiency
-        grad = self.reflection_efficiency_gradient
+        fom_1 = self.reflection_efficiency
+        grad_1 = self.reflection_efficiency_gradient
+
+        fom_2 = self.reflection_selectivity
+        grad_2 = self.reflection_selectivity_gradient
+
+        fom_3 = self.transmission_efficiency
+        grad_3 = self.transmission_efficiency_gradient
+
+        _expected_fom = self.reflection_efficiency_weight * fom_1 
+        _expected_fom += self.reflection_selectivity_weight * fom_2
+        _expected_fom += self.transmission_efficiency_weight * fom_3 
+
+        fom = self.selective_mirror_fom
+        grad = self.selective_mirror_fom_gradient
+
+        assert np.isclose(_expected_fom, fom)
 
         if self.minimization:
             fom *= 1

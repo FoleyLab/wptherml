@@ -231,18 +231,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             #print("Found transmission efficiency arg")
             self.transmission_efficiency_weight = args["transmission_efficiency_weight"]
         else:
-            self.transmission_efficiency_weight = 0.5
+            self.transmission_efficiency_weight = 1./3.
+        
         if "reflection_efficiency_weight" in args:
             self.reflection_efficiency_weight = args["reflection_efficiency_weight"]
         else:
-            self.reflection_efficiency_weight = 0.5
+            self.reflection_efficiency_weight = 1./3.
+
+        if "reflection_selectivity_weight" in args:
+            self.reflection_selectivity_weight = args["reflection_selectivity_weight"]
+        else:
+            self.reflection_selectivity_weight = 1./3.
+
+
 
         _tot_weight = (
-            self.transmission_efficiency_weight + self.reflection_efficiency_weight
+            self.transmission_efficiency_weight + self.reflection_efficiency_weight + self.reflection_selectivity_weight
         )
         print(_tot_weight)
         self.transmission_efficiency_weight /= _tot_weight
         self.reflection_efficiency_weight /= _tot_weight
+        self.reflection_selectivity_weight /= _tot_weight
 
         # user can specify which layers to compute gradients with respect to
         # i.e. for a structure like ['Air', 'SiO2', 'Ag', 'TiO2', 'Air]
@@ -1533,19 +1542,25 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             the box function that spans the window where we want high reflectivity
 
         self.reflection_efficiency : float
-            the reflection fom: (int R(lambda) * reflective_envelope d lambda) / (int R(lambda) d lambda)
+            the first reflection fom: (int R(lambda) * reflective_envelope d lambda) / (int R(lambda) d lambda)
+
+        self.reflection_selectivity : float
+            the second reflection fom: (int R(lambda) * reflective_envelope d lambda) / (int reflective_envelope d lambda) 
 
         self.transmission_efficiency : float
             the transmission fom: (int T(lambda) * transmissive_envelope d lambda) / (int tranmissive_envelope d lambda)
 
         self.selective_mirror_fom : float
-            the composite figure of merit defined as f = a * transmission_efficiency + b * reflection_efficiency
+            the composite figure of merit defined as f = a * transmission_efficiency + b * reflection_efficiency + c * reflection_selectivity
 
         self.transmission_efficiency_weight : float
-            the weight of transmission efficiency in the composite figure of merit (a) satisfying a + b = 1
+            the weight of transmission efficiency in the composite figure of merit (a) satisfying a + b + c = 1
 
         self.reflection_efficiency_weight : float
-            the weight of the reflection efficiency in the composite figure of merit (b) satisfying a + b = 1
+            the weight of the reflection efficiency in the composite figure of merit (b) satisfying a + b + c = 1
+
+        self.reflection_selectivity_weight : float
+            the weight of the reflection selectivity in the composite figure of merit (c) satisfying a + b + c = 1
         
         Returns
         -------
@@ -1572,6 +1587,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.reflectivity_array, self.wavelength_array
         )
 
+        # R_selective_denom -> integrate the reflection envelope
+        _r_select_denom = np.trapz(
+           self.reflective_envelope, self.wavelength_array 
+        )
+
         # if transmissivity_envelope is zero everywhere, this will give nan.. handle
         # by just giving value of zero the transmission_efficiency
 
@@ -1588,9 +1608,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         else: 
             self.reflection_efficiency = (_ur / _r_denom)
 
+        if _r_select_denom == 0.0:
+            self.reflection_selectivity = 0.0
+        else:
+            self.reflection_selectivity = (_ur / _r_select_denom) 
+
         self.selective_mirror_fom = (
             self.transmission_efficiency_weight * self.transmission_efficiency
             + self.reflection_efficiency_weight * self.reflection_efficiency
+            + self.reflection_selectivity_weight * self.reflection_selectivity
         )
 
     def compute_selective_mirror_fom_gradient(self):
@@ -1655,9 +1681,13 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # integrate the thermal emission spectrum over wavelength using np.trapz
         self.transmission_efficiency_gradient = np.zeros(_ngr)
         self.reflection_efficiency_gradient = np.zeros(_ngr)
+        self.reflection_selectivity_gradient = np.zeros(_ngr)
 
         # this term is in the denominator of each of the eta_T' elements
         _eta_T_denom = np.trapz(self.transmissive_envelope, self.wavelength_array)
+
+        # this term is in the denominator of each of the sel_R' elements
+        _sel_R_denom = np.trapz(self.reflective_envelope, self.wavelength_array)
 
         # these terms are in each of the eta_R' elements
         _f_l = np.trapz(
@@ -1674,6 +1704,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                     self.wavelength_array,
                 )
                 / _eta_T_denom
+            )
+            # can compute sel_R'
+            self.reflection_selectivity_gradient[i] = (
+                np.trapz(
+                    self.reflective_envelope 
+                    * self.reflectivity_gradient_array[:,i],
+                    self.wavelength_array
+                )
+                / _sel_R_denom
             )
 
             # need to get parts of g'(lambda) and f'(lambda) terms
@@ -1692,4 +1731,5 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.selective_mirror_fom_gradient = (
             self.transmission_efficiency_weight * self.transmission_efficiency_gradient
             + self.reflection_efficiency_weight * self.reflection_efficiency_gradient
+            + self.reflection_selectivity_weight * self.reflection_selectivity_gradient
         )
