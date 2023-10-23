@@ -373,6 +373,12 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Au(i)
             elif _lm == "hfo2":
                 self.material_HfO2(i)
+            elif _lm == "hfo2_udm":
+                self.material_HfO2_UDM(i) #<== from this source http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk - recommended for ALD HfO2
+            elif _lm == "hfo2_udm_no_loss":
+                self.material_HfO2_UDM_v2(i) #<== from this source http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk but k set to 0.0
+            elif _lm == "mgf2":
+                self.material_MgF2_UDM(i) #<== from this source http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk - recommended for ALD MgF2
             elif _lm == "pb":
                 self.material_Pb(i)
             elif _lm == "polystyrene":
@@ -389,8 +395,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Si(i)
             elif _lm == "sio2":
                 self.material_SiO2(i)
-            elif _lm == "sio2_udm":
+            elif _lm == "sio2_udm": 
                 self.material_SiO2_UDM(i)
+            elif _lm == "sio2_udm_vs": #<== from this source http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk - recommended for ALD SiO2
+                self.material_SiO2_UDM_v2(i)
             elif _lm == "ta2o5":
               self.material_Ta2O5(i)
             elif _lm == "tin":
