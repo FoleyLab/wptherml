@@ -7,6 +7,7 @@ import wptherml
 import numpy as np
 import pytest
 import sys
+from numpy import linalg
 
 
 sf = wptherml.SpectrumFactory()
@@ -231,6 +232,9 @@ def test_rk_density_matrix():
     E1 = dynamics_test.exciton_energy
     E2 = dynamics_test.exciton_energy
     dynamics_test.build_exciton_hamiltonian()
+    test_diag = dynamics_test.exciton_hamiltonian
+    V_1 = 
+
 
 
     dt1 = 0.01
