@@ -52,7 +52,10 @@ class ExcitonDriver(SpectrumDriver):
         self.exciton_hamiltonian = np.zeros(
             (self.number_of_monomers, self.number_of_monomers)
         )
-       
+        self.c_vector = np.zeros(
+            (self.number_of_monomers, 1),  dtype=complex
+        )  # <== wavefunction coefficient vector
+        
         # define cartesian coordinates of each monomer
         self._compute_cartesian_coordinates()
 
@@ -61,7 +64,8 @@ class ExcitonDriver(SpectrumDriver):
 
         # Probably want to allow the user to specify an initial state!
         # but right now just have the initial state with exciton localized on site 1
-        
+        self.c_vector[0,0] = 1 + 0j
+        self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
 
     def parse_input(self, args):
         if "exciton_energy" in args:
@@ -103,12 +107,6 @@ class ExcitonDriver(SpectrumDriver):
 
         self.wvlngth_variable = np.arange(0, 650.001, 0.01)
         self.number_of_monomers = self.aggregate_shape[0] * self.aggregate_shape[1] * self.aggregate_shape[2]
-
-        self.c_vector = np.zeros(
-            (self.number_of_monomers, 1),  dtype=complex
-        )  # <== wavefunction coefficient vector
-        self.c_vector[0,0] = 1 + 0j
-        self.density_matrix = np.dot(self.c_vector, np.conj(self.c_vector.T))
     def _compute_cartesian_coordinates(self):
         """ Method to assign cartesian coordinates to the monomers
             
