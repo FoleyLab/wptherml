@@ -232,7 +232,8 @@ def test_rk_density_matrix():
     E1 = dynamics_test.exciton_energy
     E2 = dynamics_test.exciton_energy
     dynamics_test.build_exciton_hamiltonian()
-    test_diag = dynamics_test.exciton_hamiltonian
+    test_H = dynamics_test.exciton_hamiltonian
+    test_diag = np.linalg.eigh(test_H)
     V_1 = test_diag.eigenvector[:,0]
     V_2 = test_diag.eigenvector[:,1]
 
