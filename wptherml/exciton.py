@@ -84,7 +84,7 @@ class ExcitonDriver(SpectrumDriver):
         if self.aggregate_shape[0] == 0 or self.aggregate_shape[1] == 0 or self.aggregate_shape[2] == 0:
             print(" Invalid shape!  All directions must have at least 1 layer!")
             print(" Smallest possible shape (1,1,1) is a monomer - please check your input and try again")
-            exit
+            
 
         self.number_of_monomers = self.aggregate_shape[0] * self.aggregate_shape[1] * self.aggregate_shape[2]
         # allow the user to specify the displacements along each axis (x, y, z) as a vector
