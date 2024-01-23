@@ -1325,7 +1325,7 @@ class Materials:
             >>> material_HfO2_UDM(1, wavelength_range="visible") -> layer 1 will be "lossless" HfO2 from the UDM data set good from 0.01 to 100 eV
             """
             # get path to the Si02 data file
-            file_path = path + "data/HfO2_no_loss.txt"
+            file_path = path + "data/HfO2_udm_no_loss.txt"
             # now read Tin data into a numpy array
             file_data = np.loadtxt(file_path)
             # file_path[:,0] -> wavelengths in meters

@@ -397,7 +397,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_SiO2(i)
             elif _lm == "sio2_udm": 
                 self.material_SiO2_UDM(i)
-            elif _lm == "sio2_udm_vs": #<== from this source http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk - recommended for ALD SiO2
+            elif _lm == "sio2_udm_v2": #<== from this source http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk - recommended for ALD SiO2
                 self.material_SiO2_UDM_v2(i)
             elif _lm == "ta2o5":
               self.material_Ta2O5(i)
