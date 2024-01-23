@@ -4,7 +4,7 @@ from .spectrum_driver import SpectrumDriver
 from .mie import MieDriver
 from .em import TmmDriver
 from .therml import Therml
-
+from .optdriver import OptDriver
 
 class SpectrumFactory:
     def spectrum_factory(self, spectrum_toolkit, args):
@@ -12,6 +12,8 @@ class SpectrumFactory:
             return MieDriver(args)
         elif spectrum_toolkit == "Tmm":
             return TmmDriver(args)
+        elif spectrum_toolkit == "Opt":
+            return OptDriver(args)
         else:
             raise TypeError("Toolkit not found")
 

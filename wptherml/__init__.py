@@ -10,6 +10,7 @@ from .mie import MieDriver
 from .therml import Therml
 from .factory import SpectrumFactory
 from .materials import Materials
+from .optdriver import OptDriver
 
 # Handle versioneer
 from ._version import get_versions

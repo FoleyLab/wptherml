@@ -12,6 +12,7 @@ test_args = {
     # thickness of each layer in meters matching the order of the materials... terminal layers
     # are infinite, so of course we say "0"
     "thickness_list": [0, 200e-9, 10e-9, 0], 
+    "optimization" : True,
 }
 
 # the top-level driver class is called "SpectrumFactory" - create an instance of it
@@ -30,8 +31,8 @@ plt.plot(ts.wavelength_array, ts.emissivity_array)
 plt.show()
 
 # if you want to see the numerical values, you can just print these... they are numpy arrays
-print(ts.wavelength_array)
-print(ts.reflectivity_array)
+#print(ts.wavelength_array)
+#print(ts.reflectivity_array)
 
 # the commented stuff below renders the color of the multilayer.
 # there are many more features, ask if interested!
@@ -43,6 +44,8 @@ print(ts.reflectivity_array)
 
  # Protanopia Deuteranopia Tritanopia
 #print(test.reflectivity_array[0])
+
+ts.optimize(ts.thickness_array)
 
 
 
