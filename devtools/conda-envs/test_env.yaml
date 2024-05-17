@@ -1,8 +1,5 @@
 name: test
 
-miniconda-version: 
-  - latest
-
 channels:
   - conda-forge
   - defaults
