@@ -10,7 +10,7 @@ WPTherml v1.1.0
 [![Release to PyPI](https://github.com/FoleyLab/wptherml/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/FoleyLab/wptherml/actions/workflows/release.yml)
 [![Documentation Status](https://readthedocs.org/projects/wptherml/badge/?version=latest)](https://wptherml.readthedocs.io/en/latest/?badge=latest)
 
-A python package for modeling light-matter interactions in nanoscale and molecular materials!
+A Python package for modeling light-matter interactions in nanoscale and molecular materials!
 
 ### [Quickstart](https://github.com/FoleyLab/wptherml/blob/main/docs/quickstart.rst)
 
