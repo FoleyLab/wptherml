@@ -18,13 +18,13 @@ dependencies:
   - numpy 
   - matplotlib
   - scipy
-  - pytorch
-  - scikit-learn
-  - pandas
-  - tqdm
+#  - pytorch
+#  - scikit-learn
+#  - pandas
+#  - tqdm
 
 
     # Pip-only installs
-  - pip:
-    - pyqubo
+#  - pip:
+#    - pyqubo
   #  - codecov
