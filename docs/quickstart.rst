@@ -21,10 +21,6 @@ Activate this environment by typing
 
 `conda activate wptherml`
 
-Once activated, install `pyqubo` using
-
-`pip install pyqubo`
-
 Development Install
 *******************
 After you have created and activated your wptherml environment, you can perform a ddevelopment install from the top-level wptherml directory
