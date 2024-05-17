@@ -1,9 +1,11 @@
 name: test
+
+miniconda-version: "latest"
+
 channels:
-
   - conda-forge
-
   - defaults
+
 dependencies:
     # Base depends
   - python
@@ -13,7 +15,6 @@ dependencies:
   - pytest
   - pytest-cov
   - codecov
-
 
     # Package-dependencies
   - numpy 
@@ -28,5 +29,4 @@ dependencies:
     # Pip-only installs
   - pip:
     - pyqubo
-
   #  - codecov
