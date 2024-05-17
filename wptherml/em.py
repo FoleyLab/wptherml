@@ -228,7 +228,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.possible_materials = ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
 
         if "transmission_efficiency_weight" in args:
-            #print("Found transmission efficiency arg")
+            print("Found transmission efficiency arg")
             self.transmission_efficiency_weight = args["transmission_efficiency_weight"]
         else:
             self.transmission_efficiency_weight = 1./3.
