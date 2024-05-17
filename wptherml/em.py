@@ -228,20 +228,25 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.possible_materials = ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
 
         if "transmission_efficiency_weight" in args:
-            print("Found transmission efficiency arg")
+            print("Found transmission efficiency weight (TEW) arg")
             self.transmission_efficiency_weight = args["transmission_efficiency_weight"]
         else:
             self.transmission_efficiency_weight = 1./3.
+        print(F'TEW is {self.transmission_efficiency_weight}')
         
         if "reflection_efficiency_weight" in args:
             self.reflection_efficiency_weight = args["reflection_efficiency_weight"]
+            print("Found reflection efficiency weight (REW) arg")
         else:
             self.reflection_efficiency_weight = 1./3.
+        print(F'REW is {self.reflection_efficiency_weight}')
 
         if "reflection_selectivity_weight" in args:
+            print("Found reflection selectivity weight (RSW) arg")
             self.reflection_selectivity_weight = args["reflection_selectivity_weight"]
         else:
             self.reflection_selectivity_weight = 1./3.
+        print(F'RSW is {self.reflection_selectivity_weight}')
 
 
 

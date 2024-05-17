@@ -101,12 +101,12 @@ class Materials:
     def material_from_file(self, layer_number, file_name):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be
-               from a test file with name "file_name" where the text file is ordered:
+               from a text file with name "file_name" where the text file is ordered:
                column 1: wavelength in meters, increasing order
                column 2: real part of refractive index corresponding to wavelengths in col 1
                column 3: imaginary part of refractive index corresponding to wavelengths in col 1
-               the file is expected to be in the directory $wpspecdir/wptherml/data
-               where $wpspecdir is the full path to the directory where you have wptherml installed
+               the file is expected to be in the directory $wpthermldir/wptherml/data
+               where $wpthermldir is the full path to the directory where you have wptherml installed
 
             Arguments
             ----------
