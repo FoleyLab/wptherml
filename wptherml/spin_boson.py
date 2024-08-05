@@ -36,7 +36,7 @@ class SpinBosonDriver(SpectrumDriver):
     single_exciton_basis : numpy matrix
         basis states for a single excition
 
-    N_exciton_basis : numpy matrix
+    n_exciton_basis : numpy matrix
         basis states for the collection of N excitons
 
     boson_basis : numpy matrix
@@ -116,7 +116,87 @@ class SpinBosonDriver(SpectrumDriver):
         """
         self.boson_basis = np.eye(self.number_of_boson_levels)
 
+    def build_exciton_basis(self):
+      """ build the basis for the N excitonic subsystems
 
+      Args
+      ------
+      None
+
+      Attributes
+      ----------
+      number_of_excitons : int
+          number of excitonic subsystems
+
+      single_exciton_basis : numpy matrix
+          basis states for a single excition
+
+      exciton_basis_dimension : int
+          dimension of the N-exciton hilbert space
+
+      n_exciton_basis : numpy matrix
+          basis states for the collection of N excitons
+
+      Returns
+      -------
+      None
+      
+      """
+
+      self.single_exciton_basis = np.matrix('1 0 ; 0 1')
+      self.exciton_basis_dimension = 2 ** self.number_of_excitons
+      self.n_exciton_basis = np.eye(self.exciton_basis_dimension)
+      
+    def build_exciton_boson_basis(self):
+      """ build the basis for the N excitonic subsystems and the N'-level Harmonic oscillator in order 
+          |s> \otimes |q_1> \otimes |q_2> \otimes ... \otimes |q_N>
+
+      Arguments
+      ----------
+      None
+
+      Attributes
+      ----------
+      n_exciton_basis : numpy matrix
+          basis states for the collection of N excitons
+
+      boson_basis : numpy matrix
+          basis states for the N'-level Harmonic oscillator
+
+      exciton_boson_basis : numpy matrix
+          basis states for the collection of N excitons and the N'-level Harmonic oscillator in order 
+          |s> \otimes |q_1> \otimes |q_2> \otimes ... \otimes |q_N>
+
+      Returns
+      -------
+      None
+      
+      """
+      self.exciton_boson_basis = np.kron(self.boson_basis, self.n_exciton_basis)
+
+    def create_bosonic_lowering_operator(self):
+      """ build the bosonic lowering operator
+
+      Arguments
+      ----------
+      None
+
+      Attributes
+      ----------
+      number_of_boson_levels : int
+          number of boson levels
+
+
+      Returns
+      -------
+      None
+      
+      """
+      self.b_matrix = np.zeros((self.number_of_boson_levels, self.number_of_boson_levels))
+      for i in range(1, self.number_of_boson_levels):
+        self.b_matrix[i - 1, i] = np.sqrt(i)
+
+      self.b_dagger_matrix = self.b_matrix.transpose().conjugate()
 
     def compute_spectrum(self):
         """method that will take values computed from spectrum_array and plot them vs wavelength
