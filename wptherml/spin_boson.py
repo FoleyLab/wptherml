@@ -174,8 +174,8 @@ class SpinBosonDriver(SpectrumDriver):
       """
       self.exciton_boson_basis = np.kron(self.boson_basis, self.n_exciton_basis)
 
-    def create_bosonic_lowering_operator(self):
-      """ build the bosonic lowering operator
+    def create_bosonic_ladder_operators(self):
+      """ build the bosonic raising and lowering operators
 
       Arguments
       ----------
@@ -185,6 +185,12 @@ class SpinBosonDriver(SpectrumDriver):
       ----------
       number_of_boson_levels : int
           number of boson levels
+
+      b_matrix : numpy matrix
+          matrix representation of the lowering operator
+
+      b_dagger_matrix : numpy matrix
+          matrix representation of the raising operator
 
 
       Returns

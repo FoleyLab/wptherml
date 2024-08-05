@@ -156,6 +156,96 @@ def test_build_exciton_boson_basis():
 	print(" Expected test 1 basis")
 	print(_expected_exciton_boson_basis_case_1)
 
+def test_build_bosonic_ladder_operators():
+	"""
+	Unit test for the build_bosonic_ladder_operator method
+
+	(1) apply b to |1> when there is a 2-dimensional hilbert space and
+	    project onto <0|
+	(2) apply b^+ to |0> when there is a 2-dimensional hilbert space and project
+	    onto <1|
+	(3) apply b to |4> when there is a 6-dimensional hilbert space and 
+	    project onto <3|
+	(4) apply b^+ to |4> when there is a 6-dimensional hilbert space and 
+	    project onto <5|
+	(5) apply b^+ b to |8> when there is a 10 dimensional hilbert space and
+	    project onto <8|
+	"""
+	# arguments for each case
+	args_2d = {
+		'number_of_boson_levels' : 2,
+	}
+	args_6d = {
+		'number_of_boson_levels' : 6,
+	}
+	args_10d = {
+		'number_of_boson_levels' : 10,
+	}
+
+	sf = wptherml.SpectrumFactory()
+
+	# instantiate cases
+	test_2d = sf.spectrum_factory("Spin-Boson", args_2d)
+	test_6d = sf.spectrum_factory("Spin-Boson", args_6d)
+	test_10d = sf.spectrum_factory("Spin-Boson", args_10d)
+
+	# build ladder oeprators 
+	test_2d.create_bosonic_ladder_operators()
+	test_6d.create_bosonic_ladder_operators()
+	test_10d.create_bosonic_ladder_operators()
+
+	# create ket states for different cases
+	_ket_1_2d = np.matrix('0 1').T
+	_ket_0_2d = np.matrix('1 0').T
+
+	_ket_4_6d = np.matrix('0 0 0 0 1 0').T
+
+	_ket_8_10d = np.matrix('0 0 0 0 0 0 0 0 1 0').T
+
+	_bra_0_2d = np.matrix('1 0')
+	_bra_1_2d = np.matrix('0 1')
+
+	_bra_3_6d = np.matrix('0 0 0 1 0 0')
+	_bra_5_6d = np.matrix('0 0 0 0 0 1')
+
+	_bra_8_10d = _ket_8_10d.T
+
+	# compute <0|b|1> in 2D hilbert space
+	_b_ket_1 = np.dot(test_2d.b_matrix, _ket_1_2d) 
+	_bra_0_2d_b_ket_1 = np.dot(_bra_0_2d, _b_ket_1)
+
+	# compute <1|b^+|0> in 2D hilbert space
+	_b_dag_ket_0 = np.dot(test_2d.b_dagger_matrix, _ket_0_2d) 
+	_bra_1_2d_b_ket_0 = np.dot(_bra_1_2d, _b_dag_ket_0)
+
+	# both brackets should give 1
+	assert np.isclose(_bra_0_2d_b_ket_1[0,0], 1.0)
+	assert np.isclose(_bra_1_2d_b_ket_0[0,0], 1.0)
+
+	# compute <3|b|4>
+	_b_ket_4_6d = np.dot(test_6d.b_matrix, _ket_4_6d)
+	_bra_3_6d_b_ket_4 = np.dot(_bra_3_6d, _b_ket_4_6d)
+
+	# this bracket should give sqrt(4)
+	assert np.isclose(_bra_3_6d_b_ket_4[0,0], 2.0)
+
+	# compute <5|b^+|4>
+	_b_dag_ket_4_6d = np.dot(test_6d.b_dagger_matrix, _ket_4_6d)
+	_bra_5_6d_b_dag_ket_4 = np.dot(_bra_5_6d, _b_dag_ket_4_6d)
+
+	# this bracket should give sqrt(5)
+	assert np.isclose(_bra_5_6d_b_dag_ket_4[0,0], np.sqrt(5))
+
+	# compute <8 | b^+ b | 8>
+	b_dag_b_ket_8_10d = np.dot(test_10d.b_dagger_matrix, np.dot(test_10d.b_matrix, _ket_8_10d))
+	_bra_8_10d_b_dag_b_ket_8 = np.dot(_bra_8_10d, b_dag_b_ket_8_10d)
+
+	# this bracket should be 8
+	assert np.isclose(_bra_8_10d_b_dag_b_ket_8[0,0], 8.0)
+	
+	
+
 test_build_boson_basis()
 test_build_exciton_basis()
 test_build_exciton_boson_basis()
+test_build_bosonic_ladder_operators()
