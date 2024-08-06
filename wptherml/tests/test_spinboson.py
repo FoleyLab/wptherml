@@ -190,9 +190,9 @@ def test_build_bosonic_ladder_operators():
 	test_10d = sf.spectrum_factory("Spin-Boson", args_10d)
 
 	# build ladder oeprators 
-	test_2d.create_bosonic_ladder_operators()
-	test_6d.create_bosonic_ladder_operators()
-	test_10d.create_bosonic_ladder_operators()
+	test_2d.build_bosonic_ladder_operators()
+	test_6d.build_bosonic_ladder_operators()
+	test_10d.build_bosonic_ladder_operators()
 
 	# create ket states for different cases
 	_ket_1_2d = np.matrix('0 1').T
@@ -242,10 +242,92 @@ def test_build_bosonic_ladder_operators():
 
 	# this bracket should be 8
 	assert np.isclose(_bra_8_10d_b_dag_b_ket_8[0,0], 8.0)
+
+
+def test_compute_boson_energy_element():
+	"""
+	Unit test for the compute_boson_energy_element method
+
+	(1) For a 1-exciton 2-level bosonic system with \hbar \omega = 6.8028 eV, compute the following elements of the boson Energy operator
+	    <0,0|H|0,0> = 1/2 
+	"""
 	
+	# dictionaries for case 1
+	args_1 = {
+		'number_of_excitons' : 1,
+		'number_of_boson_levels' : 2,
+		'boson_energy_ev' : 6.8028,
+
+	}
+
+	sf = wptherml.SpectrumFactory()
+
+	# instantiate cases
+	test_1 = sf.spectrum_factory("Spin-Boson", args_1)
+
+	# build operators
+	test_1.build_boson_basis()
+	test_1.build_exciton_basis()
+	test_1.build_exciton_boson_basis()
+	test_1.build_bosonic_ladder_operators()
+	test_1.build_boson_energy_operator()
+
+	# create bra and kets
+	_qd_bra_0 = np.matrix('1 0')
+	_qd_bra_1 = np.matrix('0 1')
+	_bos_bra_0 = np.matrix('1 0')
+	_bos_bra_1 = np.matrix('0 1')
+
+	_qd_ket_0 = _qd_bra_0.T
+	_qd_ket_1 = _qd_bra_1.T
+
+	_bos_ket_0 = _bos_bra_0.T
+	_bos_ket_1 = _bos_bra_1.T
+
+	_ket_00 = np.kron(_bos_ket_0, _qd_ket_0)
+	_bra_00 = np.kron(_bos_bra_0, _qd_bra_0)
+
+	_ket_10 = np.kron(_bos_ket_1, _qd_ket_0)
+	_bra_10 = np.kron(_bos_bra_1, _qd_bra_0)
+
+	_ket_01 = np.kron(_bos_ket_0, _qd_ket_1)
+	_bra_01 = np.kron(_bos_bra_0, _qd_bra_1)
+
+	_ket_11 = np.kron(_bos_ket_1, _qd_ket_1)
+	_bra_11 = np.kron(_bos_bra_1, _qd_bra_1)
+
+
+
+	_expected_E_0000 = test_1.boson_energy_au * 0.5
+	_expected_E_1010 = test_1.boson_energy_au * 1.5
+	_expected_E_1111 = test_1.boson_energy_au * 1.5
+	_expected_E_0101 = test_1.boson_energy_au * 0.5
+
+
+	_E_0000 = test_1.compute_boson_energy_element(_bra_00, _ket_00)
+	_E_1010 = test_1.compute_boson_energy_element(_bra_10, _ket_10)
+	_E_0101 = test_1.compute_boson_energy_element(_bra_01, _ket_01)
+	_E_1111 = test_1.compute_boson_energy_element(_bra_11, _ket_11)
+
+	print(F' <00|H|00> : {_E_0000}')
+	print(F' <10|H|10> : {_E_1010}')
+	print(F' <01|H|01> : {_E_0101}')
+	print(F' <11|H|11> : {_E_1111}')
+
+	assert np.isclose(_E_0000, _expected_E_0000)
+	assert np.isclose(_E_1010, _expected_E_1010)
+	assert np.isclose(_E_0101, _expected_E_0101)
+	assert np.isclose(_E_1111, _expected_E_1111)
+
+
+
+	
+
+
 	
 
 test_build_boson_basis()
 test_build_exciton_basis()
 test_build_exciton_boson_basis()
 test_build_bosonic_ladder_operators()
+test_compute_boson_energy_element()
