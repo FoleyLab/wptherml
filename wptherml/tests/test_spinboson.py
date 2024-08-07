@@ -415,12 +415,12 @@ def test_build_operator_for_exciton_j():
 	}
 
 	# define some reference Pauli matrices
-	_sigma_p = np.matrix("0 1 ; 0 0")
-	_sigma_m = np.matrix("0 0 ; 1 0")
+	_sigma_p = np.matrix("0 0 ; 1 0") # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
+	_sigma_m = np.matrix("0 1 ; 0 0") # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
 	_sigma_z = np.matrix("1 0 ; 0 -1")
 	_sigma_x = np.matrix("0 1 ; 1 0")
 	_ID = np.matrix("1 0 ; 0 1")
-	_sigma_pm = np.dot(_sigma_p, _sigma_m)
+	_sigma_pm = np.matrix("0 0 ; 0 1")
 
 	sf = wptherml.SpectrumFactory()
 
@@ -484,6 +484,33 @@ def test_build_operator_for_exciton_j():
 	assert np.allclose(test_3.exciton_operator_j, _expected_op_5)
 
 
+def test_compute_exciton_energy_element():
+	# dictionaries for case 1
+	args_1 = {
+	    "number_of_excitons": 2,
+	    "number_of_boson_levels": 2,
+	    "boson_energy_ev": 6.8028,
+	    "exciton_energy_ev" : 6.8028 / 2.
+	}
+	sf = wptherml.SpectrumFactory()
+
+	# instantiate cases
+	test_1 = sf.spectrum_factory("Spin-Boson", args_1)
+	test_1.exciton_energy_au = 0.5
+	test_1.build_boson_basis()
+	test_1.build_exciton_basis()
+	test_1.build_exciton_boson_basis()
+	test_1.compute_exciton_energy_operator()
+    
+	_dim = test_1.exciton_boson_basis.shape[0]
+	_H = np.zeros((_dim, _dim))
+	for i in range(_dim):
+		_bra = test_1.exciton_boson_basis[:,i]
+		for j in range(_dim):
+			_ket = np.matrix(test_1.exciton_boson_basis[:,j]).T
+			_H[i, j] = test_1.compute_exciton_energy_element(_bra, _ket)
+        
+	print(_H)
 
 
     
@@ -496,3 +523,4 @@ test_build_bosonic_ladder_operators()
 test_compute_boson_energy_element()
 test_compute_boson_energy_matrix()
 test_build_operator_for_exciton_j()
+test_compute_exciton_energy_element()
