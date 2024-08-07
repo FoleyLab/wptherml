@@ -344,6 +344,9 @@ class SpinBosonDriver(SpectrumDriver):
         elif operator == "sigma_m":
             self.single_exciton_operator = np.matrix("0 0 ; 1 0")
 
+        elif operator == "sigma_pm":
+            self.single_exciton_operator = np.matrix("1 0 ; 0 0")
+
         else:
             # if no valid option given, use an identity
             self.single_exciton_operator = np.matrix("1 0 ; 0 1")

@@ -392,6 +392,12 @@ def test_build_operator_for_exciton_j():
 	(3a) There are 5 exciton systems and we want to build sigma_+ on the 3rd one (index 2)
 
 	(3b) There are 5 exciton systems and we want to build sigma_- on the 2nd one (index 1)
+
+    (3c) There are 5 exciton systems and we want to build sigma_x on the first one (index 0)
+    
+    (3d) There are 5 exciton systems and we want to build sigma_z on the last one (index 4)
+    
+    (3e) There are 5 exciton systems and we want to build sigma_+ sigma_- on the 4th one (index 3)
 		
 	"""
 
@@ -414,6 +420,7 @@ def test_build_operator_for_exciton_j():
 	_sigma_z = np.matrix("1 0 ; 0 -1")
 	_sigma_x = np.matrix("0 1 ; 1 0")
 	_ID = np.matrix("1 0 ; 0 1")
+	_sigma_pm = np.dot(_sigma_p, _sigma_m)
 
 	sf = wptherml.SpectrumFactory()
 
@@ -470,6 +477,11 @@ def test_build_operator_for_exciton_j():
 	test_3.build_operator_for_exciton_j(4, "sigma_z")
 	_expected_op_4 = np.kron(_ID, np.kron(_ID, np.kron( np.kron(_ID, _ID), _sigma_z)))
 	assert np.allclose(test_3.exciton_operator_j, _expected_op_4)
+    
+	# create sigma_+ sigma_- on the 4th one and test
+	test_3.build_operator_for_exciton_j(3, "sigma_pm")
+	_expected_op_5 = np.kron(_ID, np.kron(_ID, np.kron( np.kron(_ID, _sigma_pm), _ID)))
+	assert np.allclose(test_3.exciton_operator_j, _expected_op_5)
 
 
 
