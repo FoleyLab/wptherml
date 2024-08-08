@@ -500,7 +500,7 @@ def test_compute_exciton_energy_element():
     test_1.build_boson_basis()
     test_1.build_exciton_basis()
     test_1.build_exciton_boson_basis()
-    test_1.compute_exciton_energy_operator()
+    test_1.build_exciton_energy_operator()
 
     _dim = test_1.exciton_boson_basis.shape[0]
     # create expected matrix
@@ -511,13 +511,60 @@ def test_compute_exciton_energy_element():
         for j in range(_dim):
             _ket = np.matrix(test_1.exciton_boson_basis[:, j]).T
             _element = test_1.compute_exciton_energy_element(_bra, _ket)
-            _H[i, j] = _element[0,0]
+            _H[i, j] = _element
 
     # use method to compute matrix
     test_1.compute_exciton_energy_matrix()
 
     # compare elements
     assert np.allclose(_H, test_1.exciton_energy_matrix)
+    
+
+def test_compute_exciton_boson_coupling_matrix():
+    """
+    Unit test for the compute_exciton_boson_coupling_matrix method for a 2-exciton 3-level bosonic system with \hbar \g = 0.01 eV.
+    Compute matrix in the basis
+        <q1, q2, s|H|q1',q2',s> =
+    """
+
+    # dictionaries for case 1
+    args_1 = {
+        "number_of_excitons": 1,
+        "number_of_boson_levels": 3,
+        "boson_energy_ev": 6.8028,
+        "exciton_boson_coupling_ev" : 0.01
+    }
+
+    sf = wptherml.SpectrumFactory()
+
+    # instantiate cases
+    test_1 = sf.spectrum_factory("Spin-Boson", args_1)
+    test_1.build_boson_basis()
+    test_1.build_exciton_basis()
+    test_1.build_exciton_boson_basis()
+    test_1.build_exciton_boson_coupling_operator()
+    test_1.compute_exciton_boson_coupling_matrix()
+
+    _dim = 6
+    _expected_matrix = np.zeros((_dim, _dim))
+
+    # fill in boson energy elements using a loop over all basis states
+    for i in range(3): # bra boson index
+        for j in range(2): # bra exciton index
+            _I = i * 2 + j
+            for ip in range(3): # ket boson index
+                for jp in range(2): # ket exciton index 
+                    _J = ip * 2 + jp 
+                    if i==(ip+1) and j==(jp-1):
+                         _expected_matrix[_I, _J] = test_1.exciton_boson_coupling_au * np.sqrt(ip+1)
+                    elif i==(ip-1) and j==(jp+1):
+                         _expected_matrix[_I, _J] = test_1.exciton_boson_coupling_au * np.sqrt(ip)
+
+    assert np.allclose(_expected_matrix, test_1.exciton_boson_coupling_matrix)
+    print("Expected Matrix")
+    print(_expected_matrix)
+    print("Built matrix")
+    print(test_1.exciton_boson_coupling_matrix)
 
 
 test_build_boson_basis()
@@ -528,3 +575,4 @@ test_compute_boson_energy_element()
 test_compute_boson_energy_matrix()
 test_build_operator_for_exciton_j()
 test_compute_exciton_energy_element()
+test_compute_exciton_boson_coupling_matrix()
