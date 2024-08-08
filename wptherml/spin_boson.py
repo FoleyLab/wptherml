@@ -5,8 +5,8 @@ from .spectrum_driver import SpectrumDriver
 
 class SpinBosonDriver(SpectrumDriver):
     """A class for computing the dynamics and spectra of coupled exciton-boson (e.g. QD - plasmon, exciton-polariton, etc) systems using
-       the spin boson for N 2-level systems coupled to an N'-level Harmonic oscillator.  For conventions of exciton states and their 
-       ladder operators, see here: https://www.phys.hawaii.edu/~yepez/Spring2013/lectures/Lecture2_Quantum_Gates_Notes.pdf 
+       the spin boson for N 2-level systems coupled to an N'-level Harmonic oscillator.  For conventions of exciton states and their
+       ladder operators, see here: https://www.phys.hawaii.edu/~yepez/Spring2013/lectures/Lecture2_Quantum_Gates_Notes.pdf
 
     Attributes
     ----------
@@ -339,10 +339,10 @@ class SpinBosonDriver(SpectrumDriver):
         elif operator == "sigma_y":
             self.single_exciton_operator = np.matrix("0 -1j ; 1j 0")
 
-        elif operator == "sigma_p": # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
+        elif operator == "sigma_p":  # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
             self.single_exciton_operator = np.matrix("0 0 ; 1 0")
 
-        elif operator == "sigma_m": # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
+        elif operator == "sigma_m":  # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
             self.single_exciton_operator = np.matrix("0 1 ; 0 0")
 
         elif operator == "sigma_pm":
@@ -388,7 +388,7 @@ class SpinBosonDriver(SpectrumDriver):
                 )
 
     def compute_exciton_energy_operator(self):
-        """ compute the exciton energy operator in the N-exciton N'-level bosonic Hilbert space
+        """compute the exciton energy operator in the N-exciton N'-level bosonic Hilbert space
 
         Arguments
         ----------
@@ -428,7 +428,7 @@ class SpinBosonDriver(SpectrumDriver):
             self.exciton_energy_operator[:, :, i] = _Op
 
     def compute_exciton_energy_element(self, bra, ket):
-        """ compute matrix element <bra|H_QD|ket>
+        """compute matrix element <bra|H_QD|ket>
 
         Arguments
         ----------
@@ -441,13 +441,43 @@ class SpinBosonDriver(SpectrumDriver):
         E_exciton_element = 0
 
         for i in range(self.number_of_excitons):
-            E_exciton_element += np.dot(bra,  np.dot(self.exciton_energy_operator[:,:,i], ket)) 
+            E_exciton_element += np.dot(
+                bra, np.dot(self.exciton_energy_operator[:, :, i], ket)
+            )
 
         return E_exciton_element
-
 
     def compute_spectrum(self):
         """method that will take values computed from spectrum_array and plot them vs wavelength"""
         spectrum_plot = np.zeros(2)  # plt.plot(self.wvlngth_variable, test_spec, 'b-')
 
         return spectrum_plot
+    
+
+    def compute_exciton_energy_matrix(self):
+        """ compute the exciton energy matrix
+
+        Arguments
+        ----------
+        None
+
+        Attributes
+        ----------
+        exciton_energy_operator : numpy matrix
+            dim x dim x N tensor representation of the exciton energy operator in the N-exciton hilbert
+
+        exciton_energy_matrix : numpy matrix
+            dim x dim matrix representation of the exciton energy operator in the coupled Hilbert space
+
+        Returns
+        -------
+        None
+        """
+        _dim = self.exciton_boson_basis.shape[0]
+        self.exciton_energy_matrix = np.zeros((_dim, _dim))
+        for i in range(_dim):
+            _bra = self.exciton_boson_basis[:, i]
+            for j in range(_dim):
+                _ket = np.matrix(self.exciton_boson_basis[:, j]).T
+                _element = self.compute_exciton_energy_element(_bra, _ket)
+                self.exciton_energy_matrix[i, j] = _element[0, 0]

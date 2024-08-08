@@ -373,147 +373,151 @@ def test_compute_boson_energy_matrix():
                             ) * (_I == _J)
 
     assert np.allclose(_expected_matrix, test_1.boson_energy_matrix)
-    
+
 
 def test_build_operator_for_exciton_j():
-	"""
-	Unit test for the compute_operator_for_exciton_j method for the following test cases:
+    """
+        Unit test for the compute_operator_for_exciton_j method for the following test cases:
 
-	(1a) There is 1 exciton system and we want to build the sigma^+ operator
+        (1a) There is 1 exciton system and we want to build the sigma^+ operator
 
-	(1b) There is 1 exciton system and we want to build the sigma^- operator
+        (1b) There is 1 exciton system and we want to build the sigma^- operator
 
-	(1c) There is 1 exciton system and we want to build the sigma_z operator
-		
-	(2a) There are 2 exciton systems and we want to build sigma_z on the 1st one (index 0)
+        (1c) There is 1 exciton system and we want to build the sigma_z operator
 
-	(2b) There are 2 exciton systems and we want to build sigma_z on the 2nd one (index 1)
+        (2a) There are 2 exciton systems and we want to build sigma_z on the 1st one (index 0)
 
-	(3a) There are 5 exciton systems and we want to build sigma_+ on the 3rd one (index 2)
+        (2b) There are 2 exciton systems and we want to build sigma_z on the 2nd one (index 1)
 
-	(3b) There are 5 exciton systems and we want to build sigma_- on the 2nd one (index 1)
+        (3a) There are 5 exciton systems and we want to build sigma_+ on the 3rd one (index 2)
+
+        (3b) There are 5 exciton systems and we want to build sigma_- on the 2nd one (index 1)
 
     (3c) There are 5 exciton systems and we want to build sigma_x on the first one (index 0)
-    
+
     (3d) There are 5 exciton systems and we want to build sigma_z on the last one (index 4)
-    
+
     (3e) There are 5 exciton systems and we want to build sigma_+ sigma_- on the 4th one (index 3)
-		
-	"""
 
-	# dictionaries for case 1
-	args_1 = {
-		"number_of_excitons": 1,
-	}
-	# dictionaries for case 2
-	args_2 = {
-		"number_of_excitons": 2,
-	}
-	# dictionaries for case 3
-	args_3 = {
-		"number_of_excitons": 5,
-	}
+    """
 
-	# define some reference Pauli matrices
-	_sigma_p = np.matrix("0 0 ; 1 0") # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
-	_sigma_m = np.matrix("0 1 ; 0 0") # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
-	_sigma_z = np.matrix("1 0 ; 0 -1")
-	_sigma_x = np.matrix("0 1 ; 1 0")
-	_ID = np.matrix("1 0 ; 0 1")
-	_sigma_pm = np.matrix("0 0 ; 0 1")
+    # dictionaries for case 1
+    args_1 = {
+        "number_of_excitons": 1,
+    }
+    # dictionaries for case 2
+    args_2 = {
+        "number_of_excitons": 2,
+    }
+    # dictionaries for case 3
+    args_3 = {
+        "number_of_excitons": 5,
+    }
 
-	sf = wptherml.SpectrumFactory()
+    # define some reference Pauli matrices
+    _sigma_p = np.matrix("0 0 ; 1 0")  # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
+    _sigma_m = np.matrix("0 1 ; 0 0")  # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
+    _sigma_z = np.matrix("1 0 ; 0 -1")
+    _sigma_x = np.matrix("0 1 ; 1 0")
+    _ID = np.matrix("1 0 ; 0 1")
+    _sigma_pm = np.matrix("0 0 ; 0 1")
 
-	# instantiate case 1
-	test_1 = sf.spectrum_factory("Spin-Boson", args_1)
-	test_1.build_exciton_basis()
+    sf = wptherml.SpectrumFactory()
 
-	# create sigma^+ operator and test
-	test_1.build_operator_for_exciton_j(0, "sigma_p")
-	assert np.allclose(test_1.exciton_operator_j, _sigma_p)
+    # instantiate case 1
+    test_1 = sf.spectrum_factory("Spin-Boson", args_1)
+    test_1.build_exciton_basis()
 
-	# create sigma^- operator and test
-	test_1.build_operator_for_exciton_j(0, "sigma_m")
-	assert np.allclose(test_1.exciton_operator_j, _sigma_m)
+    # create sigma^+ operator and test
+    test_1.build_operator_for_exciton_j(0, "sigma_p")
+    assert np.allclose(test_1.exciton_operator_j, _sigma_p)
 
-	# create sigma_z operator and test
-	test_1.build_operator_for_exciton_j(0, "sigma_z")
-	assert np.allclose(test_1.exciton_operator_j, _sigma_z)
-    
-	# instantiate case 2
-	test_2 = sf.spectrum_factory("Spin-Boson", args_2)
-	test_2.build_exciton_basis()
+    # create sigma^- operator and test
+    test_1.build_operator_for_exciton_j(0, "sigma_m")
+    assert np.allclose(test_1.exciton_operator_j, _sigma_m)
 
-	# create sigma^+ operator on 1st and test
-	test_2.build_operator_for_exciton_j(0, "sigma_z")
-	_expected_op_1 = np.kron(_sigma_z, _ID)
-	assert np.allclose(test_2.exciton_operator_j, _expected_op_1)
+    # create sigma_z operator and test
+    test_1.build_operator_for_exciton_j(0, "sigma_z")
+    assert np.allclose(test_1.exciton_operator_j, _sigma_z)
 
-	# create sigma^+ operator on 2nd and test
-	test_2.build_operator_for_exciton_j(1, "sigma_z")
-	_expected_op_2 = np.kron(_ID, _sigma_z)
-	assert np.allclose(test_2.exciton_operator_j, _expected_op_2)
-    
-	# instantiate case 3
-	test_3 = sf.spectrum_factory("Spin-Boson", args_3)
-	test_3.build_exciton_basis()
+    # instantiate case 2
+    test_2 = sf.spectrum_factory("Spin-Boson", args_2)
+    test_2.build_exciton_basis()
 
-	# create sigma^+ operator on 3rd and test
-	test_3.build_operator_for_exciton_j(2, "sigma_p")
-	_expected_op_1 = np.kron(_ID, np.kron(_ID, np.kron( np.kron(_sigma_p, _ID), _ID)))
-	assert np.allclose(test_3.exciton_operator_j, _expected_op_1)
+    # create sigma^+ operator on 1st and test
+    test_2.build_operator_for_exciton_j(0, "sigma_z")
+    _expected_op_1 = np.kron(_sigma_z, _ID)
+    assert np.allclose(test_2.exciton_operator_j, _expected_op_1)
 
-	#create sigma^m operator on 2nd and test
-	test_3.build_operator_for_exciton_j(1, "sigma_m")
-	_expected_op_2 = np.kron(_ID, np.kron(_sigma_m, np.kron( np.kron(_ID, _ID), _ID)))
-	assert np.allclose(test_3.exciton_operator_j, _expected_op_2)
-    
-	# create sigma_x operator on first and test
-	test_3.build_operator_for_exciton_j(0, "sigma_x")
-	_expected_op_3 = np.kron(_sigma_x, np.kron(_ID, np.kron( np.kron(_ID, _ID), _ID)))
-	assert np.allclose(test_3.exciton_operator_j, _expected_op_3)
-    
-	# create sigma_z operator on last and test
-	test_3.build_operator_for_exciton_j(4, "sigma_z")
-	_expected_op_4 = np.kron(_ID, np.kron(_ID, np.kron( np.kron(_ID, _ID), _sigma_z)))
-	assert np.allclose(test_3.exciton_operator_j, _expected_op_4)
-    
-	# create sigma_+ sigma_- on the 4th one and test
-	test_3.build_operator_for_exciton_j(3, "sigma_pm")
-	_expected_op_5 = np.kron(_ID, np.kron(_ID, np.kron( np.kron(_ID, _sigma_pm), _ID)))
-	assert np.allclose(test_3.exciton_operator_j, _expected_op_5)
+    # create sigma^+ operator on 2nd and test
+    test_2.build_operator_for_exciton_j(1, "sigma_z")
+    _expected_op_2 = np.kron(_ID, _sigma_z)
+    assert np.allclose(test_2.exciton_operator_j, _expected_op_2)
+
+    # instantiate case 3
+    test_3 = sf.spectrum_factory("Spin-Boson", args_3)
+    test_3.build_exciton_basis()
+
+    # create sigma^+ operator on 3rd and test
+    test_3.build_operator_for_exciton_j(2, "sigma_p")
+    _expected_op_1 = np.kron(_ID, np.kron(_ID, np.kron(np.kron(_sigma_p, _ID), _ID)))
+    assert np.allclose(test_3.exciton_operator_j, _expected_op_1)
+
+    # create sigma^m operator on 2nd and test
+    test_3.build_operator_for_exciton_j(1, "sigma_m")
+    _expected_op_2 = np.kron(_ID, np.kron(_sigma_m, np.kron(np.kron(_ID, _ID), _ID)))
+    assert np.allclose(test_3.exciton_operator_j, _expected_op_2)
+
+    # create sigma_x operator on first and test
+    test_3.build_operator_for_exciton_j(0, "sigma_x")
+    _expected_op_3 = np.kron(_sigma_x, np.kron(_ID, np.kron(np.kron(_ID, _ID), _ID)))
+    assert np.allclose(test_3.exciton_operator_j, _expected_op_3)
+
+    # create sigma_z operator on last and test
+    test_3.build_operator_for_exciton_j(4, "sigma_z")
+    _expected_op_4 = np.kron(_ID, np.kron(_ID, np.kron(np.kron(_ID, _ID), _sigma_z)))
+    assert np.allclose(test_3.exciton_operator_j, _expected_op_4)
+
+    # create sigma_+ sigma_- on the 4th one and test
+    test_3.build_operator_for_exciton_j(3, "sigma_pm")
+    _expected_op_5 = np.kron(_ID, np.kron(_ID, np.kron(np.kron(_ID, _sigma_pm), _ID)))
+    assert np.allclose(test_3.exciton_operator_j, _expected_op_5)
 
 
 def test_compute_exciton_energy_element():
-	# dictionaries for case 1
-	args_1 = {
-	    "number_of_excitons": 2,
-	    "number_of_boson_levels": 2,
-	    "boson_energy_ev": 6.8028,
-	    "exciton_energy_ev" : 6.8028 / 2.
-	}
-	sf = wptherml.SpectrumFactory()
+    # dictionaries for case 1
+    args_1 = {
+        "number_of_excitons": 2,
+        "number_of_boson_levels": 2,
+        "boson_energy_ev": 6.8028,
+        "exciton_energy_ev": 6.8028 / 2.0,
+    }
+    sf = wptherml.SpectrumFactory()
 
-	# instantiate cases
-	test_1 = sf.spectrum_factory("Spin-Boson", args_1)
-	test_1.exciton_energy_au = 0.5
-	test_1.build_boson_basis()
-	test_1.build_exciton_basis()
-	test_1.build_exciton_boson_basis()
-	test_1.compute_exciton_energy_operator()
-    
-	_dim = test_1.exciton_boson_basis.shape[0]
-	_H = np.zeros((_dim, _dim))
-	for i in range(_dim):
-		_bra = test_1.exciton_boson_basis[:,i]
-		for j in range(_dim):
-			_ket = np.matrix(test_1.exciton_boson_basis[:,j]).T
-			_H[i, j] = test_1.compute_exciton_energy_element(_bra, _ket)
-        
-	print(_H)
+    # instantiate cases
+    test_1 = sf.spectrum_factory("Spin-Boson", args_1)
+    test_1.exciton_energy_au = 0.5
+    test_1.build_boson_basis()
+    test_1.build_exciton_basis()
+    test_1.build_exciton_boson_basis()
+    test_1.compute_exciton_energy_operator()
 
+    _dim = test_1.exciton_boson_basis.shape[0]
+    # create expected matrix
+    _H = np.zeros((_dim, _dim))
 
-    
+    for i in range(_dim):
+        _bra = test_1.exciton_boson_basis[:, i]
+        for j in range(_dim):
+            _ket = np.matrix(test_1.exciton_boson_basis[:, j]).T
+            _element = test_1.compute_exciton_energy_element(_bra, _ket)
+            _H[i, j] = _element[0,0]
+
+    # use method to compute matrix
+    test_1.compute_exciton_energy_matrix()
+
+    # compare elements
+    assert np.allclose(_H, test_1.exciton_energy_matrix)
 
 
 test_build_boson_basis()
