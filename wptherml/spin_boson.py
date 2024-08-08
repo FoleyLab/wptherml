@@ -88,9 +88,15 @@ class SpinBosonDriver(SpectrumDriver):
         else:
             self.boson_energy_ev = 1.0
 
+        if "exciton_boson_coupling_ev" in args:
+            self.exciton_boson_coupling_ev = args["exciton_boson_coupling_ev"]
+        else:
+            self.exciton_boson_coupling_ev = 0.01
+
         # convert energies from eV to au
         self.exciton_energy_au = self.exciton_energy_ev * self.ev_to_au
         self.boson_energy_au = self.boson_energy_ev * self.ev_to_au
+        self.exciton_boson_coupling_au = self.exciton_boson_coupling_ev * self.ev_to_au
 
     def build_boson_basis(self):
         """build the basis for the N-level Harmonic oscillator
