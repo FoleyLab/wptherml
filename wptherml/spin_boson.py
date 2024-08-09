@@ -597,6 +597,20 @@ class SpinBosonDriver(SpectrumDriver):
 
     def compute_spectrum(self):
         """method that will build spin-boson Hamiltonian, diagonalize it, and return eigenvalues"""
-        spectrum_plot = np.zeros(2)  # plt.plot(self.wvlngth_variable, test_spec, 'b-')
+
+        # build bases
+        self.build_boson_basis()
+        self.build_exciton_basis()
+        self.build_exciton_boson_basis()
+
+        # build operators
+        self.build_exciton_boson_coupling_operator()
+        self.build_exciton_energy_operator()
+        self.build_boson_energy_operator()
+
+        # build matrices
+        self.compute_boson_energy_matrix()
+        self.compute_exciton_energy_matrix()
+        self.compute_exciton_boson_coupling_matrix()
 
         return spectrum_plot
