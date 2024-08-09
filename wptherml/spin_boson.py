@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import linalg as la 
 from matplotlib import pyplot as plt
 from .spectrum_driver import SpectrumDriver
 
@@ -66,6 +67,9 @@ class SpinBosonDriver(SpectrumDriver):
 
         # parse user inputs
         self.parse_input(args)
+
+        # compute spectrum
+        self.compute_spectrum()
 
     def parse_input(self, args):
         if "number_of_excitons" in args:
@@ -613,4 +617,11 @@ class SpinBosonDriver(SpectrumDriver):
         self.compute_exciton_energy_matrix()
         self.compute_exciton_boson_coupling_matrix()
 
-        return spectrum_plot
+        # define total Hamiltonian as the sum of these matrices
+        self.hamiltonian_matrix = self.boson_energy_matrix + self.exciton_energy_matrix + self.exciton_boson_coupling_matrix
+
+        self.energy_eigenvalues, self.energy_eigenvectors = la.eigh(self.hamiltonian_matrix)
+        print("Energy Eigenvalues in atomic units are")
+        print(self.energy_eigenvalues)
+        print("Energy eigenvalues in eV are")
+        print(self.energy_eigenvalues / self.ev_to_au)
