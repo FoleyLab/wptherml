@@ -97,6 +97,16 @@ class SpinBosonDriver(SpectrumDriver):
         else:
             self.exciton_boson_coupling_ev = 0.01
 
+        if "boson_dipole_magnitude_au" in args:
+            self.boson_dipole_magnitude_au = args["boson_dipole_magnitude_au"]
+        else:
+            self.boson_dipole_magnitude_au = 1000.
+
+        if "exciton_dipole_magnitude_au" in args:
+            self.exciton_dipole_magnitude_au = args["exciton_dipole_magnitude_au"]
+        else:
+            self.exciton_dipole_magnitude_au = 10.
+
         # convert energies from eV to au
         self.exciton_energy_au = self.exciton_energy_ev * self.ev_to_au
         self.boson_energy_au = self.boson_energy_ev * self.ev_to_au
@@ -258,6 +268,41 @@ class SpinBosonDriver(SpectrumDriver):
             _energy_operator_on_boson_space, self.n_exciton_basis
         )
 
+    def build_boson_dipole_operator(self):
+        """build the boson energy operator in the N-qd N'-level coupled Hilbert space
+
+        Arguments
+        ----------
+        None
+
+        Attributes
+        ----------
+
+        boson_dipole_magnitude_au : float
+            fundamental energy of the boson subsystem in atomic units
+
+        b_matrix : numpy matrix
+            matrix representation of the lowering operator
+
+        b_dagger_matrix : numpy matrix
+            matrix representation of the raising operator
+
+        boson_dipole_operator : numpy matrix
+            matrix representation of the bosonic energy operator in the N-excitonic N'-level bosonic Hilbert space
+
+        Returns
+        -------
+        None
+        """
+        # build number operator in the N'-level bosonic Hilbert space
+        _boson_dipole_operator_on_boson_space = self.boson_dipole_magnitude_au * (self.b_dagger_matrix + self.b_matrix)
+
+
+        # build the boson energy operator in the coupled Hilbert space
+        self.boson_dipole_operator = np.kron(
+            _boson_dipole_operator_on_boson_space, self.n_exciton_basis
+        )
+
 
     def build_operator_for_exciton_j(self, j, operator="sigma_z"):
         """build operator for the j-th exciton
@@ -295,6 +340,9 @@ class SpinBosonDriver(SpectrumDriver):
 
         elif operator == "sigma_m":  # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
             self.single_exciton_operator = np.matrix("0 1 ; 0 0")
+
+        elif operator == "dipole":
+            self.single_exciton_operator = self.exciton_dipole_magnitude_au * np.matrix("0 1 ; 1 0")
 
         elif operator == "sigma_pm":
             self.single_exciton_operator = np.matrix("0 0 ; 0 1")
@@ -377,6 +425,45 @@ class SpinBosonDriver(SpectrumDriver):
 
             # assign this operator to the ith position in the exciton_energy_operator
             self.exciton_energy_operator[:, :, i] = _Op
+
+    def build_exciton_dipole_operator(self):
+        """compute the exciton dipole operator in the N-exciton N'-level bosonic Hilbert space
+
+        Arguments
+        ----------
+        None
+
+        Attributes
+        ----------
+
+        exciton_dipole_operator : numpy matrix
+            dim x dim x N tensor representation of the exciton energy operator in the N-exciton hilbert space
+            where dim is the size of the N-exciton N'-level bosonic hilbert space
+
+
+        Returns
+        -------
+        None
+
+        """
+        # dimension of the coupled Hilbert space
+        _dim = self.exciton_boson_basis.shape[0]
+        # identity on the boson Hilbert space
+        _Is = np.eye(self.number_of_boson_levels)
+
+        # create tensor for exciton operators
+        self.exciton_dipole_operator = np.zeros((_dim, _dim, self.number_of_excitons))
+
+        for i in range(self.number_of_excitons):
+            # get the sigma_+ \sigma_- operator for the ith exciton in the N-exciton Hilbert space
+            self.build_operator_for_exciton_j(i, "dipole")
+
+            # take tensor product of the identity on the boson Hilbert space with this exciton operator
+            _Op = np.kron(_Is, self.exciton_operator_j)
+
+            # assign this operator to the ith position in the exciton_energy_operator
+            self.exciton_dipole_operator[:, :, i] = _Op
+
 
     def build_exciton_boson_coupling_operator(self):
         """compute the exciton-boson coupling operator in the N-exciton N'-level bosonic Hilbert space
