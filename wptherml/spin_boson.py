@@ -596,7 +596,7 @@ class SpinBosonDriver(SpectrumDriver):
 
 
     def compute_spectrum(self):
-        """method that will take values computed from spectrum_array and plot them vs wavelength"""
+        """method that will build spin-boson Hamiltonian, diagonalize it, and return eigenvalues"""
         spectrum_plot = np.zeros(2)  # plt.plot(self.wvlngth_variable, test_spec, 'b-')
 
         return spectrum_plot
