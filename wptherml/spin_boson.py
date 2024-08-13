@@ -571,6 +571,43 @@ class SpinBosonDriver(SpectrumDriver):
 
         return E_exciton_element
     
+    def compute_dipole_matrix_element(self, bra_coeffs, ket_coeffs):
+        """ compute the matrix element <bra | mu | ket>
+
+        Arguments
+        ---------
+        bra_coeffs : numpy array
+            coefficients of the bra state 
+
+        ket_coeffs : numpy array
+            coefficients of the ket state
+        
+        """
+        dipole_element = 0
+        _dim = self.exciton_boson_basis.shape[0]
+
+        for i in range(_dim):
+            _bra = self.exciton_boson_basis[:, i]
+            print("Printing Bra Basis Vector")
+            print(_bra)
+            print("Printing bra coeff")
+            print(bra_coeffs[i])
+            for j in range(_dim):
+                _ket = np.matrix(self.exciton_boson_basis[:, i]).T
+                _boson_term = np.dot(_bra, np.dot(self.boson_dipole_operator, _ket))
+                _exciton_term = 0.
+                for k in range(self.number_of_excitons):
+                    _exciton_term += np.dot(_bra, np.dot(self.exciton_dipole_operator[:,:,k], _ket))
+
+                dipole_element += bra_coeffs[i] * ket_coeffs[j] * (_boson_term + _exciton_term)
+        
+                
+
+                
+
+            
+
+    
     def compute_exciton_boson_coupling_element(self, bra, ket):
         """compute matrix element <bra|H_c|ket>
 
@@ -698,6 +735,8 @@ class SpinBosonDriver(SpectrumDriver):
         self.build_exciton_boson_coupling_operator()
         self.build_exciton_energy_operator()
         self.build_boson_energy_operator()
+        self.build_boson_dipole_operator()
+        self.build_exciton_dipole_operator()
 
         # build matrices
         self.compute_boson_energy_matrix()
@@ -712,3 +751,17 @@ class SpinBosonDriver(SpectrumDriver):
         print(self.energy_eigenvalues)
         print("Energy eigenvalues in eV are")
         print(self.energy_eigenvalues / self.ev_to_au)
+
+        print(self.energy_eigenvectors[:,0])
+        print(self.energy_eigenvectors[:,1])
+
+        mu_01 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,0], self.energy_eigenvectors[:,1])
+        mu_02 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,0], self.energy_eigenvectors[:,2])
+        mu_03 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,0], self.energy_eigenvectors[:,3])
+        mu_12 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,1], self.energy_eigenvectors[:,2])
+
+        print(F'mu_01 {mu_01}')
+        print(F'mu_02 {mu_02}')
+        print(F'mu_03 {mu_03}')
+        print(F'mu_12 {mu_12}')
+

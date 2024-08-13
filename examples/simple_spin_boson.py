@@ -4,7 +4,7 @@ import numpy as np
 
 # dictionaries for case 1
 args_1 = {
-     "number_of_excitons": 4,
+     "number_of_excitons": 1,
      "number_of_boson_levels": 2,
      "boson_energy_ev": 3.,
      "exciton_energy_ev" : 3.,
