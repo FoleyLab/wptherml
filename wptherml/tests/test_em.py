@@ -501,6 +501,7 @@ def test_selective_mirror_fom():
         "transmissive_window_nm": [350, 700],
         "transmission_efficiency_weight": T_weight_1,
         "reflection_efficiency_weight": R_weight_1,
+        "reflection_selectivity_weight" : 0,
     }
     test_args2 = {
         "wavelength_list": [300e-9, 6000e-9, 1000],
@@ -510,6 +511,7 @@ def test_selective_mirror_fom():
         "transmissive_window_nm": [350, 700],
         "transmission_efficiency_weight": T_weight_2,
         "reflection_efficiency_weight": R_weight_2,
+        "reflection_selectivity_weight" : 0,
     }
     test_args3 = {
         "wavelength_list": [300e-9, 6000e-9, 1000],
@@ -519,6 +521,7 @@ def test_selective_mirror_fom():
         "transmissive_window_nm": [350, 700],
         "transmission_efficiency_weight": T_weight_3,
         "reflection_efficiency_weight": R_weight_3,
+        "reflection_selectivity_weight" : 0,
     }
 
     # instantiate the factory

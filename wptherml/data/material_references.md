@@ -5,6 +5,7 @@
 |Glass/SiO2 | SiO2_ir.txt | Two references are combined in a single file to provide refractive index data from 210 - 50000 nm: from 210 - 6700 nm, I. H. Malitson,  J. Opt. Soc. Am., "Interspecimen comparison of the refractive index of fused silica", 55, 1205-1208 (1965), and from 7000 - 50000 nm, S. Popova, T. Tolstykh, V. Vorobev, Opt. Spectrosc., "Optical characteristics of amorphous quartz in the 1400–200 cm-1 region", 33, 444–445 (1972) | 7000 - 500000 nm |
 |Glass/SiO2_UDM | SiO2_udm.txt | Optical characterization of SiO2 thin films using universal dispersion model over wide spectral range,
 Daniel Franta, David Nečas, Ivan Ohlídal, Angelo Giglia, Photonics Europe 2016: Optical Micro- and Nanometrology VI, Photonics Europe 2016: Optical Micro- and Nanometrology VI, Brussels, Belgium 3 - 7 April 2016 (2016) pp.989014 | 0.01 - 100 eV |
+|Glass/SiO2_UDM_v2 | SiO2_udm_v2.txt | http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk | 0.01 - 100 eV |
 |Tantalum Pentaoxide/Ta2O5 \ Ta2O5_Bright.txt | T. J. Bright, J. I. Watjen, Z. M. Zhang, C. Muratore, A. A. Voevodin, D. I. Koukis, D. B. Tanner and D. J. Arenas. Infrared optical properties of amorphous and nanocrystalline Ta2O5 thin films J. Appl. Phys 114, 083515 (2013) | TBD | 
 |Titanium nitride/TiN | TiN_ellipsometry_data.txt | N. Jeoni et al., Adv. Energy Materials, "Pareto optimal spectrally selective emitters for thermophotovoltaics viaweak absorber critical coupling", 8, 1801035 (2018) | TBD |
 |Titanium dioxide/TiO2 | TiO2_Siefke.txt | T. Siefke, S. Kroker, K. Pfeiffer, O. Puffky, K. Dietrich, D. Franta, I. Ohlídal, A. Szeghalmi, E.-B. Kley, A. Tünnermann, Adv. Opt. Mater., "Materials pushing the application limits of wire grid polarizers further into the deep ultraviolet spectral range", 4, 1780–1786 (2016) | TBD | 
@@ -17,10 +18,11 @@ Daniel Franta, David Nečas, Ivan Ohlídal, Angelo Giglia, Photonics Europe 2016
 |Aluminium oxide/Al2O3_UDM  |Al2O3_udm.txt | Optical characterization of SiO2 thin films using universal dispersion model over wide spectral range,
 Daniel Franta, David Nečas, Ivan Ohlídal, Angelo Giglia, Photonics Europe 2016: Optical Micro- and Nanometrology VI, Photonics Europe 2016: Optical Micro- and Nanometrology VI, Brussels, Belgium 3 - 7 April 2016 (2016) pp.989014 | 0.01 - 100 eV |
 |Hafnium dioxide/HfO2|HfO2.txt||M. F. Al-Kuhaili. Optical properties of hafnium oxide thin films and their application in energy-efficient windows. Opt. Mat. 27, 383-387 (2004)|0.2-2 micrometers|
+|Hafnium dioxide/HfO2_udm| HfO2_udm.txt | http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk | 0.01 - 100 eV |
 |Platinum/Pt | Pt_txt | A. D. Rakić, A. B. Djurišic, J. M. Elazar, and M. L. Majewski. Optical properties of metallic films for vertical-cavity optoelectronic devices, Appl. Opt. 37, 5271-5283 (1998) | TBD |
 |Lead/Pb | Pb_Werner.txt | W. S. M. Werner, K. Glantschnig, C. Ambrosch-Draxl. Optical constants and inelastic electron-scattering data for 17 elemental metals, J. Phys Chem Ref. Data 38, 1013-1092 (2009) | TBD |
 |Rhenium/Re| Re_txt | E. D. Palik, "Handbook of optical constants of solids" (Academic Press, 1998) | TBD |
 |Zirconia/ZrO2|ZrO2_Wood.txt | D. L Wood and K. Nassau. Refractive index of cubic zirconia stabilized with yttria, Appl. Opt. 21, 2978-2981 (1982) | 0.361-5.14 microns |
 |Silicon Nitride/Si3N4| Si3N4_Luke.txt | K. Luke, Y. Okawachi, M. R. E. Lamont, A. L. Gaeta, M. Lipson. Broadband mid-infrared frequency comb generation in a Si3N4 microresonator, Opt. Lett. 40, 4823-4826 (2015) | 0.310–5.504 µm |
 |2D Hybrid organic-inorganic perovskite | 2D_HOIP.txt | Song et al. "Determinatino of dielectric functions and exciton oscillator strength of two-dimensional hybrid perovskites", ACS Materials Lett. 2021, 3, 1, 148–159 | 0.371-1.69 µm |
-
+|Magnesium Fluoride/MgF2 | MgF2_udm.txt | http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk | 0.01 - 100 eV |

@@ -228,21 +228,35 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.possible_materials = ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
 
         if "transmission_efficiency_weight" in args:
-            #print("Found transmission efficiency arg")
+            print("Found transmission efficiency weight (TEW) arg")
             self.transmission_efficiency_weight = args["transmission_efficiency_weight"]
         else:
-            self.transmission_efficiency_weight = 0.5
+            self.transmission_efficiency_weight = 1./3.
+        print(F'TEW is {self.transmission_efficiency_weight}')
+        
         if "reflection_efficiency_weight" in args:
             self.reflection_efficiency_weight = args["reflection_efficiency_weight"]
+            print("Found reflection efficiency weight (REW) arg")
         else:
-            self.reflection_efficiency_weight = 0.5
+            self.reflection_efficiency_weight = 1./3.
+        print(F'REW is {self.reflection_efficiency_weight}')
+
+        if "reflection_selectivity_weight" in args:
+            print("Found reflection selectivity weight (RSW) arg")
+            self.reflection_selectivity_weight = args["reflection_selectivity_weight"]
+        else:
+            self.reflection_selectivity_weight = 1./3.
+        print(F'RSW is {self.reflection_selectivity_weight}')
+
+
 
         _tot_weight = (
-            self.transmission_efficiency_weight + self.reflection_efficiency_weight
+            self.transmission_efficiency_weight + self.reflection_efficiency_weight + self.reflection_selectivity_weight
         )
         print(_tot_weight)
         self.transmission_efficiency_weight /= _tot_weight
         self.reflection_efficiency_weight /= _tot_weight
+        self.reflection_selectivity_weight /= _tot_weight
 
         # user can specify which layers to compute gradients with respect to
         # i.e. for a structure like ['Air', 'SiO2', 'Ag', 'TiO2', 'Air]
@@ -379,6 +393,12 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Au(i)
             elif _lm == "hfo2":
                 self.material_HfO2(i)
+            elif _lm == "hfo2_udm":
+                self.material_HfO2_UDM(i) #<== from this source http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk - recommended for ALD HfO2
+            elif _lm == "hfo2_udm_no_loss":
+                self.material_HfO2_UDM_v2(i) #<== from this source http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk but k set to 0.0
+            elif _lm == "mgf2":
+                self.material_MgF2_UDM(i) #<== from this source http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk - recommended for ALD MgF2
             elif _lm == "pb":
                 self.material_Pb(i)
             elif _lm == "polystyrene":
@@ -395,8 +415,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 self.material_Si(i)
             elif _lm == "sio2":
                 self.material_SiO2(i)
-            elif _lm == "sio2_udm":
+            elif _lm == "sio2_udm": 
                 self.material_SiO2_UDM(i)
+            elif _lm == "sio2_udm_v2": #<== from this source http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk - recommended for ALD SiO2
+                self.material_SiO2_UDM_v2(i)
             elif _lm == "ta2o5":
               self.material_Ta2O5(i)
             elif _lm == "tin":
@@ -1722,19 +1744,25 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             the box function that spans the window where we want high reflectivity
 
         self.reflection_efficiency : float
-            the reflection fom: (int R(lambda) * reflective_envelope d lambda) / (int R(lambda) d lambda)
+            the first reflection fom: (int R(lambda) * reflective_envelope d lambda) / (int R(lambda) d lambda)
+
+        self.reflection_selectivity : float
+            the second reflection fom: (int R(lambda) * reflective_envelope d lambda) / (int reflective_envelope d lambda) 
 
         self.transmission_efficiency : float
             the transmission fom: (int T(lambda) * transmissive_envelope d lambda) / (int tranmissive_envelope d lambda)
 
         self.selective_mirror_fom : float
-            the composite figure of merit defined as f = a * transmission_efficiency + b * reflection_efficiency
+            the composite figure of merit defined as f = a * transmission_efficiency + b * reflection_efficiency + c * reflection_selectivity
 
         self.transmission_efficiency_weight : float
-            the weight of transmission efficiency in the composite figure of merit (a) satisfying a + b = 1
+            the weight of transmission efficiency in the composite figure of merit (a) satisfying a + b + c = 1
 
         self.reflection_efficiency_weight : float
-            the weight of the reflection efficiency in the composite figure of merit (b) satisfying a + b = 1
+            the weight of the reflection efficiency in the composite figure of merit (b) satisfying a + b + c = 1
+
+        self.reflection_selectivity_weight : float
+            the weight of the reflection selectivity in the composite figure of merit (c) satisfying a + b + c = 1
         
         Returns
         -------
@@ -1761,6 +1789,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self.reflectivity_array, self.wavelength_array
         )
 
+        # R_selective_denom -> integrate the reflection envelope
+        _r_select_denom = np.trapz(
+           self.reflective_envelope, self.wavelength_array 
+        )
+
         # if transmissivity_envelope is zero everywhere, this will give nan.. handle
         # by just giving value of zero the transmission_efficiency
 
@@ -1777,9 +1810,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         else: 
             self.reflection_efficiency = (_ur / _r_denom)
 
+        if _r_select_denom == 0.0:
+            self.reflection_selectivity = 0.0
+        else:
+            self.reflection_selectivity = (_ur / _r_select_denom) 
+
         self.selective_mirror_fom = (
             self.transmission_efficiency_weight * self.transmission_efficiency
             + self.reflection_efficiency_weight * self.reflection_efficiency
+            + self.reflection_selectivity_weight * self.reflection_selectivity
         )
 
     def compute_selective_mirror_fom_gradient(self):
@@ -1844,9 +1883,13 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # integrate the thermal emission spectrum over wavelength using np.trapz
         self.transmission_efficiency_gradient = np.zeros(_ngr)
         self.reflection_efficiency_gradient = np.zeros(_ngr)
+        self.reflection_selectivity_gradient = np.zeros(_ngr)
 
         # this term is in the denominator of each of the eta_T' elements
         _eta_T_denom = np.trapz(self.transmissive_envelope, self.wavelength_array)
+
+        # this term is in the denominator of each of the sel_R' elements
+        _sel_R_denom = np.trapz(self.reflective_envelope, self.wavelength_array)
 
         # these terms are in each of the eta_R' elements
         _f_l = np.trapz(
@@ -1863,6 +1906,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                     self.wavelength_array,
                 )
                 / _eta_T_denom
+            )
+            # can compute sel_R'
+            self.reflection_selectivity_gradient[i] = (
+                np.trapz(
+                    self.reflective_envelope 
+                    * self.reflectivity_gradient_array[:,i],
+                    self.wavelength_array
+                )
+                / _sel_R_denom
             )
 
             # need to get parts of g'(lambda) and f'(lambda) terms
@@ -1881,4 +1933,5 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.selective_mirror_fom_gradient = (
             self.transmission_efficiency_weight * self.transmission_efficiency_gradient
             + self.reflection_efficiency_weight * self.reflection_efficiency_gradient
+            + self.reflection_selectivity_weight * self.reflection_selectivity_gradient
         )

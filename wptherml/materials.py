@@ -101,12 +101,12 @@ class Materials:
     def material_from_file(self, layer_number, file_name):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be
-               from a test file with name "file_name" where the text file is ordered:
+               from a text file with name "file_name" where the text file is ordered:
                column 1: wavelength in meters, increasing order
                column 2: real part of refractive index corresponding to wavelengths in col 1
                column 3: imaginary part of refractive index corresponding to wavelengths in col 1
-               the file is expected to be in the directory $wpspecdir/wptherml/data
-               where $wpspecdir is the full path to the directory where you have wptherml installed
+               the file is expected to be in the directory $wpthermldir/wptherml/data
+               where $wpthermldir is the full path to the directory where you have wptherml installed
 
             Arguments
             ----------
@@ -1198,7 +1198,210 @@ class Materials:
             self._refractive_index_array[:, layer_number] = n_spline(
                 self.wavelength_array
             ) + 1j * k_spline(self.wavelength_array)
-            
+
+    def material_SiO2_UDM_v2(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be SiO2 using the universal dispersion model (UDM) here: http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk 
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as SiO2 udm
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_SiO2_UDM_v2(1, wavelength_range="visible") -> layer 1 will be SiO2 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the Si02 data file
+            file_path = path + "data/SiO2_udm_v2.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+    def material_HfO2_UDM(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be HfO2 using the universal dispersion model (UDM) here: http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as HfO2 udm
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_HfO2_UDM(1, wavelength_range="visible") -> layer 1 will be HfO2 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the Si02 data file
+            file_path = path + "data/HfO2_udm.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+    def material_HfO2_UDM_v2(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be HfO2 using the universal dispersion model (UDM) here: http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk
+               with the modification that the imaginary part of the refractive index is set to zero!
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as HfO2 udm
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_HfO2_UDM(1, wavelength_range="visible") -> layer 1 will be "lossless" HfO2 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the Si02 data file
+            file_path = path + "data/HfO2_udm_no_loss.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+    def material_MgF2_UDM(self, layer_number):
+        if layer_number > 0 and layer_number < (self.number_of_layers - 1):
+            """defines the refractive index of layer layer_number to be MgF2 using the universal dispersion model (UDM) here: http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk
+               
+
+            Arguments
+            ----------
+            layer_number : int
+            specifies the layer of the stack that will be modelled as MgF2 udm
+
+            wavelength_range (optional) : str
+            specifies wavelength regime that is desired for modelling the material
+
+            Attributes
+            ----------
+            _refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats
+
+            Returns
+            -------
+            None
+
+            Examples
+            --------
+            >>> material_HfO2_UDM(1, wavelength_range="visible") -> layer 1 will be MgF2 from the UDM data set good from 0.01 to 100 eV
+            """
+            # get path to the Si02 data file
+            file_path = path + "data/MgF2_udm.txt"
+            # now read Tin data into a numpy array
+            file_data = np.loadtxt(file_path)
+            # file_path[:,0] -> wavelengths in meters
+            # file_path[:,1] -> real part of the refractive index
+            # file_path[:,2] -> imaginary part of the refractive index
+            e_data = file_data[:, 0]
+            wl_nm = 1239.84193 / e_data
+
+            wl_si = np.flip(wl_nm) * 1e-9
+
+            n_array = np.flip(file_data[:,1])
+            k_array = np.flip(file_data[:,2])
+
+            n_spline = InterpolatedUnivariateSpline(
+                wl_si, n_array, k=1
+            )
+            k_spline = InterpolatedUnivariateSpline(
+                wl_si, k_array, k=1
+            )
+
+            self._refractive_index_array[:, layer_number] = n_spline(
+                self.wavelength_array
+            ) + 1j * k_spline(self.wavelength_array)
+
+
     def material_Al2O3_UDM(self, layer_number):
         if layer_number > 0 and layer_number < (self.number_of_layers - 1):
             """defines the refractive index of layer layer_number to be Al203

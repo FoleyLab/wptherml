@@ -5,6 +5,10 @@ dependencies:
     - pip>=19.0
     - numpy
     - scipy
-    - matplotlib 
-    - jupyter 
+    - matplotlib
+    - jupyter
     - pytest
+    - pytorch
+    - scikit-learn
+    - pandas
+    - tqdm
