@@ -22,7 +22,7 @@ def test_build_boson_basis():
 
     test = sf.spectrum_factory("Spin-Boson", args)
     test.build_boson_basis()
-    _expected_basis = np.matrix("1 0 0 ; 0 1 0 ; 0 0 1")
+    _expected_basis = np.eye(3) #np.matrix("1 0 0 ; 0 1 0 ; 0 0 1")
     assert np.allclose(_expected_basis, test.boson_basis)
     print(test.boson_basis)
 
@@ -61,7 +61,7 @@ def test_build_exciton_basis():
     test_2.build_exciton_basis()
     test_3.build_exciton_basis()
 
-    _expected_one_exciton_basis = np.matrix("1 0 ; 0 1")
+    _expected_one_exciton_basis = np.eye(2)
     _expected_two_exciton_basis = np.kron(
         _expected_one_exciton_basis, _expected_one_exciton_basis
     )
@@ -134,15 +134,13 @@ def test_build_exciton_boson_basis():
     test_3.build_exciton_boson_basis()
 
     # create components of expected bases
-    _expected_one_exciton_basis = np.matrix("1 0 ; 0 1")
+    _expected_one_exciton_basis = np.eye(2)
     _expected_two_exciton_basis = np.kron(
         _expected_one_exciton_basis, _expected_one_exciton_basis
     )
-    _expected_2_level_boson_basis = np.matrix("1 0 ; 0 1")
-    _expected_3_level_boson_basis = np.matrix("1 0 0 ; 0 1 0 ; 0 0 1")
-    _expected_5_level_boson_basis = np.matrix(
-        "1 0 0 0 0 ; 0 1 0 0 0 ; 0 0 1 0 0 ; 0 0 0 1 0; 0 0 0 0 1"
-    )
+    _expected_2_level_boson_basis = np.eye(2)
+    _expected_3_level_boson_basis = np.eye(3)
+    _expected_5_level_boson_basis = np.eye(5)
 
     # create expected composite basis for case 1
     _expected_exciton_boson_basis_case_1 = np.kron(
@@ -208,18 +206,18 @@ def test_build_bosonic_ladder_operators():
     test_10d.build_bosonic_ladder_operators()
 
     # create ket states for different cases
-    _ket_1_2d = np.matrix("0 1").T
-    _ket_0_2d = np.matrix("1 0").T
+    _ket_1_2d = np.array([[0, 1]]).T #np.matrix("0 1").T
+    _ket_0_2d = np.array([[1, 0]]).T #np.matrix("1 0").T
 
-    _ket_4_6d = np.matrix("0 0 0 0 1 0").T
+    _ket_4_6d = np.array([[0, 0, 0, 0, 1, 0]]).T #np.matrix("0 0 0 0 1 0").T
 
-    _ket_8_10d = np.matrix("0 0 0 0 0 0 0 0 1 0").T
+    _ket_8_10d = np.array([[0, 0, 0, 0, 0, 0, 0, 0, 1, 0]]).T #np.matrix("0 0 0 0 0 0 0 0 1 0").T
 
-    _bra_0_2d = np.matrix("1 0")
-    _bra_1_2d = np.matrix("0 1")
+    _bra_0_2d = np.array([[1, 0]])
+    _bra_1_2d = np.array([[0, 1]])
 
-    _bra_3_6d = np.matrix("0 0 0 1 0 0")
-    _bra_5_6d = np.matrix("0 0 0 0 0 1")
+    _bra_3_6d = np.array([[0, 0, 0, 1, 0, 0]])   #np.matrix("0 0 0 1 0 0")
+    _bra_5_6d = np.array([[0, 0, 0, 0, 0, 1]])   #np.matrix("0 0 0 0 0 1")
 
     _bra_8_10d = _ket_8_10d.T
 
@@ -288,10 +286,10 @@ def test_compute_boson_energy_element():
     test_1.build_boson_energy_operator()
 
     # create bra and kets
-    _qd_bra_0 = np.matrix("1 0")
-    _qd_bra_1 = np.matrix("0 1")
-    _bos_bra_0 = np.matrix("1 0")
-    _bos_bra_1 = np.matrix("0 1")
+    _qd_bra_0 = np.array([[1, 0]])  #np.matrix("1 0")
+    _qd_bra_1 = np.array([[0, 1]])  #np.matrix("0 1")
+    _bos_bra_0 = np.array([[1, 0]]) #np.matrix("1 0")
+    _bos_bra_1 = np.array([[0, 1]]) #np.matrix("0 1")
 
     _qd_ket_0 = _qd_bra_0.T
     _qd_ket_1 = _qd_bra_1.T
@@ -415,12 +413,12 @@ def test_build_operator_for_exciton_j():
     }
 
     # define some reference Pauli matrices
-    _sigma_p = np.matrix("0 0 ; 1 0")  # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
-    _sigma_m = np.matrix("0 1 ; 0 0")  # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
-    _sigma_z = np.matrix("1 0 ; 0 -1")
-    _sigma_x = np.matrix("0 1 ; 1 0")
-    _ID = np.matrix("1 0 ; 0 1")
-    _sigma_pm = np.matrix("0 0 ; 0 1")
+    _sigma_p = np.array([[0, 0], [1, 0]])   #np.matrix("0 0 ; 1 0")  # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
+    _sigma_m = np.array([[0, 1], [0, 0]])   #np.matrix("0 1 ; 0 0")  # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
+    _sigma_z = np.array([[1, 0], [0, -1]])  #np.matrix("1 0 ; 0 -1")
+    _sigma_x = np.array([[0, 1], [1, 0]])   #np.matrix("0 1 ; 1 0")
+    _ID = np.eye(2) # np.matrix("1 0 ; 0 1")
+    _sigma_pm = np.array([[0, 0], [0, 1]])  #np.matrix("0 0 ; 0 1")
 
     sf = wptherml.SpectrumFactory()
 
@@ -509,7 +507,7 @@ def test_compute_exciton_energy_element():
     for i in range(_dim):
         _bra = test_1.exciton_boson_basis[:, i]
         for j in range(_dim):
-            _ket = np.matrix(test_1.exciton_boson_basis[:, j]).T
+            _ket = (np.array(test_1.exciton_boson_basis[:, j]).reshape(1,_dim)).T  #np.matrix(test_1.exciton_boson_basis[:, j]).T
             _element = test_1.compute_exciton_energy_element(_bra, _ket)
             _H[i, j] = _element
 
