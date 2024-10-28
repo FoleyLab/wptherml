@@ -121,6 +121,17 @@ class SpinBosonDriver(SpectrumDriver):
         else:
             self.exciton_transition_dipole_magnitude_au = 10.
 
+        if "exciton_ground_state_dipole_magnitude_au" in args:
+            self.exciton_ground_state_dipole_magnitude_au = args["exciton_ground_state_dipole_magnitude_au"]
+        else:
+            self.exciton_ground_state_dipole_magnitude_au = 10.
+
+        if "exciton_excited_state_dipole_magnitude_au" in args:
+            self.exciton_excited_state_dipole_magnitude_au = args["exciton_excited_state_dipole_magnitude_au"]
+        else:
+            self.exciton_excited_state_dipole_magnitude_au = 10.
+        
+
         # convert energies from eV to au
         self.exciton_energy_au = self.exciton_energy_ev * self.ev_to_au
         self.boson_energy_au = self.boson_energy_ev * self.ev_to_au
@@ -355,8 +366,11 @@ class SpinBosonDriver(SpectrumDriver):
             self.single_exciton_operator = np.array([[0, 1], [0, 0]]) #np.matrix("0 1 ; 0 0")
 
         elif operator == "transition_dipole_operator":
-            self.single_exciton_operator = self.exciton_dipole_magnitude_au * np.array([[0, 1], [1, 0]]) #np.matrix("0 1 ; 1 0")
+            self.single_exciton_operator = self.exciton_transition_dipole_magnitude_au * np.array([[0, 1], [1, 0]]) #np.matrix("0 1 ; 1 0")
 
+        elif operator == "total_dipole_operator":
+            self.single_exciton_operator = np.array([[self.exciton_ground_state_dipole_magnitude_au, self.exciton_transition_dipole_magnitude_au],
+                                                     [self.exciton_transition_dipole_magnitude_au, self.exciton_excited_state_dipole_magnitude_au]])
         elif operator == "sigma_pm":
             self.single_exciton_operator = np.array([[0, 0], [0, 1]]) #np.matrix("0 0 ; 0 1")
 
