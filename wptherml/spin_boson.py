@@ -329,7 +329,8 @@ class SpinBosonDriver(SpectrumDriver):
 
 
     def build_operator_for_exciton_j(self, j, operator="sigma_z", factor = 1):
-        """build operator for the j-th exciton in the coupled N-exciton hilbert space
+        """build operator for the j-th exciton in the coupled N-exciton hilbert space.
+           THIS MUST BE LIFTED INTO THE COUPLED BOSON-EXCITON HILBERT SPACE OUTSIDE OF THIS METHOD!
 
         Arguments
         ----------
@@ -337,7 +338,7 @@ class SpinBosonDriver(SpectrumDriver):
             operator to build
 
         j : int
-            index of the exciton; start couunt from 0
+            index of the exciton; start count from 0
 
         factor : float
             scaling factor for the operator, defaults to 1
@@ -553,7 +554,7 @@ class SpinBosonDriver(SpectrumDriver):
             self.build_operator_for_exciton_j(i, "sigma_m", factor = self.exciton_boson_coupling_au)
 
             # take tensor product of the bosonic raising operator and the sigma^- operator times the coupling constant
-            _Op = self.exciton_boson_coupling_au * np.kron(self.b_dagger_matrix,  self.exciton_operator_j)
+            _Op = np.kron(self.b_dagger_matrix,  self.exciton_operator_j)
 
             # assign this operator to the ith position in the exciton_boson_coupling_operator_b_sp
             self.exciton_boson_coupling_operator_bd_sm += _Op
@@ -631,14 +632,9 @@ class SpinBosonDriver(SpectrumDriver):
                     _exciton_term += np.dot(_bra, np.dot(self.exciton_dipole_operator[:,:,k], _ket))
 
                 dipole_element += bra_coeffs[i] * ket_coeffs[j] * (_boson_term + _exciton_term)
-        
-                
 
-                
+        pass 
 
-            
-
-    
     def compute_exciton_boson_coupling_element(self, bra, ket):
         """compute matrix element <bra|H_c|ket>
 
@@ -665,95 +661,6 @@ class SpinBosonDriver(SpectrumDriver):
 
         return E_coupling_element
     
-
-    def compute_boson_energy_matrix(self):
-        """compute the bosonic energy matrix
-
-        Arguments
-        ----------
-        None
-
-        Attributes
-        ----------
-        boson_energy_operator : numpy matrix
-            matrix representation of the bosonic energy operator in the N-exciton N'-level boson hilbert space
-
-        exciton_boson_basis : numpy matrix
-            basis states for the collection of N excitons and the N'-level Harmonic oscillator in order
-            |s> \otimes |q_1> \otimes |q_2> \otimes ... \otimes |q_N>
-
-        boson_energy_matrix : numpy matrix
-            matrix representation of the bosonic energy operator in the coupled excitonic bosonic Hilbert space
-
-        Returns
-        -------
-        None
-        """
-        _dim = self.exciton_boson_basis.shape[0]
-        #print(f" Dim is {_dim}")
-        self.boson_energy_matrix = np.zeros((_dim, _dim))
-
-        for i in range(_dim):
-            for j in range(_dim):
-                _bra = self.exciton_boson_basis[:, i]
-                _ket = np.matrix(self.exciton_boson_basis[:, j]).T
-                self.boson_energy_matrix[i, j] = self.compute_boson_energy_element(_bra, _ket)
-
-    def compute_exciton_energy_matrix(self):
-        """ compute the exciton energy matrix
-
-        Arguments
-        ----------
-        None
-
-        Attributes
-        ----------
-        exciton_energy_operator : numpy matrix
-            dim x dim x N tensor representation of the exciton energy operator in the N-exciton hilbert
-
-        exciton_energy_matrix : numpy matrix
-            dim x dim matrix representation of the exciton energy operator in the coupled Hilbert space
-
-        Returns
-        -------
-        None
-        """
-        _dim = self.exciton_boson_basis.shape[0]
-        self.exciton_energy_matrix = np.zeros((_dim, _dim))
-        for i in range(_dim):
-            _bra = self.exciton_boson_basis[:, i]
-            for j in range(_dim):
-                _ket = np.matrix(self.exciton_boson_basis[:, j]).T
-                self.exciton_energy_matrix[i, j] = self.compute_exciton_energy_element(_bra, _ket)
-
-    def compute_exciton_boson_coupling_matrix(self):
-        """ compute the exciton boson coupling
-
-        Arguments
-        ----------
-        None
-
-        Attributes
-        ----------
-        exciton_boson_coupling_operator : numpy matrix
-            dim x dim x N tensor representation of the exciton energy operator in the N-exciton hilbert
-
-        exciton_boson_coupling_matrix : numpy matrix
-            dim x dim matrix representation of the exciton energy operator in the coupled Hilbert space
-
-        Returns
-        -------
-        None
-        """
-        _dim = self.exciton_boson_basis.shape[0]
-        self.exciton_boson_coupling_matrix = np.zeros((_dim, _dim))
-        for i in range(_dim):
-            _bra = self.exciton_boson_basis[:, i]
-            for j in range(_dim):
-                _ket = np.matrix(self.exciton_boson_basis[:, j]).T
-                self.exciton_boson_coupling_matrix[i, j] = self.compute_exciton_boson_coupling_element(_bra, _ket)
-
-
     def compute_spectrum(self):
         """method that will build spin-boson Hamiltonian, diagonalize it, and return eigenvalues"""
 
@@ -762,20 +669,17 @@ class SpinBosonDriver(SpectrumDriver):
         self.build_exciton_basis()
         self.build_exciton_boson_basis()
 
-        # build operators
+        # build operators (really matrix representations of operators)
         self.build_exciton_boson_coupling_operator()
         self.build_exciton_energy_operator()
         self.build_boson_energy_operator()
         self.build_boson_dipole_operator()
         self.build_exciton_dipole_operator()
 
-        # build matrices
-        self.compute_boson_energy_matrix()
-        self.compute_exciton_energy_matrix()
-        self.compute_exciton_boson_coupling_matrix()
+
 
         # define total Hamiltonian as the sum of these matrices
-        self.hamiltonian_matrix = self.boson_energy_matrix + self.exciton_energy_matrix + self.exciton_boson_coupling_matrix
+        self.hamiltonian_matrix = self.boson_energy_operator + self.exciton_energy_operator+ self.exciton_boson_coupling_operator
 
         self.energy_eigenvalues, self.energy_eigenvectors = la.eigh(self.hamiltonian_matrix)
         print("Energy Eigenvalues in atomic units are")

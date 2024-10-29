@@ -230,22 +230,22 @@ def test_build_bosonic_ladder_operators():
     _bra_1_2d_b_ket_0 = np.dot(_bra_1_2d, _b_dag_ket_0)
 
     # both brackets should give 1
-    assert np.isclose(_bra_0_2d_b_ket_1[0, 0], 1.0)
-    assert np.isclose(_bra_1_2d_b_ket_0[0, 0], 1.0)
+    assert np.isclose(_bra_0_2d_b_ket_1[0], 1.0)
+    assert np.isclose(_bra_1_2d_b_ket_0[0], 1.0)
 
     # compute <3|b|4>
     _b_ket_4_6d = np.dot(test_6d.b_matrix, _ket_4_6d)
     _bra_3_6d_b_ket_4 = np.dot(_bra_3_6d, _b_ket_4_6d)
 
     # this bracket should give sqrt(4)
-    assert np.isclose(_bra_3_6d_b_ket_4[0, 0], 2.0)
+    assert np.isclose(_bra_3_6d_b_ket_4[0], 2.0)
 
     # compute <5|b^+|4>
     _b_dag_ket_4_6d = np.dot(test_6d.b_dagger_matrix, _ket_4_6d)
     _bra_5_6d_b_dag_ket_4 = np.dot(_bra_5_6d, _b_dag_ket_4_6d)
 
     # this bracket should give sqrt(5)
-    assert np.isclose(_bra_5_6d_b_dag_ket_4[0, 0], np.sqrt(5))
+    assert np.isclose(_bra_5_6d_b_dag_ket_4[0], np.sqrt(5))
 
     # compute <8 | b^+ b | 8>
     b_dag_b_ket_8_10d = np.dot(
@@ -254,123 +254,8 @@ def test_build_bosonic_ladder_operators():
     _bra_8_10d_b_dag_b_ket_8 = np.dot(_bra_8_10d, b_dag_b_ket_8_10d)
 
     # this bracket should be 8
-    assert np.isclose(_bra_8_10d_b_dag_b_ket_8[0, 0], 8.0)
+    assert np.isclose(_bra_8_10d_b_dag_b_ket_8[0], 8.0)
 
-
-def test_compute_boson_energy_element():
-    """
-    Unit test for the compute_boson_energy_element method for a 1-exciton 2-level bosonic system with \hbar \omega = 6.8028 eV, compute the following elements of the boson Energy operator
-        <0,0|H|0,0> = 1/2 \hbar \omega
-            <1,0|H|1,0> = 3/2 \hbar \omega
-            <0,1|H|0,1> = 1/2 \hbar \omega
-            <1,1|H|1,1> = 3/2 \hbar \omega
-            <1,0|H|0,1> = 0
-    """
-
-    # dictionaries for case 1
-    args_1 = {
-        "number_of_excitons": 1,
-        "number_of_boson_levels": 2,
-        "boson_energy_ev": 6.8028,
-    }
-    sf = wptherml.SpectrumFactory()
-
-    # instantiate cases
-    test_1 = sf.spectrum_factory("Spin-Boson", args_1)
-
-    # build operators
-    test_1.build_boson_basis()
-    test_1.build_exciton_basis()
-    test_1.build_exciton_boson_basis()
-    test_1.build_bosonic_ladder_operators()
-    test_1.build_boson_energy_operator()
-
-    # create bra and kets
-    _qd_bra_0 = np.array([[1, 0]])  #np.matrix("1 0")
-    _qd_bra_1 = np.array([[0, 1]])  #np.matrix("0 1")
-    _bos_bra_0 = np.array([[1, 0]]) #np.matrix("1 0")
-    _bos_bra_1 = np.array([[0, 1]]) #np.matrix("0 1")
-
-    _qd_ket_0 = _qd_bra_0.T
-    _qd_ket_1 = _qd_bra_1.T
-
-    _bos_ket_0 = _bos_bra_0.T
-    _bos_ket_1 = _bos_bra_1.T
-
-    _ket_00 = np.kron(_bos_ket_0, _qd_ket_0)
-    _bra_00 = np.kron(_bos_bra_0, _qd_bra_0)
-
-    _ket_10 = np.kron(_bos_ket_1, _qd_ket_0)
-    _bra_10 = np.kron(_bos_bra_1, _qd_bra_0)
-
-    _ket_01 = np.kron(_bos_ket_0, _qd_ket_1)
-    _bra_01 = np.kron(_bos_bra_0, _qd_bra_1)
-
-    _ket_11 = np.kron(_bos_ket_1, _qd_ket_1)
-    _bra_11 = np.kron(_bos_bra_1, _qd_bra_1)
-
-    _expected_E_0000 = test_1.boson_energy_au * 0.5
-    _expected_E_1010 = test_1.boson_energy_au * 1.5
-    _expected_E_1111 = test_1.boson_energy_au * 1.5
-    _expected_E_0101 = test_1.boson_energy_au * 0.5
-    _expected_E_1001 = 0.0
-
-    _E_0000 = test_1.compute_boson_energy_element(_bra_00, _ket_00)
-    _E_1010 = test_1.compute_boson_energy_element(_bra_10, _ket_10)
-    _E_0101 = test_1.compute_boson_energy_element(_bra_01, _ket_01)
-    _E_1111 = test_1.compute_boson_energy_element(_bra_11, _ket_11)
-
-    _E_1001 = test_1.compute_boson_energy_element(_bra_10, _ket_01)
-
-    assert np.isclose(_E_0000, _expected_E_0000)
-    assert np.isclose(_E_1010, _expected_E_1010)
-    assert np.isclose(_E_0101, _expected_E_0101)
-    assert np.isclose(_E_1111, _expected_E_1111)
-    assert np.isclose(_E_1001, _expected_E_1001)
-
-
-def test_compute_boson_energy_matrix():
-    """
-    Unit test for the compute_boson_energy_element method for a 2-exciton 3-level bosonic system with \hbar \omega = 6.8028 eV.
-    Compute matrix in the basis
-        <q1, q2, s|H|q1',q2',s> =
-    """
-
-    # dictionaries for case 1
-    args_1 = {
-        "number_of_excitons": 2,
-        "number_of_boson_levels": 3,
-        "boson_energy_ev": 6.8028,
-    }
-
-    sf = wptherml.SpectrumFactory()
-
-    # instantiate cases
-    test_1 = sf.spectrum_factory("Spin-Boson", args_1)
-    test_1.build_boson_basis()
-    test_1.build_exciton_basis()
-    test_1.build_exciton_boson_basis()
-    test_1.build_bosonic_ladder_operators()
-    test_1.build_boson_energy_operator()
-    test_1.compute_boson_energy_matrix()
-
-    _dim = 2**2 * 3
-    _expected_matrix = np.zeros((_dim, _dim))
-
-    # fill in boson energy elements using a loop over all basis states
-    for i in range(3):
-        for j in range(2):
-            for k in range(2):
-                _I = i * 2 * 2 + j * 2 + k
-                for ip in range(3):
-                    for jp in range(2):
-                        for kp in range(2):
-                            _J = ip * 2 * 2 + jp * 2 + kp
-                            _expected_matrix[_I, _J] = (
-                                (i + 1 / 2) * test_1.boson_energy_au
-                            ) * (_I == _J)
-
-    assert np.allclose(_expected_matrix, test_1.boson_energy_matrix)
 
 
 def test_build_operator_for_exciton_j():
@@ -480,44 +365,7 @@ def test_build_operator_for_exciton_j():
     test_3.build_operator_for_exciton_j(3, "sigma_pm")
     _expected_op_5 = np.kron(_ID, np.kron(_ID, np.kron(np.kron(_ID, _sigma_pm), _ID)))
     assert np.allclose(test_3.exciton_operator_j, _expected_op_5)
-
-
-def test_compute_exciton_energy_element():
-    # dictionaries for case 1
-    args_1 = {
-        "number_of_excitons": 2,
-        "number_of_boson_levels": 2,
-        "boson_energy_ev": 6.8028,
-        "exciton_energy_ev": 6.8028 / 2.0,
-    }
-    sf = wptherml.SpectrumFactory()
-
-    # instantiate cases
-    test_1 = sf.spectrum_factory("Spin-Boson", args_1)
-    test_1.exciton_energy_au = 0.5
-    test_1.build_boson_basis()
-    test_1.build_exciton_basis()
-    test_1.build_exciton_boson_basis()
-    test_1.build_exciton_energy_operator()
-
-    _dim = test_1.exciton_boson_basis.shape[0]
-    # create expected matrix
-    _H = np.zeros((_dim, _dim))
-
-    for i in range(_dim):
-        _bra = test_1.exciton_boson_basis[:, i]
-        for j in range(_dim):
-            _ket = (np.array(test_1.exciton_boson_basis[:, j]).reshape(1,_dim)).T  #np.matrix(test_1.exciton_boson_basis[:, j]).T
-            _element = test_1.compute_exciton_energy_element(_bra, _ket)
-            _H[i, j] = _element
-
-    # use method to compute matrix
-    test_1.compute_exciton_energy_matrix()
-
-    # compare elements
-    assert np.allclose(_H, test_1.exciton_energy_matrix)
     
-
 def test_compute_exciton_boson_coupling_matrix():
     """
     Unit test for the compute_exciton_boson_coupling_matrix method for a 2-exciton 3-level bosonic system with \hbar \g = 0.01 eV.
@@ -541,7 +389,6 @@ def test_compute_exciton_boson_coupling_matrix():
     test_1.build_exciton_basis()
     test_1.build_exciton_boson_basis()
     test_1.build_exciton_boson_coupling_operator()
-    test_1.compute_exciton_boson_coupling_matrix()
 
     _dim = 6
     _expected_matrix = np.zeros((_dim, _dim))
@@ -558,19 +405,17 @@ def test_compute_exciton_boson_coupling_matrix():
                     elif i==(ip-1) and j==(jp+1):
                          _expected_matrix[_I, _J] = test_1.exciton_boson_coupling_au * np.sqrt(ip)
 
-    assert np.allclose(_expected_matrix, test_1.exciton_boson_coupling_matrix)
+    assert np.allclose(_expected_matrix, test_1.exciton_boson_coupling_operator)
     print("Expected Matrix")
     print(_expected_matrix)
     print("Built matrix")
-    print(test_1.exciton_boson_coupling_matrix)
+    print(test_1.exciton_boson_coupling_operator)
 
 
 test_build_boson_basis()
 test_build_exciton_basis()
 test_build_exciton_boson_basis()
 test_build_bosonic_ladder_operators()
-test_compute_boson_energy_element()
-test_compute_boson_energy_matrix()
+#test_compute_boson_energy_matrix()
 test_build_operator_for_exciton_j()
-test_compute_exciton_energy_element()
 test_compute_exciton_boson_coupling_matrix()
