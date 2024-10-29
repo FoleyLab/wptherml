@@ -248,7 +248,7 @@ class SpinBosonDriver(SpectrumDriver):
         self.b_dagger_matrix = self.b_matrix.transpose().conjugate()
 
     def build_boson_energy_operator(self):
-        """build the boson energy operator in theN'-level bosonic - N-qd coupled Hilbert space
+        """build the boson energy operator in the N'-level bosonic - N-qd coupled Hilbert space
 
         Arguments
         ----------
@@ -328,8 +328,8 @@ class SpinBosonDriver(SpectrumDriver):
         )
 
 
-    def build_operator_for_exciton_j(self, j, operator="sigma_z"):
-        """build operator for the j-th exciton
+    def build_operator_for_exciton_j(self, j, operator="sigma_z", factor = 1):
+        """build operator for the j-th exciton in the coupled N-exciton hilbert space
 
         Arguments
         ----------
@@ -338,6 +338,9 @@ class SpinBosonDriver(SpectrumDriver):
 
         j : int
             index of the exciton; start couunt from 0
+
+        factor : float
+            scaling factor for the operator, defaults to 1
 
         Attributes
         ----------
@@ -351,32 +354,32 @@ class SpinBosonDriver(SpectrumDriver):
         # define the operator on the single exciton hilbert space that we
         # wish to use in the composite hilbert space
         if operator == "sigma_z":
-            self.single_exciton_operator = np.array([[1, 0], [0, -1]])  #np.matrix("1 0 ; 0 -1")
+            self.single_exciton_operator = np.array([[1, 0], [0, -1]]) * factor  #np.matrix("1 0 ; 0 -1")
 
         elif operator == "sigma_x":
-            self.single_exciton_operator = np.array([[0, 1], [1, 0]]) #np.matrix("0 1 ; 1 0")
+            self.single_exciton_operator = np.array([[0, 1], [1, 0]]) * factor #np.matrix("0 1 ; 1 0")
 
         elif operator == "sigma_y":
-            self.single_exciton_operator = np.array([[0, -1j], [1j, 0]]) #np.matrix("0 -1j ; 1j 0")
+            self.single_exciton_operator = np.array([[0, -1j], [1j, 0]]) * factor #np.matrix("0 -1j ; 1j 0")
 
         elif operator == "sigma_p":  # sigma_p |0> == sigma_p [1 0].T = |1> == [0 1].T
-            self.single_exciton_operator = np.array([[0, 0], [1, 0]]) #np.matrix("0 0 ; 1 0")
+            self.single_exciton_operator = np.array([[0, 0], [1, 0]]) * factor #np.matrix("0 0 ; 1 0")
 
         elif operator == "sigma_m":  # sigma_m |1> == sigma_m [0 1].T = |0> == [1 0].T
-            self.single_exciton_operator = np.array([[0, 1], [0, 0]]) #np.matrix("0 1 ; 0 0")
+            self.single_exciton_operator = np.array([[0, 1], [0, 0]]) * factor #np.matrix("0 1 ; 0 0")
 
         elif operator == "transition_dipole_operator":
-            self.single_exciton_operator = self.exciton_transition_dipole_magnitude_au * np.array([[0, 1], [1, 0]]) #np.matrix("0 1 ; 1 0")
+            self.single_exciton_operator = self.exciton_transition_dipole_magnitude_au * np.array([[0, 1], [1, 0]]) * factor #np.matrix("0 1 ; 1 0")
 
         elif operator == "total_dipole_operator":
             self.single_exciton_operator = np.array([[self.exciton_ground_state_dipole_magnitude_au, self.exciton_transition_dipole_magnitude_au],
-                                                     [self.exciton_transition_dipole_magnitude_au, self.exciton_excited_state_dipole_magnitude_au]])
+                                                     [self.exciton_transition_dipole_magnitude_au, self.exciton_excited_state_dipole_magnitude_au]]) * factor
         elif operator == "sigma_pm":
-            self.single_exciton_operator = np.array([[0, 0], [0, 1]]) #np.matrix("0 0 ; 0 1")
+            self.single_exciton_operator = np.array([[0, 0], [0, 1]]) * factor #np.matrix("0 0 ; 0 1")
 
         else:
             # if no valid option given, use an identity
-            self.single_exciton_operator = np.array([[1, 0], [0, 1]]) #np.matrix("1 0 ; 0 1")
+            self.single_exciton_operator = np.array([[1, 0], [0, 1]]) * factor #np.matrix("1 0 ; 0 1")
 
         if self.number_of_excitons == 1:
             # exciton_operator_j is just a single exciton operator
@@ -437,21 +440,24 @@ class SpinBosonDriver(SpectrumDriver):
         """
         # dimension of the coupled Hilbert space
         _dim = self.exciton_boson_basis.shape[0]
+
         # identity on the boson Hilbert space
         _Is = np.eye(self.number_of_boson_levels)
 
         # create tensor for exciton operators
-        self.exciton_energy_operator = np.zeros((_dim, _dim, self.number_of_excitons))
+        self.exciton_energy_operator = np.zeros((_dim, _dim))
 
         for i in range(self.number_of_excitons):
             # get the sigma_+ \sigma_- operator for the ith exciton in the N-exciton Hilbert space
-            self.build_operator_for_exciton_j(i, "sigma_pm")
+            self.build_operator_for_exciton_j(i, "sigma_pm", factor = self.exciton_energy_au)
 
             # take tensor product of the identity on the boson Hilbert space with this exciton operator
-            _Op = np.kron(_Is, self.exciton_energy_au * self.exciton_operator_j)
+            _Op = np.kron(_Is, self.exciton_operator_j)
 
-            # assign this operator to the ith position in the exciton_energy_operator
-            self.exciton_energy_operator[:, :, i] = _Op
+            # add this operator to exciton_energy_operator
+            self.exciton_energy_operator  += _Op
+
+     
 
     def build_exciton_dipole_operator(self):
         """compute the exciton dipole operator in the N-exciton N'-level bosonic Hilbert space
@@ -479,17 +485,17 @@ class SpinBosonDriver(SpectrumDriver):
         _Is = np.eye(self.number_of_boson_levels)
 
         # create tensor for exciton operators
-        self.exciton_dipole_operator = np.zeros((_dim, _dim, self.number_of_excitons))
+        self.exciton_dipole_operator = np.zeros((_dim, _dim))
 
         for i in range(self.number_of_excitons):
             # get the sigma_+ \sigma_- operator for the ith exciton in the N-exciton Hilbert space
-            self.build_operator_for_exciton_j(i, "dipole")
+            self.build_operator_for_exciton_j(i, "total_dipole_operator")
 
             # take tensor product of the identity on the boson Hilbert space with this exciton operator
             _Op = np.kron(_Is, self.exciton_operator_j)
 
             # assign this operator to the ith position in the exciton_energy_operator
-            self.exciton_dipole_operator[:, :, i] = _Op
+            self.exciton_dipole_operator += _Op
 
 
     def build_exciton_boson_coupling_operator(self):
@@ -505,11 +511,11 @@ class SpinBosonDriver(SpectrumDriver):
             interaction energy between the excitonic subsystems and the bosonic subsystem
 
         exciton_boson_coupling_operator_sp_b : numpy matrix
-            dim x dim x N tensor representation of the coupling operator proportional to b sigma^+  in the N-exciton N'-level hilbert space
+            dim x dim representation of the coupling operator proportional to b sigma^+  in the N-exciton N'-level hilbert space
             where dim is the size of the N-exciton N'-level bosonic hilbert space
 
         exciton_boson_coupling_operator_sm_bd : numpy matrix
-            dim x dim x N tensor representation of the coupling operator proportional to b^+ sigma^-  in the N-exciton N'-level hilbert space
+            dim x dim matrix representation of the coupling operator proportional to b^+ sigma^-  in the N-exciton N'-level hilbert space
             where dim is the size of the N-exciton N'-level bosonic hilbert space
 
 
@@ -524,8 +530,9 @@ class SpinBosonDriver(SpectrumDriver):
 
 
         # create tensor for coupling operators
-        self.exciton_boson_coupling_operator_b_sp = np.zeros((_dim, _dim, self.number_of_excitons))
-        self.exciton_boson_coupling_operator_bd_sm = np.zeros((_dim, _dim, self.number_of_excitons))
+        self.exciton_boson_coupling_operator_b_sp = np.zeros((_dim, _dim))
+        self.exciton_boson_coupling_operator_bd_sm = np.zeros((_dim, _dim))
+        self.exciton_boson_coupling_operator = np.zeros((_dim, _dim))
 
         # build bosonic ladder operator
         self.build_bosonic_ladder_operators()
@@ -534,22 +541,24 @@ class SpinBosonDriver(SpectrumDriver):
         for i in range(self.number_of_excitons):
 
             # get the sigma_+ for the ith exciton in the N-exciton Hilbert space
-            self.build_operator_for_exciton_j(i, "sigma_p")
+            self.build_operator_for_exciton_j(i, "sigma_p", factor = self.exciton_boson_coupling_au)
 
             # take tensor product of the bosonic lowering operator and the sigma^+ operator times the coupling constant
-            _Op = self.exciton_boson_coupling_au * np.kron(self.b_matrix,  self.exciton_operator_j)
+            _Op = np.kron(self.b_matrix,  self.exciton_operator_j)
 
             # assign this operator to the ith position in the exciton_boson_coupling_operator_b_sp
-            self.exciton_boson_coupling_operator_b_sp[:, :, i] = _Op
+            self.exciton_boson_coupling_operator_b_sp += _Op
 
             # get the sigma_- operator for the ith exciton in the N-exciton Hilbert space
-            self.build_operator_for_exciton_j(i, "sigma_m")
+            self.build_operator_for_exciton_j(i, "sigma_m", factor = self.exciton_boson_coupling_au)
 
             # take tensor product of the bosonic raising operator and the sigma^- operator times the coupling constant
             _Op = self.exciton_boson_coupling_au * np.kron(self.b_dagger_matrix,  self.exciton_operator_j)
 
             # assign this operator to the ith position in the exciton_boson_coupling_operator_b_sp
-            self.exciton_boson_coupling_operator_bd_sm[:, :, i] = _Op
+            self.exciton_boson_coupling_operator_bd_sm += _Op
+
+        self.exciton_boson_coupling_operator = self.exciton_boson_coupling_operator_b_sp + self.exciton_boson_coupling_operator_bd_sm
 
 
     def compute_boson_energy_element(self, bra, ket):
@@ -576,7 +585,7 @@ class SpinBosonDriver(SpectrumDriver):
         # This dot product will still be an array type
         E_boson_element = np.dot(bra, np.dot(self.boson_energy_operator, ket))
 
-        return E_boson_element[0,0]
+        return E_boson_element[0]
 
     def compute_exciton_energy_element(self, bra, ket):
         """compute matrix element <bra|H_QD|ket>
@@ -589,14 +598,9 @@ class SpinBosonDriver(SpectrumDriver):
         ket : numpy matrix
             ket state in the coupled Hilbert space
         """
-        E_exciton_element = 0
-
-        for i in range(self.number_of_excitons):
-            # this dot product will be an array type
-            _term = np.dot(bra, np.dot(self.exciton_energy_operator[:, :, i], ket))
-            E_exciton_element += _term[0]
-
-        return E_exciton_element
+        
+        E_exciton_element = np.dot(bra, np.dot(self.exciton_energy_operator, ket))
+        return E_exciton_element[0]
     
     def compute_dipole_matrix_element(self, bra_coeffs, ket_coeffs):
         """ compute the matrix element <bra | mu | ket>
