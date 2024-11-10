@@ -661,6 +661,25 @@ class SpinBosonDriver(SpectrumDriver):
 
         return E_coupling_element
     
+    def build_dipole_squared_operator(self):
+        """ method to build the dipole squared operator on the coupled boson-N-excition space
+            currently just works for 2-spin boson system
+        """
+
+        # build mu matrix for a single exciton
+        mu_matrix =  np.array([[self.exciton_ground_state_dipole_magnitude_au, self.exciton_transition_dipole_magnitude_au],
+                               [self.exciton_transition_dipole_magnitude_au, self.exciton_excited_state_dipole_magnitude_au]])
+        
+        # build identities for spin and boson system
+        _Is = np.eye(2)
+
+        _Ib = np.eye(self.number_of_boson_levels)
+        
+        mu_squared = np.kron( mu_matrix @ mu_matrix, _Is) + 2 * np.kron(mu_matrix, mu_matrix) + np.kron(_Is, mu_matrix @ mu_matrix)
+
+        self.mu_squared_operator = np.kron(_Ib, mu_squared)
+    
+    
     def compute_spectrum(self):
         """method that will build spin-boson Hamiltonian, diagonalize it, and return eigenvalues"""
 
