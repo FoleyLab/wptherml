@@ -677,7 +677,7 @@ class SpinBosonDriver(SpectrumDriver):
         
         mu_squared = np.kron( mu_matrix @ mu_matrix, _Is) + 2 * np.kron(mu_matrix, mu_matrix) + np.kron(_Is, mu_matrix @ mu_matrix)
 
-        self.mu_squared_operator = np.kron(_Ib, mu_squared)
+        self.mu_squared_operator = np.copy(mu_squared) # np.kron(_Ib, mu_squared)
     
     
     def compute_spectrum(self):
