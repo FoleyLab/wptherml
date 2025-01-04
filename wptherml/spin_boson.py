@@ -43,6 +43,30 @@ class SpinBosonDriver(SpectrumDriver):
     exciton_transition_dipole_magnitude_au : float
         transition dipole moment of the excitonic subsystems
 
+    exciton_spontaneous_emission_rate_mev : float
+        the spontaneous emission rate for the exciton subsystem(s) in milli eV (i.e. hbar gamma -> meV)
+
+    exciton_spontaneous_emission_rate_au : float
+        the spontaneous emission rate for the exciton subsystem(s) in atomic units
+
+    exciton_dephasing_rate_mev : float
+        the dephasing rate for the exciton subsystem(s) in milli eV (i.e. hbar gamma -> meV)
+
+    exciton_dephasing_rate_au : float
+        the dephasing rate for the exciton subsystem(s) in atomic units
+
+    boson_spontaneous_emission_rate_mev : float
+        the spontaneous emission rate for the boson subsystem in milli eV (i.e. hbar gamma -> meV)
+
+    boson_spontaneous_emission_rate_au : float
+        the spontaneous emission rate for the boson subsystem in atomic units
+    
+    boson_dephasing_rate_mev : float
+        the dephasing rate for the boson subsystem in milli eV (i.e. hbar gamma -> meV)
+
+    boson_dephasing_rate_au : float
+        the dephasing rate for the boson subsystem in atomic units
+
     exciton_ground_state_dipole_magnitude_au : float
         permanent dipole moment of the excitonic ground state
 
@@ -130,12 +154,37 @@ class SpinBosonDriver(SpectrumDriver):
             self.exciton_excited_state_dipole_magnitude_au = args["exciton_excited_state_dipole_magnitude_au"]
         else:
             self.exciton_excited_state_dipole_magnitude_au = 10.
-        
 
+        if "exciton_spontaneous_emission_rate_mev" in args:
+            self.exciton_spontaneous_emission_rate_mev = args["exciton_spontaneous_emission_rate_mev"]
+        else: 
+            self.exciton_spontaneous_emission_rate_mev = 0.
+
+        if "exciton_dephasing_rate_mev" in args:
+            self.exciton_dephasing_rate_mev = args["exciton_dephasing_rate_mev"]
+        else:
+            self.exciton_dephasing_rate_mev = 0.
+
+        if "boson_spontaneous_emission_rate_mev" in args:
+            self.boson_spontaneous_emission_rate_mev = args["boson_spontaneous_emission_rate_mev"]
+        else: 
+            self.boson_spontaneous_emission_rate_mev = 0.
+
+        if "boson_dephasing_rate_mev" in args:
+            self.boson_dephasing_rate_mev = args["boson_dephasing_rate_mev"]
+        else:
+            self.boson_dephasing_rate_mev = 0.
+        
         # convert energies from eV to au
         self.exciton_energy_au = self.exciton_energy_ev * self.ev_to_au
         self.boson_energy_au = self.boson_energy_ev * self.ev_to_au
         self.exciton_boson_coupling_au = self.exciton_boson_coupling_ev * self.ev_to_au
+
+        # convert dissipation rates from meV to au
+        self.exciton_spontaneous_emission_rate_au = self.exciton_spontaneous_emission_rate_mev * self.ev_to_au * 1e-3
+        self.exciton_dephasing_rate_au = self.exciton_dephasing_rate_mev * self.ev_to_au * 1e-3
+        self.boson_spontaneous_emission_rate_au = self.boson_spontaneous_emission_rate_mev * self.ev_to_au * 1e-3
+        self.boson_dephasing_rate_au = self.boson_dephasing_rate_mev * self.ev_to_au * 1e-3
 
     def build_boson_basis(self):
         """build the basis for the N-level Harmonic oscillator
@@ -458,8 +507,6 @@ class SpinBosonDriver(SpectrumDriver):
             # add this operator to exciton_energy_operator
             self.exciton_energy_operator  += _Op
 
-     
-
     def build_exciton_dipole_operator(self):
         """compute the exciton dipole operator in the N-exciton N'-level bosonic Hilbert space
 
@@ -706,16 +753,196 @@ class SpinBosonDriver(SpectrumDriver):
         print("Energy eigenvalues in eV are")
         print(self.energy_eigenvalues / self.ev_to_au)
 
-        #print(self.energy_eigenvectors[:,0])
-        #print(self.energy_eigenvectors[:,1])
+    def build_rho_from_eigenstate(self, state_index):
+        """ Method to build the density matrix from a particular energy eigenstate
+        
+        Parameters
+        ----------
+        state_index : int
+            the index for the energy eigenstate
 
-        #mu_01 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,0], self.energy_eigenvectors[:,1])
-        #mu_02 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,0], self.energy_eigenvectors[:,2])
-        #mu_03 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,0], self.energy_eigenvectors[:,3])
-        #mu_12 = self.compute_dipole_matrix_element(self.energy_eigenvectors[:,1], self.energy_eigenvectors[:,2])
+        Attributes
+        ----------
+        energy_eigenvectors : numpy arrays
+            the energy eigenvectors
 
-        #print(F'mu_01 {mu_01}')
-        #print(F'mu_02 {mu_02}')
-        #print(F'mu_03 {mu_03}')
-        #print(F'mu_12 {mu_12}')
+        psi : numpy array
+            ket representation of the state
+
+        rho : numpy array
+            density matrix representation of the state 
+        
+        """
+
+        # get the size of the ket vector
+        _dim = self.exciton_boson_basis.shape[0]
+
+        # store ket as a column vector
+        self.ket = self.energy_eigenvectors[:,state_index].reshape(_dim, 1)
+        
+        # store bra as a row vector
+        self.bra = self.ket.T.conj()
+
+        # compute density matrix as |state><state|
+        self.rho = self.ket @ self.bra 
+
+    
+    def compute_lindblad_exciton_i_on_rho(self, i):
+        """
+        Compute the Lindblad superoperator contribution for a specific spin on the density matrix.
+
+        This method calculates the contribution to the time derivative of the density matrix (`rho`) 
+        due to the Lindblad superoperator associated with spin `i`. It includes terms for spontaneous 
+        emission and dephasing processes in the exciton system.
+
+        Parameters
+        ----------
+        i : int
+            Index of the spin (exciton) for which the Lindblad superoperator is computed.
+
+        Returns
+        -------
+        np.ndarray
+            The time derivative of the density matrix (`rho`) contributed by the Lindblad superoperator 
+            for spin `i`. The result is an array of the same shape as the density matrix.
+
+        Notes
+        -----
+        The Lindblad terms are constructed as:
+        
+        - Spontaneous emission term:
+        \[
+        T_{se} = \sigma^+ \sigma^- \rho + \rho \sigma^+ \sigma^- - 2 \sigma^- \rho \sigma^+
+        \]
+        
+        - Dephasing term:
+        \[
+        T_d = \sigma^+ \sigma^- \rho + \rho \sigma^+ \sigma^- - 2 \sigma^+ \sigma^- \rho \sigma^+ \sigma^-
+        \]
+        
+        The final time derivative of the density matrix is given by:
+        \[
+        \dot{\rho} = -\frac{\gamma_p}{2} T_{se} - \gamma_d T_d
+        \]
+        where \(\gamma_p\) is the spontaneous emission rate and \(\gamma_d\) is the dephasing rate.
+
+        The operators \(\sigma^+ \sigma^-\), \(\sigma^+\), and \(\sigma^-\) are constructed for the specified 
+        spin `i` and are extended to the full Hilbert space via a tensor product with the bosonic identity.
+
+        """
+
+        # get the gamma factors
+        _gamma_p = self.exciton_spontaneous_emission_rate_au
+        _gamma_d = self.exciton_dephasing_rate_au
+
+        # copy current density matrix
+        _rho_t = np.copy(self.rho)
+        
+        # build identity on the boson space
+        _Is = np.copy(self.boson_basis)
+
+        # get sigma^+ sigma^- operator for spin i
+        self.build_operator_for_exciton_j(i, "sigma_pm", 1.)
+
+        # take tensor product of boson identity with this exciton operator
+        _sigma_pm = np.kron(_Is, self.exciton_operator_j)
+
+        # get sigma^+ operator for spin i
+        self.build_operator_for_exciton_j(i, "sigma_p", 1.)
+
+        # take tensor product of boson identity with this exciton operator
+        _sigma_p = np.kron(_Is, self.exciton_operator_j)
+
+        # get sigma^- operator for spin i
+        self.build_operator_for_exciton_j(i, "sigma_m", 1.)
+
+        # take tensor product of boson identity with this exciton operator
+        _sigma_m = np.kron(_Is, self.exciton_operator_j)
+
+        # compute spontaneous emission term
+        _T_se = _sigma_pm @ _rho_t + _rho_t @ _sigma_pm - 2 * _sigma_m @ _rho_t @ _sigma_p 
+
+        # compute dephasing term
+        _T_d = _sigma_pm @ _rho_t + _rho_t @  _sigma_pm - 2 * _sigma_pm @ _rho_t @ _sigma_pm 
+
+        # take total time derivative of rho coming from Lindblad term for exciton i
+        _rho_dot = -_gamma_p / 2 * _T_se - _gamma_d * _T_d
+
+        return _rho_dot
+    
+    def compute_lindblad_boson_on_rho(self, i):
+        """
+        Compute the Lindblad superoperator contribution for the boson on the density matrix.
+
+        This method calculates the contribution to the time derivative of the density matrix (`rho`) 
+        due to the Lindblad superoperator associated with the bosonic subsystem. It includes terms for spontaneous 
+        emission and dephasing processes in the exciton system.
+
+        Parameters
+        ----------
+        i : int
+            Index of the spin (exciton) for which the Lindblad superoperator is computed.
+
+        Returns
+        -------
+        np.ndarray
+            The time derivative of the density matrix (`rho`) contributed by the Lindblad superoperator 
+            for spin `i`. The result is an array of the same shape as the density matrix.
+
+        Notes
+        -----
+        The Lindblad terms are constructed as:
+        
+        - Spontaneous emission term:
+        \[
+        T_{se} = b^+ b \rho + \rho b^+ b - 2 b \rho b^+
+        \]
+        
+        - Dephasing term:
+        \[
+        T_d = b^+ b \rho + \rho b^+ b - 2 b^+ b \rho b^+ b
+        \]
+        
+        The final time derivative of the density matrix is given by:
+        \[
+        \dot{\rho} = -\frac{\gamma_p}{2} T_{se} - \gamma_d T_d
+        \]
+        where \(\gamma_p\) is the spontaneous emission rate and \(\gamma_d\) is the dephasing rate.
+
+        The operators \(b^+ b \), \(b^+ \), and \(b \) are constructed for the boson system
+        and are extended to the full Hilbert space via a tensor product with the identity for N spins.
+
+        """
+
+        # get the gamma factors
+        _gamma_p = self.boson_spontaneous_emission_rate_au
+        _gamma_d = self.boson_dephasing_rate_au
+
+        # copy current density matrix
+        _rho_t = np.copy(self.rho)
+        
+        # build identity on the boson space
+        _Is = np.eye(self.exciton_basis_dimension)
+
+        # get b^+ and b operators tensor products with exciton identity
+        _bd = np.kron(self.b_dagger_matrix, _Is)
+        _b = np.kron(self.b_matrix, _Is)
+
+        # compute spontaneous emission term
+        _T_se = _bd @ _b @ _rho_t + _rho_t @ _bd @ _b - 2 * _b @ _rho_t @ _bd
+
+        # compute dephasing term
+        _T_d = _bd @ _b @ _rho_t + _rho_t @  _bd @ _b - 2 * _bd @ _b @ _rho_t @ _bd @ _b
+
+        # take total time derivative of rho coming from Lindblad term for exciton i
+        _rho_dot = -_gamma_p / 2 * _T_se - _gamma_d * _T_d
+
+        return _rho_dot
+
+
+
+
+
+
+
 
