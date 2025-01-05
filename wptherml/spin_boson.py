@@ -938,7 +938,106 @@ class SpinBosonDriver(SpectrumDriver):
         _rho_dot = -_gamma_p / 2 * _T_se - _gamma_d * _T_d
 
         return _rho_dot
+    
+    def compute_hamiltonian_on_rho(self):
+        """
+        Compute the time derivative of the density matrix from the Hamiltonian commutator.
 
+        This method calculates the unitary contribution to the time evolution of the density 
+        matrix (`rho`) based on the commutator with the system Hamiltonian.
+
+        The evolution is given by:
+        \[
+        \dot{\rho} = -i [H, \rho]
+        \]
+        where \([H, \rho] = H \rho - \rho H\) is the commutator of the Hamiltonian (`H`) 
+        and the density matrix (`rho`).
+
+        Returns
+        -------
+        np.ndarray
+            The time derivative of the density matrix (`rho_dot`) as an array of the same shape.
+
+        Notes
+        -----
+        - The Hamiltonian matrix (`H`) is assumed to be Hermitian, as required in quantum mechanics.
+        - The computation uses the imaginary unit \(i = \sqrt{-1}\), represented as `1j` in Python.
+
+        Examples
+        --------
+        Assuming `self.hamiltonian_matrix` and `self.rho` are properly initialized:
+        
+        >>> rho_dot = obj.compute_hamiltonian_on_rho()
+        >>> print(rho_dot)
+        [[...]]
+        """
+        # imaginary unit
+        ci = 0+1j
+
+        # copy density matrix
+        _rho_t = np.copy(self.rho)
+
+        # copy Hamiltonian
+        _H = np.copy(self.hamiltonian_matrix)
+
+        # compute commutator
+        _rho_dot = -ci * ( _H @ _rho_t - _rho_t @ _H )
+
+        return _rho_dot
+    
+
+    def compute_time_derivative_of_rho(self):
+        """
+        Compute the total time derivative of the density matrix.
+
+        This method calculates the time derivative of the density matrix (`rho`) 
+        by combining the unitary evolution due to the system Hamiltonian and 
+        the non-unitary evolution from Lindblad operators, which account for 
+        dissipation and decoherence.
+
+        The total time derivative is given by:
+        \[
+        \dot{\rho} = -i [H, \rho] + \mathcal{L}_{\text{boson}}[\rho] + \sum_i \mathcal{L}_{\text{exciton}, i}[\rho]
+        \]
+        where:
+        - \([H, \rho]\) is the commutator capturing unitary evolution.
+        - \(\mathcal{L}_{\text{boson}}[\rho]\) is the Lindblad contribution from the bosonic mode.
+        - \(\mathcal{L}_{\text{exciton}, i}[\rho]\) is the Lindblad contribution from the \(i\)-th exciton.
+
+        Returns
+        -------
+        np.ndarray
+            The time derivative of the density matrix (`rho_dot`) as an array 
+            of the same shape.
+
+        Notes
+        -----
+        - The method uses `compute_hamiltonian_on_rho` for the unitary evolution.
+        - The non-unitary evolution contributions are calculated by `compute_lindblad_boson_on_rho` 
+        and `compute_lindblad_exciton_i_on_rho` for each exciton.
+        - The computed time derivative is stored in `self.rho_dot` for later use.
+
+        Examples
+        --------
+        Assuming `self.hamiltonian_matrix`, `self.rho`, and relevant Lindblad rates are initialized:
+
+        >>> rho_dot = obj.compute_time_derivative_of_rho()
+        >>> print(rho_dot)
+        [[...]]
+        """
+
+        # compute the unitary contributions
+        _rho_dot = self.compute_hamiltonian_on_rho()
+
+        # compute non-unitary contribution from boson
+        _rho_dot += self.compute_lindblad_boson_on_rho()
+
+        # for each exciton, compute non-unitary contribution from each excition
+        for i in range(self.number_of_excitons):
+            _rho_dot += self.compute_lindblad_exciton_i_on_rho(i)
+
+        self.rho_dot = np.copy(_rho_dot)
+        return _rho_dot
 
 
 
