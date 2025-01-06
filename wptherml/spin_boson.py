@@ -174,6 +174,11 @@ class SpinBosonDriver(SpectrumDriver):
             self.boson_dephasing_rate_mev = args["boson_dephasing_rate_mev"]
         else:
             self.boson_dephasing_rate_mev = 0.
+
+        if "time_step_au" in args:
+            self.time_step_au = args["time_step_au"]
+        else:
+            self.time_step_au = 0.01
         
         # convert energies from eV to au
         self.exciton_energy_au = self.exciton_energy_ev * self.ev_to_au
@@ -870,7 +875,7 @@ class SpinBosonDriver(SpectrumDriver):
 
         return _rho_dot
     
-    def compute_lindblad_boson_on_rho(self, i):
+    def compute_lindblad_boson_on_rho(self):
         """
         Compute the Lindblad superoperator contribution for the boson on the density matrix.
 
@@ -1038,8 +1043,77 @@ class SpinBosonDriver(SpectrumDriver):
 
         self.rho_dot = np.copy(_rho_dot)
         return _rho_dot
+    
+
+    def rk4_update_on_rho(self):
+        """
+        Performs RK4 update on attribute self.rho which is the density matrix
+
+        Arguments
+        ---------
+        None
+
+        Attributes
+        ----------
+        self.rho : numpy array
+            the density matrix
+
+        self.time_step_au : float
+            the time step in atomic units
+
+        Return
+        ------
+        None
+        """
+        # get time step variable
+        _h = self.time_step_au
+
+        # copy current rho
+        _rho_tn = np.copy(self.rho)
+
+        # get rate for first Euler update
+        _k1 = self.compute_time_derivative_of_rho()
+
+        # perform half update
+        _rho_u1 = _rho_tn + _h/2 * _k1
+
+        # copy half updated rho to self.rho
+        self.rho = np.copy(_rho_u1)
+
+        # get rate for second Euler update
+        _k2 = self.compute_time_derivative_of_rho()
+
+        # perform half update
+        _rho_u2 = _rho_tn + _h/2 * _k2
+
+        # copy half updated rho to self.rho
+        self.rho = np.copy(_rho_u2)
+
+        # get rate for third Euler update
+        _k3 = self.compute_time_derivative_of_rho()
+
+        # perform full update
+        _rho_u3 = _rho_tn + _h * _k3
+
+        # copy updated rho to self.rho
+        self.rho = np.copy(_rho_u3)
+
+        # get rate for fourth Euler update
+        _k4 = self.compute_time_derivative_of_rho()
+
+        # perform full update
+        _rho_update = _rho_tn + _h/6 * (_k1 + 2*_k2 + 2*_k3 + _k4)
+
+        self.rho = np.copy(_rho_update)
+        
+        return _rho_update
 
 
+
+
+
+
+        
 
 
 
