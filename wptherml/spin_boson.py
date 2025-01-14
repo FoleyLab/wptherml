@@ -791,6 +791,207 @@ class SpinBosonDriver(SpectrumDriver):
         # compute density matrix as |state><state|
         self.rho = self.ket @ self.bra 
 
+
+    def build_rho_from_ket(self, ket):
+        """ Method to build the density matrix from a particular ket state
+        
+        Arguments
+        ---------
+        ket : numpy array
+            the ket state
+
+        Attributes
+        ----------
+        psi : numpy array
+            ket representation of the state
+
+        psi_star : numpy array
+            bra representation of the state
+
+        rho : numpy array
+
+        Returns
+        -------
+        None
+        """
+        # store ket as a column vector to self.psi
+        self.psi = ket
+
+        # store bra as a row vector to self.psi_star
+        self.psi_star = self.psi.T.conj()
+
+        # compute density matrix as |state><state|
+        self.rho = self.psi @ self.psi_star
+
+    def kron_index_map_AB(self,A, B):
+        """ Creates a map between the row and column of the Kronecker product of two arrays
+            and the composite indices corresponding to the original arrays.
+
+        Arguments
+        ----------
+        A : numpy array
+            first array
+
+        B : numpy array
+            second array
+
+        Returns
+        -------
+        index_map : dictionary
+            dictionary with keys as the row and column indices and values as the composite indices 
+        """
+        rowsA, colsA = A.shape
+        rowsB, colsB = B.shape
+
+        index_map = {}
+        for rowAB in range(rowsA * rowsB):
+            rowA = rowAB // rowsB
+            rowB = rowAB % rowsB
+            for colAB in range(colsA * colsB):
+                colA = colAB // colsB
+                colB = colAB % colsB
+                index_map[(rowAB, colAB)] = (rowA, colA, rowB, colB)
+
+        return index_map
+    
+
+    def kron_index_map_ABC(self, A, B, C):
+        """ Creates a map between the row and column of the Kronecker product of three arrays
+            and the composite indices corresponding to the original arrays.
+
+        Arguments
+        ----------
+        A : numpy array
+            first array
+        B : numpy array
+            second array
+        C : numpy array
+            third array
+
+        Returns
+        -------
+        index_map : dictionary
+            dictionary with keys as the row and column indices and values as the composite indices 
+        """
+        rowsA, colsA = A.shape
+        rowsB, colsB = B.shape
+        rowsC, colsC = C.shape
+
+        print("Rows and Cols of A, B, C")
+        print(rowsA, colsA)
+        print(rowsB, colsB)
+        print(rowsC, colsC)
+        index_map = {}
+        for rowABC in range(rowsA * rowsB * rowsC):
+            for colABC in range(colsA * colsB * colsC):
+                i = rowABC // (rowsB * rowsC)
+                temp = rowABC % (rowsB * rowsC)
+                k = temp // rowsC
+                m = temp % rowsC
+
+                j = colABC // (colsB * colsC)
+                temp = colABC % (colsB * colsC)
+                l = temp // colsC
+                n = temp % colsC
+
+                index_map[(rowABC, colABC)] = (i, j, k, l, m, n)
+
+        return index_map
+
+
+    def compute_partial_traces(self, rho):
+        """ Method to compute all possible single partial traces of a composite density matrix; currently
+            supports a caivty x spin1 system or a cavity x spin 1 x spin 2 system  
+            The order of the subsystems is assumed to be |cavity> x |spin1> x |spin2>
+        
+        Arguments
+        ---------
+        rho : numpy array
+            the density matrix
+
+        Attributes
+        ----------
+        rdm_cavity : numpy array
+            reduced density matrix for the cavity
+
+        rdm_spin1 : numpy array 
+            reduced density matrix for the first spin
+
+        rdm_spin2 : numpy array (if applicable)
+            reduced density matrix for the second spin
+        """
+        # right now only support partial trace when we have 1 or 2 spin systems and 1 boson system
+        # we will consider the single spin system case first
+        if self.number_of_excitons == 1:
+            # get the index map for the Kronecker product of the boson and single exciton basis
+            _index_map = self.kron_index_map_AB(self.boson_basis, self.single_exciton_basis)
+
+            self.rdm_cavity = np.zeros_like(self.boson_basis)
+            self.rdm_spin1 = np.zeros_like(self.single_exciton_basis)
+
+            # take both partial traces
+            for (_row, _col), (_i, _j, _k, _l) in _index_map.items():
+                if _k==_l:
+                    self.rdm_cavity[_i, _j] += rho[_row, _col]
+                if _i==_j:
+                    self.rdm_spin1[_k, _l] += rho[_row, _col]   
+
+        elif self.number_of_excitons == 2:
+            # get the index map for the Kronecker product of the boson and two exciton basis
+            _index_map = self.kron_index_map_ABC(self.boson_basis, self.single_exciton_basis, self.single_exciton_basis)
+
+            # get dimensions of three individual sub-matrices
+            _dimA = self.boson_basis.shape[0]
+            _dimB = self.single_exciton_basis.shape[0]
+            _dimC = self.single_exciton_basis.shape[0]
+
+            # initialize the three possible 2-rdms
+            self.rdm_cavity_spin1 = np.zeros((_dimA * _dimB, _dimA * _dimB))
+            self.rdm_cavity_spin2 = np.zeros((_dimA * _dimC, _dimA * _dimC))
+            self.rdm_spin1_spin2 = np.zeros((_dimB * _dimC, _dimB * _dimC))
+
+            # take all three partial traces
+            for (_row, _col), (_i, _j, _k, _l, _m, _n) in _index_map.items():
+
+                # partial trace over spin 2
+                if _m == _n:
+                    _trow = _i * _dimB + _k
+                    _tcol = _j * _dimB + _l
+                    self.rdm_cavity_spin1[_trow, _tcol] += rho[_row, _col]
+
+                # partial trace over spin 1
+                if _k == _l:
+                    _trow = _i * _dimC + _m
+                    _tcol = _j * _dimC + _n
+                    self.rdm_cavity_spin2[_trow, _tcol] += rho[_row, _col]
+
+                # partial trace over cavity
+                if _i == _j:
+                    _trow = _k * _dimC + _m
+                    _tcol = _l * _dimC + _n
+                    self.rdm_spin1_spin2[_trow, _tcol] += rho[_row, _col]
+
+    def compute_entanglement_entropy(self, rdm):
+        """ Method to compute the entanglement entropy of a reduced density matrix
+
+        Arguments
+        ---------
+        rdm : numpy array
+            the reduced density matrix
+
+        Returns
+        -------
+        entropy : float
+            the entanglement entropy
+        """
+        _eigenvalues = la.eigvalsh(rdm)
+        _entropy = 0
+        for _eig in _eigenvalues:
+            if _eig > 0:
+                _entropy -= _eig * np.log(_eig)
+        return _entropy
+                
+
     
     def compute_lindblad_exciton_i_on_rho(self, i):
         """
