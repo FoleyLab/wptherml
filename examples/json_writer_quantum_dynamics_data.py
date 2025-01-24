@@ -25,6 +25,8 @@ TC_data = {
     "population_s1e_s2e_ce" : [],
 }
 
+
+
 # run dynamics and store the results in the dictionary
 TC_data["population_s1g_s2g_cg"] = #< Insert value from appropriate diagonal element of density matrix (spin 1, spin 2, cavity in ground) 
 TC_data["population_s1e_s2g_cg"] = #< Insert value from appropriate diagonal element of density matrix (spin 1 excited, spin 2 ground, cavity ground)
