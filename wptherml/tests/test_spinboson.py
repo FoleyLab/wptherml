@@ -9,7 +9,151 @@ import pytest
 import sys
 from numpy import linalg
 
+# high-level tests for spin-boson model and dynamics
+def test_compute_spectrum():
 
+    # test example vs QuTip J-C model for strong coupling between 1 spin and 2 level cavity
+    # with spin = cavity omega = 0.5 atomic units, g = 0.02 (using RWA)
+    test_args_1 = {
+     "Number_of_Excitons": 1,
+     "number_of_boson_levels": 2,
+     "boson_energy_ev": 0.5 / 3.6749322175665e-2, 
+     "exciton_energy_ev" : 0.5 / 3.6749322175665e-2, 
+     "exciton_boson_coupling_ev" : 0.02 / 3.6749322175665e-2
+     
+    }
+
+    sf = wptherml.SpectrumFactory()
+    
+    # instantiate 
+    test_1 = sf.spectrum_factory("Spin-Boson", test_args_1)
+    _expected_eigs_1 = np.array([0.0, 0.48, 0.52, 1.0])
+
+    # wptherml includes zero-point energy but QuTip doesn't - we will subtract ZPE from ours
+    test_1.energy_eigenvalues -= test_1.boson_energy_au / 2
+
+    assert np.allclose(test_1.energy_eigenvalues, _expected_eigs_1)
+
+    # test example vs QuTip J-C model for ultra strong coupling between 1 spin and 10 level cavity
+    # with spin = cavity omega = 0.5 atomic units, g = 0.49 (using RWA)
+    test_args_2 = {
+     "Number_of_Excitons": 1,
+     "number_of_boson_levels": 10,
+     "boson_energy_ev": 0.5 / 3.6749322175665e-2, 
+     "exciton_energy_ev" : 0.5 / 3.6749322175665e-2, 
+     "exciton_boson_coupling_ev" : 0.49 / 3.6749322175665e-2
+     
+    }
+
+    sf = wptherml.SpectrumFactory()
+    
+    # instantiate 
+    test_2 = sf.spectrum_factory("Spin-Boson", test_args_2)
+    _expected_eigs_2 = np.array([0.0, 
+                                 0.010000000000000009, 
+                                 0.30703535443718355, 
+                                 0.6512951042912501, 
+                                 0.99, 
+                                 1.02, 
+                                 1.4043266910251035, 
+                                 1.6929646455628165, 
+                                 1.799750026036243, 
+                                 2.2035818575783503, 
+                                 2.34870489570875, 
+                                 2.6140707088743675, 
+                                 2.98, 
+                                 3.0300000000000007, 
+                                 3.595673308974897, 
+                                 4.200249973963757, 
+                                 4.79641814242165, 
+                                 5.0, 
+                                 5.385929291125633, 
+                                 5.97])
+
+    # wptherml includes zero-point energy but QuTip doesn't - we will subtract ZPE from ours
+    test_2.energy_eigenvalues -= test_2.boson_energy_au / 2
+
+    assert np.allclose(test_2.energy_eigenvalues, _expected_eigs_2)
+
+
+def test_spin_boson():
+    test_args_1 = {
+     "Number_of_Excitons": 1,
+     "number_of_boson_levels": 2,
+     "boson_energy_ev": 0.5 / 3.6749322175665e-2, 
+     "exciton_energy_ev" : 0.5 / 3.6749322175665e-2, 
+     "exciton_boson_coupling_ev" : 0.02 / 3.6749322175665e-2,
+     "time_step_au" : 1.0
+     
+    }
+
+    # test example vs QuTip J-C model for strong coupling between 1 spin and 2 level cavity
+    # with spin = cavity omega = 0.5 atomic units, g = 0.02 (using RWA) and gamma = 5e-6 atomic units, kappa = 0
+    # gamma is the spin decay rate in QuTip, kappa is the cavity decay rate
+    # will set the initial condition corresponding to the spin in the excited state and cavity in the ground state
+
+    # QuTip output for initial density matrix
+    _expected_rho_init = np.array(
+        [[0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j],
+         [0.+0.j, 1.+0.j, 0.+0.j, 0.+0.j],
+         [0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j],
+         [0.+0.j, 0.+0.j, 0.+0.j, 0.+0.j]]
+    )
+
+    # QuTip output for density matrix after 1000 time steps with dt = 1 atomic unit
+    _expected_rho_t_10 = np.array(
+        [[4.93374249e-05+0.j,        0.00000000e+00+0.j, 0.00000000e+00+0.j,        0.00000000e+00+0.j       ],
+         [0.00000000e+00+0.j,        9.60482179e-01+0.j,0.00000000e+00+0.1947019j, 0.00000000e+00+0.j       ],
+         [0.00000000e+00+0.j,        0.00000000e+00-0.1947019j, 3.94684840e-02+0.j,        0.00000000e+00+0.j       ],
+         [0.00000000e+00+0.j,        0.00000000e+00+0.j, 0.00000000e+00+0.j,        0.00000000e+00+0.j       ]]
+
+    )
+
+    sf = wptherml.SpectrumFactory()
+    
+
+
+    # instantiate 
+    test_1 = sf.spectrum_factory("Spin-Boson", test_args_1)
+
+    
+
+    # set the rates in atomic units by hand - can set it in eV before instantiation, but too much trouble to convert...
+    test_1.exciton_spontaneous_emission_rate_au = 5e-6
+
+    # set initial condition for wptherml
+    initial_cav = np.array([[1],[0]])
+    initial_sp = np.array([[0],[1]])
+    initial_ket = np.kron(initial_cav, initial_sp)
+
+    # assign initial rho to test_1.rho attribute
+    test_1.rho = initial_ket @ initial_ket.conj().T
+
+    # test against QuTip initial rho for the same state
+    assert np.allclose(test_1.rho, _expected_rho_init)
+
+    # propagate for 1000 timesteps
+    for i in range(10):
+        test_1.rk4_update_on_rho()
+
+
+    # test against QuTip rho at t = 10
+    assert np.allclose(test_1.rho, _expected_rho_t_10)
+
+    
+
+    
+
+
+
+
+
+
+    
+    
+
+
+# unit tests
 def test_build_boson_basis():
     """
     Unit test for the build_boson_basis method.
