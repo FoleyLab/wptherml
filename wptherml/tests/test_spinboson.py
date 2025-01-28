@@ -8,18 +8,30 @@ import numpy as np
 import pytest
 import sys
 from numpy import linalg
+import json
+import os
+
+path_and_file = os.path.realpath(__file__)
+path = path_and_file[:-23] + "data/json_data/"
+
 
 # high-level tests for spin-boson model and dynamics
 def test_compute_spectrum():
+
+    # test example vs QuTip J-C model for weak coupling between 1 spin and 2 level cavity
+    # from json file
+    test_1_json = path + "JC_simulation_RWA=_True-spin_freq_0.5_cavity_freq_0.5_cavity_coupling_0.0.json"
+    with open(test_1_json) as f:
+        json_data = json.load(f)
 
     # test example vs QuTip J-C model for strong coupling between 1 spin and 2 level cavity
     # with spin = cavity omega = 0.5 atomic units, g = 0.02 (using RWA)
     test_args_1 = {
      "Number_of_Excitons": 1,
-     "number_of_boson_levels": 2,
-     "boson_energy_ev": 0.5 / 3.6749322175665e-2, 
-     "exciton_energy_ev" : 0.5 / 3.6749322175665e-2, 
-     "exciton_boson_coupling_ev" : 0.02 / 3.6749322175665e-2
+     "number_of_boson_levels": json_data["number_of_cavity_states"],
+     "boson_energy_ev": json_data["cavity_frequency"] / 3.6749322175665e-2, 
+     "exciton_energy_ev" : json_data["spin_frequency"] / 3.6749322175665e-2, 
+     "exciton_boson_coupling_ev" : json_data["cavity_coupling"] / 3.6749322175665e-2
      
     }
 
@@ -27,7 +39,7 @@ def test_compute_spectrum():
     
     # instantiate 
     test_1 = sf.spectrum_factory("Spin-Boson", test_args_1)
-    _expected_eigs_1 = np.array([0.0, 0.48, 0.52, 1.0])
+    _expected_eigs_1 = np.array(json_data["energies"])
 
     # wptherml includes zero-point energy but QuTip doesn't - we will subtract ZPE from ours
     test_1.energy_eigenvalues -= test_1.boson_energy_au / 2
