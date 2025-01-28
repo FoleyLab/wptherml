@@ -1,5 +1,6 @@
-wptherml v1.1.0
-==============================
+WPTherml v1.1.0
+===============================
+
 [//]: # (Badges)
 [![GitHub Actions Build Status](https://github.com/FoleyLab/wptherml/workflows/CI/badge.svg)](https://github.com/FoleyLab/wptherml/actions?query=workflow%3ACI)
 [![codecov](https://codecov.io/gh/FoleyLab/wptherml/branch/main/graph/badge.svg)](https://codecov.io/gh/FoleyLab/wptherml/branch/main)
@@ -9,8 +10,7 @@ wptherml v1.1.0
 [![Release to PyPI](https://github.com/FoleyLab/wptherml/actions/workflows/release.yml/badge.svg?branch=main)](https://github.com/FoleyLab/wptherml/actions/workflows/release.yml)
 [![Documentation Status](https://readthedocs.org/projects/wptherml/badge/?version=latest)](https://wptherml.readthedocs.io/en/latest/?badge=latest)
 
-A python package for modeling light-matter interactions in nanoscale and molecular materials!
-
+A Python package for modeling light-matter interactions in nanoscale and molecular materials!
 
 ### [Quickstart](https://github.com/FoleyLab/wptherml/blob/main/docs/quickstart.rst)
 
@@ -18,9 +18,7 @@ A python package for modeling light-matter interactions in nanoscale and molecul
 
 ### Copyright
 
-Copyright (c) 2022, Foley Lab, The University of North Carolina at Charlotte, NC, USA.
-
-
+Copyright (c) 2022, Foley Lab, The University of North Carolina Charlotte, NC, USA.
 
 #### Acknowledgements
 Project based on the
