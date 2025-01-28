@@ -21,34 +21,38 @@ def test_compute_spectrum():
     # test example vs QuTip J-C model for weak coupling between 1 spin and 2 level cavity
     # from json file
     test_1_json = path + "JC_simulation_RWA=_True-spin_freq_0.5_cavity_freq_0.5_cavity_coupling_0.0.json"
+    test_2_json = path + "JC_simulation_RWA=_True-spin_freq_0.5_cavity_freq_0.5_cavity_coupling_0.02.json"
+
+    # load json data
     with open(test_1_json) as f:
-        json_data = json.load(f)
+        json_1_data = json.load(f)
+
+    with open(test_2_json) as f:
+        json_2_data = json.load(f)
+
+    
 
     # test example vs QuTip J-C model for strong coupling between 1 spin and 2 level cavity
     # with spin = cavity omega = 0.5 atomic units, g = 0.02 (using RWA)
     test_args_1 = {
      "Number_of_Excitons": 1,
-     "number_of_boson_levels": json_data["number_of_cavity_states"],
-     "boson_energy_ev": json_data["cavity_frequency"] / 3.6749322175665e-2, 
-     "exciton_energy_ev" : json_data["spin_frequency"] / 3.6749322175665e-2, 
-     "exciton_boson_coupling_ev" : json_data["cavity_coupling"] / 3.6749322175665e-2
+     "number_of_boson_levels": json_1_data["number_of_cavity_states"],
+     "boson_energy_ev": json_1_data["cavity_frequency"] / 3.6749322175665e-2, 
+     "exciton_energy_ev" : json_1_data["spin_frequency"] / 3.6749322175665e-2, 
+     "exciton_boson_coupling_ev" : json_1_data["cavity_coupling"] / 3.6749322175665e-2
      
     }
 
-    sf = wptherml.SpectrumFactory()
-    
-    # instantiate 
-    test_1 = sf.spectrum_factory("Spin-Boson", test_args_1)
-    _expected_eigs_1 = np.array(json_data["energies"])
-
-    # wptherml includes zero-point energy but QuTip doesn't - we will subtract ZPE from ours
-    test_1.energy_eigenvalues -= test_1.boson_energy_au / 2
-
-    assert np.allclose(test_1.energy_eigenvalues, _expected_eigs_1)
-
-    # test example vs QuTip J-C model for ultra strong coupling between 1 spin and 10 level cavity
-    # with spin = cavity omega = 0.5 atomic units, g = 0.49 (using RWA)
     test_args_2 = {
+        "Number_of_Excitons": 1,
+        "number_of_boson_levels": json_2_data["number_of_cavity_states"],
+        "boson_energy_ev": json_2_data["cavity_frequency"] / 3.6749322175665e-2, 
+        "exciton_energy_ev" : json_2_data["spin_frequency"] / 3.6749322175665e-2, 
+        "exciton_boson_coupling_ev" : json_2_data["cavity_coupling"] / 3.6749322175665e-2
+        
+        }
+    
+    test_args_3 = {
      "Number_of_Excitons": 1,
      "number_of_boson_levels": 10,
      "boson_energy_ev": 0.5 / 3.6749322175665e-2, 
@@ -59,9 +63,15 @@ def test_compute_spectrum():
 
     sf = wptherml.SpectrumFactory()
     
-    # instantiate 
+    # instantiate the three tests
+    test_1 = sf.spectrum_factory("Spin-Boson", test_args_1)
     test_2 = sf.spectrum_factory("Spin-Boson", test_args_2)
-    _expected_eigs_2 = np.array([0.0, 
+    test_3 = sf.spectrum_factory("Spin-Boson", test_args_3)
+    
+    # get expected results for the three cases
+    _expected_eigs_1 = np.array(json_1_data["energies"])
+    _expected_eigs_2 = np.array(json_2_data["energies"])
+    _expected_eigs_3 = np.array([0.0, 
                                  0.010000000000000009, 
                                  0.30703535443718355, 
                                  0.6512951042912501, 
@@ -83,9 +93,13 @@ def test_compute_spectrum():
                                  5.97])
 
     # wptherml includes zero-point energy but QuTip doesn't - we will subtract ZPE from ours
+    test_1.energy_eigenvalues -= test_1.boson_energy_au / 2
     test_2.energy_eigenvalues -= test_2.boson_energy_au / 2
+    test_3.energy_eigenvalues -= test_3.boson_energy_au / 2
 
+    assert np.allclose(test_1.energy_eigenvalues, _expected_eigs_1)
     assert np.allclose(test_2.energy_eigenvalues, _expected_eigs_2)
+    assert np.allclose(test_3.energy_eigenvalues, _expected_eigs_3)
 
 
 def test_spin_boson():
