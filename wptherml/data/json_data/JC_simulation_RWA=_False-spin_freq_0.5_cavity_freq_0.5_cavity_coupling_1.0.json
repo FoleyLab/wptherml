@@ -1,0 +1,15 @@
+{
+    "spin_frequency": 0.5,
+    "cavity_frequency": 0.5,
+    "cavity_coupling": 1.0,
+    "use_rwa": false,
+    "number_of_cavity_states": 2,
+    "energies": [
+        [
+            -0.6180339887498948,
+            -0.5,
+            1.5,
+            1.618033988749895
+        ]
+    ]
+}

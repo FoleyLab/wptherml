@@ -4,6 +4,8 @@ from .spectrum_driver import SpectrumDriver
 from .mie import MieDriver
 from .em import TmmDriver
 from .therml import Therml
+from .exciton import ExcitonDriver
+from .spin_boson import SpinBosonDriver 
 
 
 class SpectrumFactory:
@@ -12,6 +14,10 @@ class SpectrumFactory:
             return MieDriver(args)
         elif spectrum_toolkit == "Tmm":
             return TmmDriver(args)
+        elif spectrum_toolkit == "Frenkel":
+            return ExcitonDriver(args)
+        elif spectrum_toolkit == "Spin-Boson":
+            return SpinBosonDriver(args)
         else:
             raise TypeError("Toolkit not found")
 

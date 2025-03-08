@@ -8,8 +8,10 @@ from .spectrum_driver import SpectrumDriver
 from .em import TmmDriver
 from .mie import MieDriver
 from .therml import Therml
+from .exciton import ExcitonDriver
 from .factory import SpectrumFactory
 from .materials import Materials
+from .spin_boson import SpinBosonDriver
 
 # Handle versioneer
 from ._version import get_versions
