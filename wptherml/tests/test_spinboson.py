@@ -102,7 +102,7 @@ def test_compute_spectrum():
     assert np.allclose(test_3.energy_eigenvalues, _expected_eigs_3)
 
 
-def test_spin_boson():
+def test_spin_boson_dynamics():
     test_args_1 = {
      "Number_of_Excitons": 1,
      "number_of_boson_levels": 2,
@@ -165,18 +165,6 @@ def test_spin_boson():
 
     # test against QuTip rho at t = 10
     assert np.allclose(test_1.rho, _expected_rho_t_10)
-
-    
-
-    
-
-
-
-
-
-
-    
-    
 
 
 # unit tests
