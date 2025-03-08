@@ -1,12 +1,12 @@
 name: test
-
 channels:
-  - conda-forge
-  - defaults
 
+  - conda-forge
+
+  - defaults
 dependencies:
     # Base depends
-  - python
+  - python=3.8
   - pip
 
     # Testing
@@ -14,17 +14,12 @@ dependencies:
   - pytest-cov
   - codecov
 
+
     # Package-dependencies
   - numpy 
   - matplotlib
   - scipy
-#  - pytorch
-#  - scikit-learn
-#  - pandas
-#  - tqdm
-
 
     # Pip-only installs
-#  - pip:
-#    - pyqubo
+  #- pip:
   #  - codecov
