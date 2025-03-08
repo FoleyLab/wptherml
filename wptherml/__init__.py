@@ -11,6 +11,7 @@ from .therml import Therml
 from .exciton import ExcitonDriver
 from .factory import SpectrumFactory
 from .materials import Materials
+from .optdriver import OptDriver
 from .spin_boson import SpinBosonDriver
 
 # Handle versioneer
