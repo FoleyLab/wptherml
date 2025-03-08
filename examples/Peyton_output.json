@@ -1,0 +1,31 @@
+{
+    "spin_1_initial_state": [
+        1,
+        0
+    ],
+    "spin_2_initial_state": [
+        0,
+        1
+    ],
+    "cavity_initial_state": [
+        1,
+        0
+    ],
+    "spin_frequency": 0.5,
+    "cavity_frequency": 0.5,
+    "cavity_coupling": 0.02,
+    "cavity_spontaneous_emission": 0,
+    "spin_spontaneous_emission": 0,
+    "cavity_dephasing": 0,
+    "spin_dephasing": 0,
+    "time_steps": 1000,
+    "time_step_size": 1.0,
+    "population_s1g_s2g_cg": 3.170308265495034e-42,
+    "population_s1e_s2g_cg": 0.24646340579764392,
+    "population_s1g_s2e_cg": 0.500000000000001,
+    "population_s1e_s2e_cg": 0.25353659418633534,
+    "population_s1g_s2g_ce": 0.0,
+    "population_s1e_s2g_ce": 2.790361702971881e-32,
+    "population_s1g_s2e_ce": 0.0,
+    "population_s1e_s2e_ce": 1.6019204470942007e-11
+}
