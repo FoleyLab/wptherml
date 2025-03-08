@@ -17,7 +17,7 @@ on:
     #   Scheduled workflows run on the latest commit on the default or base branch.
     #   (from https://help.github.com/en/actions/reference/events-that-trigger-workflows#scheduled-events-schedule)
   #  - cron: "0 0 * * *"
-  # on 3/28/25 JJF changed python-version: [3.7, 3.8, 3.9] -> [3.9, 3.10]
+  # on 3/28/25 JJF changed python-version: [3.7, 3.8, 3.9] -> 3.8
 
 jobs:
   test:
@@ -26,7 +26,7 @@ jobs:
     strategy:
       matrix:
         os: [macOS-latest, ubuntu-latest, windows-latest]
-        python-version: 3.10 #[3.9, 3.10]
+        python-version: 3.8 
 
     steps:
     - uses: actions/checkout@v1
@@ -45,7 +45,7 @@ jobs:
     # and changed auto-update-conda: False to auto-update-conda: True
     - uses: conda-incubator/setup-miniconda@v3
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.8
         environment-file: devtools/conda-envs/test_env.yaml
 
         channels: conda-forge,defaults
