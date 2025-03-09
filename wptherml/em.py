@@ -6,6 +6,75 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Circle
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
+from scipy.linalg.blas import zgemm  # BLAS-optimized complex matrix multiplication
+from numba import jit
+
+#@jit(nopython=True)
+def _compute_dm(refractive_index, cosine_theta, polarization):
+    """Compute the D and D_inv matrices for each layer and wavelength"""
+    _dm = np.zeros((2, 2), dtype=np.complex128)
+    _dim = np.zeros((2, 2), dtype=np.complex128)
+
+    if polarization == "s":
+        _dm[0, 0] = 1
+        _dm[0, 1] = 1
+        _dm[1, 0] = refractive_index * cosine_theta
+        _dm[1, 1] = -refractive_index * cosine_theta
+
+    elif polarization == "p":
+        _dm[0, 0] = cosine_theta
+        _dm[0, 1] = cosine_theta
+        _dm[1, 0] = refractive_index
+        _dm[1, 1] = -refractive_index
+
+    # Faster manual inversion of 2x2 matrix
+    _det = 1 / (_dm[0, 0] * _dm[1, 1] - _dm[0, 1] * _dm[1, 0])
+    _dim[0, 0] = _det * _dm[1, 1]
+    _dim[0, 1] = -_det * _dm[0, 1]
+    _dim[1, 0] = -_det * _dm[1, 0]
+    _dim[1, 1] = _det * _dm[0, 0]
+
+    return _dm, _dim
+
+#@jit(nopython=True)
+def _compute_pm(phil):
+    """Compute the P matrices for each intermediate layer and wavelength"""
+    _pm = np.eye(2, dtype=np.complex128)  # Identity matrix to avoid unnecessary zeros
+    _ci = 1j  # Directly use imaginary unit
+
+    _pm[0, 0] = np.exp(-_ci * phil)
+    _pm[1, 1] = np.exp(_ci * phil)
+
+    return _pm
+
+#@jit(nopython=True)
+def _compute_pm_analytical_gradient(kzl, phil):
+    """compute the derivative of the P matrix with respect to layer thickness
+
+    Arguments
+    ---------
+        kzl : complex float
+            the z-component of the wavevector in layer l
+        phil : complex float
+            kzl * sl where sl is the thickness of layer l
+    Reference
+    ---------
+        Equation 18 of https://journals.aps.org/prresearch/pdf/10.1103/PhysRevResearch.2.013018
+    Returns
+    -------
+        _pm_analytical_gradient : 2x2 numpy array of complex floats
+            the analytical derivative of the P matrix with respect to thickness of layer l
+
+    """
+    _pm_analytical_gradient = np.zeros((2, 2), dtype=np.complex128)
+    _ci = 0 + 1j
+    _a = -1 * _ci * phil
+    _b = _ci * phil
+
+    _pm_analytical_gradient[0, 0] = -_ci * kzl * np.exp(_a)
+    _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp(_b)
+
+    return _pm_analytical_gradient
 
 
 class TmmDriver(SpectrumDriver, Materials, Therml):
@@ -1425,8 +1494,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             * self._k0_array
         )
 
-    def _compute_tm_gradient(self, _refractive_index, _k0, _kz, _d, _ln):
-        """compute the transfer matrix for each wavelength
+    #def _compute_tm_gradient(self, _refractive_index, _k0, _kz, _d, _ln):
+    """compute the transfer matrix for each wavelength
         _ln : int
             specifies the layer number the gradient will be taken with respect to
         Returns
@@ -1443,7 +1512,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         loop where _PM is computed to have a conditional that
         computes _PM by calling _compute_pm_gradient instead of _compute_pm
         when i == _ln
-        """
+        
 
         _DM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
         _DIM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
@@ -1487,154 +1556,77 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         _tm_gradient = np.matmul(_tm_gradient, _DM[:, :, self.number_of_layers - 1])
 
-        return _tm_gradient, _THETA, _CTHETA
-
-    def _compute_tm(self, _refractive_index, _k0, _kz, _d):
-        """compute the transfer matrix for each wavelength
-        Returns
-        -------
-        _tm : 2 x 2 complex numpy array
-            transfer matrix for the _k0 value
-        _THETA : 1 x number_of_layers complex numpy array
-            refraction angles in each layer for the _k0 value
-        _CTHETA : 1 x number_of_layers complex numpy array
-            cosine of the refraction angles in each layer for the _k0 value
-        """
-        _DM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
-        _DIM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
-        _PM = np.zeros((2, 2, self.number_of_layers), dtype=complex)
-        _CTHETA = np.zeros(self.number_of_layers, dtype=complex)
-        _THETA = np.zeros(self.number_of_layers, dtype=complex)
+        return _tm_gradient, _THETA, _CTHETA """
+    
+    def _compute_tm_gradient(self, _refractive_index, _k0, _kz, _d, _ln):
+        """Compute the transfer matrix gradient with respect to a layer _ln"""
+        num_layers = self.number_of_layers
 
         _PHIL = _kz * _d
+        _THETA = np.zeros(num_layers, dtype=np.complex128)
+        _CTHETA = np.zeros(num_layers, dtype=np.complex128)
+
+        # Compute refraction angles
         _THETA[0] = self.incident_angle
         _CTHETA[0] = np.cos(self.incident_angle)
+        _CTHETA[1:] = _kz[1:] / (_refractive_index[1:] * _k0)
+        _THETA[1:] = np.arccos(_CTHETA[1:])
 
-        _CTHETA[1 : self.number_of_layers] = _kz[1 : self.number_of_layers] / (
-            _refractive_index[1 : self.number_of_layers] * _k0
-        )
-        _THETA[1 : self.number_of_layers] = np.arccos(
-            _CTHETA[1 : self.number_of_layers]
-        )
+        # Initialize transfer matrix
+        _DM, _tm_gradient = _compute_dm(_refractive_index[0], _CTHETA[0], self.polarization)
 
-        _DM[:, :, 0], _tm = self._compute_dm(_refractive_index[0], _CTHETA[0])
+        # Loop through layers
+        for i in range(1, num_layers - 1):
+            _DM, _DIM = _compute_dm(_refractive_index[i], _CTHETA[i], self.polarization)
 
+            if i == _ln:
+                _PM = _compute_pm_analytical_gradient(_kz[i], _PHIL[i])
+            else:
+                _PM = _compute_pm(_PHIL[i])
+
+            # Use BLAS-optimized multiplications
+            _tm_gradient = zgemm(1.0, _tm_gradient, _DM)
+            _tm_gradient = zgemm(1.0, _tm_gradient, _PM)
+            _tm_gradient = zgemm(1.0, _tm_gradient, _DIM)
+
+        # Compute last layer contribution
+        _DM, _DIM = _compute_dm(_refractive_index[-1], _CTHETA[-1], self.polarization)
+        _tm_gradient = zgemm(1.0, _tm_gradient, _DM)
+
+        return _tm_gradient, _THETA, _CTHETA
+
+
+    def _compute_tm(self, _refractive_index, _k0, _kz, _d):
+        """Compute the transfer matrix for each wavelength"""
+        _PHIL = _kz * _d
+        _THETA = np.zeros(self.number_of_layers, dtype=complex)
+        _CTHETA = np.zeros(self.number_of_layers, dtype=complex)
+
+        # Compute refraction angles
+        _THETA[0] = self.incident_angle
+        _CTHETA[0] = np.cos(self.incident_angle)
+        _CTHETA[1:] = _kz[1:] / (_refractive_index[1:] * _k0)
+        _THETA[1:] = np.arccos(_CTHETA[1:])
+
+        # Initialize matrices
+        _DM, _tm = _compute_dm(_refractive_index[0], _CTHETA[0], self.polarization)
+
+        # Loop through layers (optimized)
         for i in range(1, self.number_of_layers - 1):
-            _DM[:, :, i], _DIM[:, :, i] = self._compute_dm(
-                _refractive_index[i], _CTHETA[i]
-            )
-            _PM[:, :, i] = self._compute_pm(_PHIL[i])
-            _tm = np.matmul(_tm, _DM[:, :, i])
-            _tm = np.matmul(_tm, _PM[:, :, i])
-            _tm = np.matmul(_tm, _DIM[:, :, i])
+            _DM, _DIM = _compute_dm(_refractive_index[i], _CTHETA[i], self.polarization)
+            _PM = _compute_pm(_PHIL[i])
 
-        (
-            _DM[:, :, self.number_of_layers - 1],
-            _DIM[:, :, self.number_of_layers - 1],
-        ) = self._compute_dm(
-            _refractive_index[self.number_of_layers - 1],
-            _CTHETA[self.number_of_layers - 1],
-        )
+            # Use BLAS-optimized multiplication
+            _tm = zgemm(1.0, _tm, _DM)  # In-place multiplication
+            _tm = zgemm(1.0, _tm, _PM)
+            _tm = zgemm(1.0, _tm, _DIM)
 
-        _tm = np.matmul(_tm, _DM[:, :, self.number_of_layers - 1])
+        # Last layer computation
+        _DM, _DIM = _compute_dm(_refractive_index[-1], _CTHETA[-1], self.polarization)
+        _tm = zgemm(1.0, _tm, _DM)
 
-        return _tm, _THETA, _CTHETA
-
-    def _compute_dm(self, refractive_index, cosine_theta):
-        """compute the D and D_inv matrices for each layer and wavelength
-        Arguments
-        ---------
-            refractive_index : complex float
-                refractive index of the layer you are computing _dm and _dim for
-            cosine_theta : complex float
-                cosine of the complex refraction angle within the layer you are computing _dm and _dim for
-        Attributes
-        ----------
-            polarization : str
-                string indicating the polarization convention of the incident light
-        Returns
-        -------
-        _dm, _dim
-        """
-
-        _dm = np.zeros((2, 2), dtype=complex)
-        _dim = np.zeros((2, 2), dtype=complex)
-
-        if self.polarization == "s":
-            _dm[0, 0] = 1 + 0j
-            _dm[0, 1] = 1 + 0j
-            _dm[1, 0] = refractive_index * cosine_theta
-            _dm[1, 1] = -1 * refractive_index * cosine_theta
-
-        elif self.polarization == "p":
-            _dm[0, 0] = cosine_theta + 0j
-            _dm[0, 1] = cosine_theta + 0j
-            _dm[1, 0] = refractive_index
-            _dm[1, 1] = -1 * refractive_index
-
-        # Note it is actually faster to invert the 2x2 matrix
-        # "By Hand" than it is to use linalg.inv
-        # and this inv step seems to be the bottleneck for the TMM function
-        # but numpy way would just look like this:
-        # _dim = inv(_dm)
-        _tmp = _dm[0, 0] * _dm[1, 1] - _dm[0, 1] * _dm[1, 0]
-        _det = 1 / _tmp
-        _dim[0, 0] = _det * _dm[1, 1]
-        _dim[0, 1] = -1 * _det * _dm[0, 1]
-        _dim[1, 0] = -1 * _det * _dm[1, 0]
-        _dim[1, 1] = _det * _dm[0, 0]
-
-        return _dm, _dim
-
-    def _compute_pm(self, phil):
-        """compute the P matrices for each intermediate-layer layer and wavelength
-        Arguments
-        ---------
-            phil : complex float
-                kz * d of the current layer
-        Returns
-        -------
-        _pm
-        """
-
-        _pm = np.zeros((2, 2), dtype=complex)
-        _ci = 0 + 1j
-        _a = -1 * _ci * phil
-        _b = _ci * phil
-
-        _pm[0, 0] = np.exp(_a)
-        _pm[1, 1] = np.exp(_b)
-
-        return _pm
-
-    def _compute_pm_analytical_gradient(self, kzl, phil):
-        """compute the derivative of the P matrix with respect to layer thickness
-
-        Arguments
-        ---------
-            kzl : complex float
-                the z-component of the wavevector in layer l
-            phil : complex float
-                kzl * sl where sl is the thickness of layer l
-        Reference
-        ---------
-            Equation 18 of https://journals.aps.org/prresearch/pdf/10.1103/PhysRevResearch.2.013018
-        Returns
-        -------
-            _pm_analytical_gradient : 2x2 numpy array of complex floats
-                the analytical derivative of the P matrix with respect to thickness of layer l
-
-        """
-        _pm_analytical_gradient = np.zeros((2, 2), dtype=complex)
-        _ci = 0 + 1j
-        _a = -1 * _ci * phil
-        _b = _ci * phil
-
-        _pm_analytical_gradient[0, 0] = -_ci * kzl * np.exp(_a)
-        _pm_analytical_gradient[1, 1] = _ci * kzl * np.exp(_b)
-
-        return _pm_analytical_gradient
-
+        return _tm, _THETA, _CTHETA 
+    
     def _compute_rgb(self, colorblindness="False"):
         # get color response functions
         self._read_CIE()

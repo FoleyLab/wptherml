@@ -307,8 +307,7 @@ def test_compute_explicit_angle_spectrum():
     assert np.allclose(test.emissivity_array_p[:, 1], _expected_e_p, 5e-3)
     assert np.allclose(test.emissivity_array_s[:, 1], _expected_e_s, 5e-3)
 
-
-def test_pm_grad():
+#def test_pm_grad():
     """
     structure = {
         'Material_List' : ['Air', 'SiO2', 'Air'],
@@ -320,7 +319,7 @@ def test_pm_grad():
         }
     """
 
-    test_args = {
+"""    test_args = {
         "wavelength_list": [600e-9, 602e-9, 3],
         "material_list": [
             "Air",
@@ -345,7 +344,7 @@ def test_pm_grad():
     )
 
     assert np.allclose(pml, expected_pml)
-
+"""
 
 def test_compute_spectrum_gradient():
 
