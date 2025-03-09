@@ -7,7 +7,7 @@ from matplotlib.patches import Circle
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 from scipy.linalg.blas import zgemm  # BLAS-optimized complex matrix multiplication
-from numba import jit
+
 
 #@jit(nopython=True)
 def _compute_dm(refractive_index, cosine_theta, polarization):
@@ -36,7 +36,7 @@ def _compute_dm(refractive_index, cosine_theta, polarization):
 
     return _dm, _dim
 
-#@jit(nopython=True)
+
 def _compute_pm(phil):
     """Compute the P matrices for each intermediate layer and wavelength"""
     _pm = np.eye(2, dtype=np.complex128)  # Identity matrix to avoid unnecessary zeros
