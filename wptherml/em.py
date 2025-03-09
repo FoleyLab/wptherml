@@ -36,6 +36,32 @@ def _compute_dm(refractive_index, cosine_theta, polarization):
 
     return _dm, _dim
 
+def compute_p_matrices_vectorized(phil):
+    """
+    Computes P matrices for each wavelength and layer using vectorized operations.
+    Args:
+        phil: NumPy array (Nl, Nd) containing phil values.
+    Returns:
+        NumPy array (Nl, Nd - 2, 2, 2) containing P matrices.
+    """
+    Nl, Nd = phil.shape
+    P_matrices = np.zeros((Nl, Nd - 2, 2, 2), dtype=np.complex128)
+    _ci = 1j
+    # Slice phil to exclude the first and last layers
+    phil_intermediate = phil[:, 1:-1]
+    # Compute exponential terms
+    exp_minus_iphil = np.exp(-_ci * phil_intermediate)
+    exp_plus_iphil = np.exp(_ci * phil_intermediate)
+    # Assign values to P matrices
+    for wavelength_index in range(Nl):
+        for layer_index in range(Nd - 2):
+            P_matrices[wavelength_index, layer_index, 0, 0] = exp_minus_iphil[wavelength_index, layer_index]
+            P_matrices[wavelength_index, layer_index, 1, 1] = exp_plus_iphil[wavelength_index, layer_index]
+            P_matrices[wavelength_index, layer_index, 0, 1] = 0.0
+            P_matrices[wavelength_index, layer_index, 1, 0] = 0.0
+    return P_matrices
+
+
 
 def _compute_pm(phil):
     """Compute the P matrices for each intermediate layer and wavelength"""
@@ -631,6 +657,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_k0()
         self._compute_kx()
         self._compute_kz()
+        self._compute_phil()
 
         # compute the reflectivity in a loop for now!
         self.reflectivity_array = np.zeros_like(self.wavelength_array)
@@ -1445,6 +1472,22 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             - self.atmospheric_warming_power_gradient
         )
 
+    def _compute_phil(self):
+        """computes the phil angle for each layer and wavelength
+        Attributes
+        ----------
+            _refractive_index_array : number_of_wavelength x number_of_layers numpy array of complex floats
+                the array of refractive index values corresponding to wavelength_array
+            _kz_array : number_of_wavelength x number_of_layers numpy array of complex floats
+                the z-component of the wavevector in each layer of the multilayer for each wavelength
+            _kx_array : 1 x number_of_wavelengths numpy array of complex floats
+                the x-component of the wavevector in each layer for each wavelength
+            _k0_array : 1 x number_of_wavelengths numpy array of floats
+                the wavevector magnitude in the incident layer for each wavelength
+        """
+        # compute phil_array using broadcasting
+        self._phil_array = self._kz_array * self.thickness_array
+
     def _compute_kz(self):
         """computes the z-component of the wavevector in each layer of the stack
         Attributes
@@ -1563,6 +1606,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         num_layers = self.number_of_layers
 
         _PHIL = _kz * _d
+        print("PRINTING PHI_L EXPLICIT")
+        print(_PHIL)
+        print("PRINTING FROM PHI ARRAY")
+        print(self._phil_array[0, :])
+
         _THETA = np.zeros(num_layers, dtype=np.complex128)
         _CTHETA = np.zeros(num_layers, dtype=np.complex128)
 
@@ -1601,6 +1649,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _PHIL = _kz * _d
         _THETA = np.zeros(self.number_of_layers, dtype=complex)
         _CTHETA = np.zeros(self.number_of_layers, dtype=complex)
+
+        print("PRINTING PHI_L EXPLICIT")
+        print(_PHIL)
+        print("PRINTING FROM PHI ARRAY")
+        print(self._phil_array[1, :])
 
         # Compute refraction angles
         _THETA[0] = self.incident_angle
