@@ -1472,6 +1472,18 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             - self.atmospheric_warming_power_gradient
         )
 
+    def _compute_costheta(self):
+
+        self._theta = np.zeros((self.number_of_wavelengths, self.number_of_layers), dtype=np.complex128)
+        self._ctheta = np.zeros((self.number_of_wavelengths, self.number_of_layers), dtype=np.complex128)
+        _CTHETA = np.zeros(num_layers, dtype=np.complex128)
+
+        # Compute refraction angles
+        _THETA[0] = self.incident_angle
+        _CTHETA[0] = np.cos(self.incident_angle)
+        _CTHETA[1:] = _kz[1:] / (_refractive_index[1:] * _k0)
+        _THETA[1:] = np.arccos(_CTHETA[1:])
+
     def _compute_phil(self):
         """computes the phil angle for each layer and wavelength
         Attributes
