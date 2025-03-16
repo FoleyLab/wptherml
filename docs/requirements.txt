@@ -1,0 +1,22 @@
+name: docs
+channels:
+dependencies:
+    # Base depends
+  - python=3.11
+  - pip>=19.0
+
+    # Package depends
+  - numpy
+  - matplotlib
+  - scipy
+  - pytest
+  - matplotlib
+  - jupyter
+  - pytorch
+  - scikit-learn
+  - pandas
+  - tqdm
+
+    # Pip-only installs
+  - pip:
+    - sphinx-autoapi
