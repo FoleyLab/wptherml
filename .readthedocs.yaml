@@ -22,7 +22,7 @@ build.commands:
 
 # Optional: Define explicit submodules if using Git submodules
 submodules:
-  include: true
+  include: ["*"]
 
 # Optional: Custom build settings
 formats: ["htmlzip", "pdf", "epub"]
