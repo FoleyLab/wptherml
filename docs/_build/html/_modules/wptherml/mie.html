@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wptherml.mie &mdash; wptherml  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            wptherml
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wptherml</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">wptherml.mie</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for wptherml.mie</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">spherical_jn</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">spherical_yn</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">jv</span>
+<span class="kn">from</span> <span class="nn">scipy.special</span> <span class="kn">import</span> <span class="n">yv</span>
+<span class="kn">from</span> <span class="nn">.spectrum_driver</span> <span class="kn">import</span> <span class="n">SpectrumDriver</span>
+<span class="kn">from</span> <span class="nn">.materials</span> <span class="kn">import</span> <span class="n">Materials</span>
+
+
+<div class="viewcode-block" id="MieDriver">
+<a class="viewcode-back" href="../../autosummary/wptherml.MieDriver.html#wptherml.MieDriver">[docs]</a>
+<span class="k">class</span> <span class="nc">MieDriver</span><span class="p">(</span><span class="n">SpectrumDriver</span><span class="p">,</span> <span class="n">Materials</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    radius : float</span>
+<span class="sd">        the radius of the sphere</span>
+
+<span class="sd">    number_of_wavelengths : int</span>
+<span class="sd">        the number of wavelengths over which the cross sections / efficiencies will be computed</span>
+
+<span class="sd">    wavelength_array : 1 x number_of_wavelengths numpy array of floats</span>
+<span class="sd">        the array of wavelengths in meters over which you will compute the spectra</span>
+
+<span class="sd">    _size_factor_array : 1 x number_of_wavelengths numpy array of floats</span>
+<span class="sd">        size factor of the sphere</span>
+
+<span class="sd">    _relative_refractive_index_array : 1 x number_of_wavelengths numpy array of complex floats</span>
+<span class="sd">        the array of refractive index values corresponding to wavelength_array</span>
+
+<span class="sd">    _medium_refractive_index : float</span>
+<span class="sd">        the refractive index of the surrounding medium - assumed to be real and wavelength-independent</span>
+
+<span class="sd">    q_scat : numpy array of floats</span>
+<span class="sd">        the scattering efficiency as a function of wavelength</span>
+
+<span class="sd">    q_ext : numpy array of floats</span>
+<span class="sd">        the extenction efficiency as a function of wavelength</span>
+
+<span class="sd">    q_abs : 1 x number_of_wavelengths numpy array of floats</span>
+<span class="sd">        the absorption efficiency as a function of wavelength</span>
+
+<span class="sd">    c_scat : numpy array of floats</span>
+<span class="sd">        the scattering cross section as a function of wavelength</span>
+
+<span class="sd">    c_ext : numpy array of floats</span>
+<span class="sd">        the extinction cross section as a function of wavelength</span>
+
+<span class="sd">    c_abs : 1 x number_of_wavelengths numpy array of floats</span>
+<span class="sd">        the absorption efficiency as a function of wavelength</span>
+
+<span class="sd">    _max_coefficient_n : int</span>
+<span class="sd">        the maximum coefficient to be computed in the Mie expansion</span>
+
+<span class="sd">    _n_array : 1 x _max_coefficient_n array of ints</span>
+<span class="sd">        array of indices for the terms in the Mie expansion</span>
+
+<span class="sd">    _an : _max_coefficient x number_of_wavelengths numpy array of complex floats</span>
+<span class="sd">        the array of a coefficients in the Mie expansion</span>
+
+<span class="sd">    _bn : _max_coefficientx x number_of_wavelengths numpy array of complex floats</span>
+<span class="sd">        the array of b coefficients in the Mie expansion</span>
+
+<span class="sd">    _cn : _max_coefficientx x number_of_wavelengths numpy array of complex floats</span>
+<span class="sd">        the array of c coefficients in the Mie expansion</span>
+
+<span class="sd">    _dn : _max_coefficientx x number_of_wavelengths numpy array of complex floats</span>
+<span class="sd">        the array of d coefficients in the Mie expansion</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; fill_in_with_actual_example!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="MieDriver.__init__">
+<a class="viewcode-back" href="../../autosummary/wptherml.MieDriver.html#wptherml.MieDriver.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_input</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Radius of the sphere is &quot;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ci</span> <span class="o">=</span> <span class="mi">0</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_refractive_indicex_array</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_spectrum</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="nf">parse_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;radius&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;radius&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">=</span> <span class="mf">100e-9</span>
+
+        <span class="k">if</span> <span class="s2">&quot;wavelength_list&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="n">lamlist</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;wavelength_list&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="n">lamlist</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">lamlist</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span> <span class="nb">int</span><span class="p">(</span><span class="n">lamlist</span><span class="p">[</span><span class="mi">2</span><span class="p">]))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number_of_wavelengths</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">lamlist</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wavenumber_array</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span>
+        <span class="c1"># default wavelength array</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mf">400e-9</span><span class="p">,</span> <span class="mf">800e-9</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number_of_wavelengths</span> <span class="o">=</span> <span class="mi">10</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">wavenumber_array</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span>
+
+        <span class="k">if</span> <span class="s2">&quot;sphere_material&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sphere_material</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;sphere_material&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sphere_material</span> <span class="o">=</span> <span class="s2">&quot;ag&quot;</span>
+
+        <span class="k">if</span> <span class="s2">&quot;medium_material&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">medium_material</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;medium_material&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">medium_material</span> <span class="o">=</span> <span class="s2">&quot;air&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">=</span> <span class="mi">3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_refractive_index_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_wavelengths</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_relative_permeability</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">+</span> <span class="mi">0</span><span class="n">j</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_size_factor_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_ext</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_scat</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">q_abs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">set_refractive_indicex_array</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;once materials are specified, define the refractive_index_array values&quot;&quot;&quot;</span>
+
+        <span class="c1"># terminal layers can be air or water now</span>
+        <span class="n">_lmed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">medium_material</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="k">if</span> <span class="n">_lmed</span> <span class="o">==</span> <span class="s2">&quot;air&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Air</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lmed</span> <span class="o">==</span> <span class="s2">&quot;water&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_H2O</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lmed</span> <span class="o">==</span> <span class="s2">&quot;h2o&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_H2O</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+
+        <span class="n">_lm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">sphere_material</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+
+        <span class="c1"># check all possible values of the material string</span>
+        <span class="c1"># and set material as appropriate.</span>
+        <span class="c1"># in future probably good to create a single wrapper</span>
+        <span class="c1"># function in materials.py that will do this so</span>
+        <span class="c1"># that MieDriver and TmmDriver can just use it rather</span>
+        <span class="c1"># than duplicating this kind of code in both classes</span>
+        <span class="k">if</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;air&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Air</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;ag&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Ag</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;al&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Al</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;al2o3&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Al2O3</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;aln&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_AlN</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;au&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Au</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;hfo2&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_HfO2</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;pb&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Pb</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;polystyrene&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_polystyrene</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;pt&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Pt</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;re&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Re</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;rh&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Rh</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;ru&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Ru</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;si&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Si</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;sio2&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_SiO2</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;ta2O5&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_Ta2O5</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;tin&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_TiN</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;tio2&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_TiO2</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">_lm</span> <span class="o">==</span> <span class="s2">&quot;w&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_W</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="c1"># default is SiO2</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">material_SiO2</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_relative_refractive_index_array</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_refractive_index_array</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">_refractive_index_array</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Will prepare the attributes forcomputing q_ext, q_abs, q_scat, c_abs, c_ext, c_scat</span>
+<span class="sd">        via computing the mie coefficients</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ---------</span>
+<span class="sd">        TBD</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        TBD</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">wavelength_array</span><span class="p">)):</span>
+            <span class="c1"># get Mie coefficients... stored in attriubutes</span>
+            <span class="n">m_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_relative_refractive_index_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="n">mu_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_relative_permeability</span>
+            <span class="n">x_val</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_size_factor_array</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_compute_mie_coeffients</span><span class="p">(</span><span class="n">m_val</span><span class="p">,</span> <span class="n">mu_val</span><span class="p">,</span> <span class="n">x_val</span><span class="p">)</span>
+
+            <span class="c1"># compute q_scat</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_scat</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_q_scattering</span><span class="p">(</span><span class="n">x_val</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_ext</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_q_extinction</span><span class="p">(</span><span class="n">x_val</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">q_abs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_ext</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">q_scat</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_compute_s_jn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the spherical bessel function from the Bessel function</span>
+<span class="sd">        of the first kind</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        n : 1 x _max_coefficient numpy array of ints</span>
+<span class="sd">            orders of the bessel function</span>
+
+<span class="sd">        z : float</span>
+<span class="sd">            size parameter of the sphere</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _s_jn</span>
+
+<span class="sd">        Test Implemented</span>
+<span class="sd">        ----------------</span>
+<span class="sd">        Yes</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ns</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mf">0.5</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">z</span><span class="p">))</span> <span class="o">*</span> <span class="n">jv</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_s_yn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the spherical bessel function from the Bessel function</span>
+<span class="sd">        of the first kind</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        n : 1 x _max_coefficient numpy array of ints</span>
+<span class="sd">            orders of the bessel function</span>
+
+<span class="sd">        z : float</span>
+<span class="sd">            variable passed to the bessel function</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _s_jn</span>
+
+<span class="sd">        Test Implemented</span>
+<span class="sd">        ----------------</span>
+<span class="sd">        Yes</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">ns</span> <span class="o">=</span> <span class="n">n</span> <span class="o">+</span> <span class="mf">0.5</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">z</span><span class="p">))</span> <span class="o">*</span> <span class="n">yv</span><span class="p">(</span><span class="n">ns</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_s_hn</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute the spherical bessel function h_n^{(1)}</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        n : 1 x _max_coefficient array of int</span>
+<span class="sd">            orders of the bessel function</span>
+
+<span class="sd">        z : float</span>
+<span class="sd">            variable passed to the bessel function</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _s_hn</span>
+
+<span class="sd">        Test Implemented</span>
+<span class="sd">        ----------------</span>
+<span class="sd">        Yes</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">spherical_jn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">ci</span> <span class="o">*</span> <span class="n">spherical_yn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_z_jn_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute derivative of z*j_n(z) using recurrence relations</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        n : 1 x _max_coefficient array of int</span>
+<span class="sd">            orders of the bessel functions</span>
+<span class="sd">        z : float</span>
+<span class="sd">            variable passed to the bessel function</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _z_jn_prime</span>
+
+<span class="sd">        Test Implemented</span>
+<span class="sd">        ----------------</span>
+<span class="sd">        Yes</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">z</span> <span class="o">*</span> <span class="n">spherical_jn</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span> <span class="o">*</span> <span class="n">spherical_jn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_z_hn_prime</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Compute derivative of z*h_n^{(1)}(z) using recurrence relations</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        n : 1 x _max_coefficient array of int</span>
+<span class="sd">            orders of the bessel functions</span>
+<span class="sd">        z : float</span>
+<span class="sd">            variable passed to the bessel function</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _z_hn_prime</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">return</span> <span class="n">z</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_s_hn</span><span class="p">(</span><span class="n">n</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span> <span class="o">-</span> <span class="n">n</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_s_hn</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">z</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_mie_coeffients</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;computes the Mie coefficients given relative refractive index,</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        n : 1 x _max_coefficient array of ints</span>
+<span class="sd">            order of the mie coefficients functions</span>
+<span class="sd">        m : complex float</span>
+<span class="sd">            relative refractive index of the sphere to the medium</span>
+<span class="sd">        mu : complex float</span>
+<span class="sd">            relative permeability of the sphere to the medium (typically 1)</span>
+<span class="sd">        x : float</span>
+<span class="sd">            size parameter of the sphere</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        -------</span>
+<span class="sd">        _an</span>
+
+<span class="sd">        _bn</span>
+
+<span class="sd">        _cn</span>
+
+<span class="sd">        _dn</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_n_array</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="c1"># self._n_array will be an array from 1 to n_max</span>
+
+        <span class="c1"># pre-compute terms that will be used numerous times in computing coefficients</span>
+        <span class="n">_jnx</span> <span class="o">=</span> <span class="n">spherical_jn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_array</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">_jnmx</span> <span class="o">=</span> <span class="n">spherical_jn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_array</span><span class="p">,</span> <span class="n">m</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">_hnx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_s_hn</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_array</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">_xjnxp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_z_jn_prime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_array</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">_mxjnmxp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_z_jn_prime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_array</span><span class="p">,</span> <span class="n">m</span> <span class="o">*</span> <span class="n">x</span><span class="p">)</span>
+        <span class="n">_xhnxp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_z_hn_prime</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_array</span><span class="p">,</span> <span class="n">x</span><span class="p">)</span>
+
+        <span class="c1"># a_n coefficients</span>
+        <span class="n">_a_numerator</span> <span class="o">=</span> <span class="n">m</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">_jnmx</span> <span class="o">*</span> <span class="n">_xjnxp</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_jnx</span> <span class="o">*</span> <span class="n">_mxjnmxp</span>
+        <span class="n">_a_denominator</span> <span class="o">=</span> <span class="n">m</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">_jnmx</span> <span class="o">*</span> <span class="n">_xhnxp</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_hnx</span> <span class="o">*</span> <span class="n">_mxjnmxp</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_an</span> <span class="o">=</span> <span class="n">_a_numerator</span> <span class="o">/</span> <span class="n">_a_denominator</span>
+
+        <span class="c1"># b_n coefficients</span>
+        <span class="n">_b_numerator</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_jnmx</span> <span class="o">*</span> <span class="n">_xjnxp</span> <span class="o">-</span> <span class="n">_jnx</span> <span class="o">*</span> <span class="n">_mxjnmxp</span>
+        <span class="n">_b_denominator</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_jnmx</span> <span class="o">*</span> <span class="n">_xhnxp</span> <span class="o">-</span> <span class="n">_hnx</span> <span class="o">*</span> <span class="n">_mxjnmxp</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bn</span> <span class="o">=</span> <span class="n">_b_numerator</span> <span class="o">/</span> <span class="n">_b_denominator</span>
+
+        <span class="c1"># c_n coefficients</span>
+        <span class="n">_c_numerator</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_jnx</span> <span class="o">*</span> <span class="n">_xhnxp</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_hnx</span> <span class="o">*</span> <span class="n">_xjnxp</span>
+        <span class="n">_c_denominator</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_jnmx</span> <span class="o">*</span> <span class="n">_xhnxp</span> <span class="o">-</span> <span class="n">_hnx</span> <span class="o">*</span> <span class="n">_mxjnmxp</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cn</span> <span class="o">=</span> <span class="n">_c_numerator</span> <span class="o">/</span> <span class="n">_c_denominator</span>
+
+        <span class="c1"># d_n coefficients</span>
+        <span class="n">_d_numerator</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">m</span> <span class="o">*</span> <span class="n">_jnx</span> <span class="o">*</span> <span class="n">_xhnxp</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">m</span> <span class="o">*</span> <span class="n">_hnx</span> <span class="o">*</span> <span class="n">_xjnxp</span>
+        <span class="n">_d_denominator</span> <span class="o">=</span> <span class="n">m</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="n">_jnmx</span> <span class="o">*</span> <span class="n">_xhnxp</span> <span class="o">-</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">_hnx</span> <span class="o">*</span> <span class="n">_mxjnmxp</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_dn</span> <span class="o">=</span> <span class="n">_d_numerator</span> <span class="o">/</span> <span class="n">_d_denominator</span>
+        <span class="c1"># return [self._an,self._bn,self._cn,self._dn]</span>
+
+    <span class="k">def</span> <span class="nf">_compute_q_scattering</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;computes the scattering efficiency from the mie coefficients</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        m : complex float</span>
+<span class="sd">            relative refractive index of the sphere</span>
+
+<span class="sd">        mu : float</span>
+<span class="sd">            relative permeability of the sphere</span>
+
+<span class="sd">        x : float</span>
+<span class="sd">            size parameter of the sphere, defined as 2 * pi * r / lambda</span>
+<span class="sd">            where r is the radius of the sphere and lambda is the wavelength of illumination</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        -------</span>
+<span class="sd">        q_scat</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        q_scat</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># c = self._compute_mie_coeffients(m, mu, x)</span>
+        <span class="n">an</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_an</span>
+        <span class="n">bn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bn</span>
+
+        <span class="n">q_scat</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">an</span><span class="p">)):</span>
+            <span class="c1"># n is i + 1</span>
+            <span class="c1"># because i indexes the arrays, n is the multipole order</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">q_scat</span> <span class="o">=</span> <span class="n">q_scat</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">an</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">bn</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">**</span> <span class="mi">2</span>
+            <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">q_scat</span>
+
+    <span class="k">def</span> <span class="nf">_compute_q_extinction</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;computes the extinction efficiency from the mie coefficients</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        m : complex float</span>
+<span class="sd">            relative refractive index of the sphere</span>
+
+<span class="sd">        mu : float</span>
+<span class="sd">            relative permeability of the sphere</span>
+
+<span class="sd">        x : float</span>
+<span class="sd">            size parameter of the sphere, defined as 2 * pi * r / lambda</span>
+<span class="sd">            where r is the radius of the sphere and lambda is the wavelength of illumination</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        -------</span>
+<span class="sd">        q_ext</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        q_ext</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># c = self._compute_mie_coeffients(m, mu, x)</span>
+        <span class="n">an</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_an</span>
+        <span class="n">bn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bn</span>
+
+        <span class="n">q_ext</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">an</span><span class="p">)):</span>
+            <span class="c1"># n is i + 1</span>
+            <span class="c1"># because i indexes the arrays, n is the multipole order</span>
+            <span class="n">n</span> <span class="o">=</span> <span class="n">i</span> <span class="o">+</span> <span class="mi">1</span>
+            <span class="n">q_ext</span> <span class="o">=</span> <span class="n">q_ext</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">/</span> <span class="n">x</span><span class="o">**</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">n</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">real</span><span class="p">(</span><span class="n">an</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">+</span> <span class="n">bn</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+
+        <span class="k">return</span> <span class="n">q_ext</span>
+
+    <span class="k">def</span> <span class="nf">_compute_n_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="n">_n_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">_n_max</span><span class="p">,</span> <span class="n">_n_max</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_compute_gl</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">omega_p</span><span class="p">,</span> <span class="n">eps_inf</span><span class="p">,</span> <span class="n">eps_d</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;docstring goes here!&quot;&quot;&quot;</span>
+        <span class="n">zeta</span> <span class="o">=</span> <span class="n">h</span> <span class="o">/</span> <span class="n">r</span>
+
+        <span class="n">omega_l</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_omega_l</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">omega_p</span><span class="p">,</span> <span class="n">eps_inf</span><span class="p">,</span> <span class="n">eps_d</span><span class="p">)</span>
+        <span class="c1"># note in atomics, 4 * pi * epsilon_0 = 1</span>
+        <span class="n">g_l_squared</span> <span class="o">=</span> <span class="n">mu</span> <span class="o">*</span> <span class="n">omega_p</span> <span class="o">/</span> <span class="p">(</span><span class="mi">1</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">r</span><span class="o">**</span><span class="mi">3</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">omega_l</span> <span class="o">/</span> <span class="n">omega_p</span><span class="p">)</span> <span class="o">**</span> <span class="mi">3</span>
+        <span class="n">g_l_squared</span> <span class="o">*=</span> <span class="p">(</span><span class="n">l</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span> <span class="p">((</span><span class="mi">1</span> <span class="o">+</span> <span class="n">zeta</span><span class="p">)</span> <span class="o">**</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">l</span> <span class="o">+</span> <span class="mi">4</span><span class="p">))</span> <span class="o">*</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">l</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">g_l_squared</span><span class="p">),</span> <span class="n">omega_l</span>
+
+    <span class="k">def</span> <span class="nf">_compute_gm</span><span class="p">(</span><span class="n">l_max</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">omega_p</span><span class="p">,</span> <span class="n">eps_inf</span><span class="p">,</span> <span class="n">eps_d</span><span class="p">):</span>
+        <span class="n">gm_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">l_max</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">omegam_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">l_max</span><span class="p">)</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">l_max</span><span class="p">):</span>
+            <span class="n">gm_array</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">],</span> <span class="n">omegam_array</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_gl</span><span class="p">(</span>
+                <span class="n">i</span><span class="p">,</span> <span class="n">r</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">mu</span><span class="p">,</span> <span class="n">omega_p</span><span class="p">,</span> <span class="n">eps_inf</span><span class="p">,</span> <span class="n">eps_d</span>
+            <span class="p">)</span>
+
+        <span class="n">gm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">gm_array</span> <span class="o">*</span> <span class="n">gm_array</span><span class="p">))</span>
+        <span class="n">omegam</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span><span class="n">omegam_array</span> <span class="o">*</span> <span class="n">gm_array</span> <span class="o">*</span> <span class="n">gm_array</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sum</span><span class="p">(</span>
+            <span class="n">gm_array</span> <span class="o">*</span> <span class="n">gm_array</span>
+        <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">gm</span><span class="p">,</span> <span class="n">omegam</span>
+
+    <span class="k">def</span> <span class="nf">_compute_omega_l</span><span class="p">(</span><span class="n">l</span><span class="p">,</span> <span class="n">omega_p</span><span class="p">,</span> <span class="n">eps_inf</span><span class="p">,</span> <span class="n">eps_d</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;docstring goes here!&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">omega_p</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">eps_inf</span> <span class="o">+</span> <span class="p">(</span><span class="mi">1</span> <span class="o">+</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">l</span><span class="p">)</span> <span class="o">*</span> <span class="n">eps_d</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute_hamiltonian</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">N</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">drude_dictionary</span><span class="p">,</span> <span class="n">emitter_dictionary</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;docstring goes here!&quot;&quot;&quot;</span>
+        <span class="c1"># this is the wavelength relevant for the system studied in PRL 112, 253601 (2014)</span>
+        <span class="c1"># it is not general! should think of a more general way to get the l_max value!</span>
+        <span class="c1"># in that paper, the set omega_0 to 2.5 eV so we can convert that frequency into a wavelength</span>
+        <span class="n">lambda_0</span> <span class="o">=</span> <span class="mi">1240</span> <span class="o">/</span> <span class="mf">2.5</span>
+        <span class="c1"># now we can get the size parameter</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span> <span class="o">/</span> <span class="n">lambda_0</span>
+        <span class="n">_l_max</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">x</span> <span class="o">+</span> <span class="mi">4</span> <span class="o">*</span> <span class="n">x</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="mf">3.0</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># get parameters of the metal nanoparticle</span>
+        <span class="n">_omega_p</span> <span class="o">=</span> <span class="n">drude_dictionary</span><span class="p">[</span><span class="s2">&quot;omega_p&quot;</span><span class="p">]</span>
+        <span class="n">_eps_inf</span> <span class="o">=</span> <span class="n">drude_dictionary</span><span class="p">[</span><span class="s2">&quot;eps_inf&quot;</span><span class="p">]</span>
+        <span class="n">_gamma_p</span> <span class="o">=</span> <span class="n">drude_dictionary</span><span class="p">[</span><span class="s2">&quot;gamma_p&quot;</span><span class="p">]</span>
+        <span class="n">_eps_d</span> <span class="o">=</span> <span class="n">drude_dictionary</span><span class="p">[</span><span class="s2">&quot;eps_d&quot;</span><span class="p">]</span>
+
+        <span class="c1"># get parameters of the quantum emitter</span>
+        <span class="n">_gamma_qe</span> <span class="o">=</span> <span class="n">emitter_dictionary</span><span class="p">[</span><span class="s2">&quot;gamma_qe&quot;</span><span class="p">]</span>
+        <span class="n">_omega_0</span> <span class="o">=</span> <span class="n">emitter_dictionary</span><span class="p">[</span><span class="s2">&quot;omega_0&quot;</span><span class="p">]</span>
+        <span class="n">_mu</span> <span class="o">=</span> <span class="n">emitter_dictionary</span><span class="p">[</span><span class="s2">&quot;mu&quot;</span><span class="p">]</span>
+
+        <span class="c1"># compute g_1 and omega_1</span>
+        <span class="n">_g1</span><span class="p">,</span> <span class="n">_omega1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_gl</span><span class="p">(</span>
+            <span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">_mu</span><span class="p">,</span> <span class="n">_omega_p</span><span class="p">,</span> <span class="n">_eps_inf</span><span class="p">,</span> <span class="n">_eps_d</span>
+        <span class="p">)</span>
+
+        <span class="c1"># compute g_M and omega_M</span>
+        <span class="n">_gm</span><span class="p">,</span> <span class="n">_omegam</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_gm</span><span class="p">(</span>
+            <span class="n">_l_max</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">radius</span><span class="p">,</span> <span class="n">h</span><span class="p">,</span> <span class="n">_mu</span><span class="p">,</span> <span class="n">_omega_p</span><span class="p">,</span> <span class="n">_eps_inf</span><span class="p">,</span> <span class="n">_eps_d</span>
+        <span class="p">)</span>
+
+        <span class="n">H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="mi">3</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">complex</span><span class="p">)</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="mi">0</span> <span class="o">+</span> <span class="mi">1</span><span class="n">j</span>
+
+        <span class="c1"># diagonal elements</span>
+        <span class="n">H</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">_omega_0</span> <span class="o">-</span> <span class="n">ci</span> <span class="o">*</span> <span class="n">_gamma_qe</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">H</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">_omega1</span> <span class="o">-</span> <span class="n">ci</span> <span class="o">*</span> <span class="n">_gamma_p</span> <span class="o">/</span> <span class="mi">2</span>
+        <span class="n">H</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">_omegam</span> <span class="o">-</span> <span class="n">ci</span> <span class="o">*</span> <span class="n">_gamma_p</span> <span class="o">/</span> <span class="mi">2</span>
+
+        <span class="c1"># off-diagonal for coupling to dipolar term</span>
+        <span class="n">H</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">_g1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">N</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+        <span class="n">H</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">_g1</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">N</span> <span class="o">/</span> <span class="mi">3</span><span class="p">)</span>
+
+        <span class="c1"># off-diagonal for coupling to all higher multipoles</span>
+        <span class="n">H</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">=</span> <span class="n">_gm</span>
+        <span class="n">H</span><span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="n">_gm</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Foley Lab. Project structure based on the Computational Molecular Science Python Cookiecutter version 1.5.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

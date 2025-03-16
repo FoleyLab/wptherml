@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wptherml.optdriver &mdash; wptherml  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            wptherml
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wptherml</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">wptherml.optdriver</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for wptherml.optdriver</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">minimize</span>
+<span class="kn">from</span> <span class="nn">scipy.optimize</span> <span class="kn">import</span> <span class="n">basinhopping</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">from</span> <span class="nn">.em</span> <span class="kn">import</span> <span class="n">TmmDriver</span>
+<span class="c1">#import torch</span>
+<span class="c1">#import torch.nn as nn</span>
+<span class="c1">#import torch.optim as optim</span>
+<span class="c1">#import tqdm</span>
+<span class="c1">#from sklearn.model_selection import train_test_split</span>
+<span class="c1">#from sklearn.preprocessing import StandardScaler</span>
+<span class="c1">#from sklearn.preprocessing import MinMaxScaler</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="c1">#from pyqubo import Binary</span>
+<span class="c1">#import neal</span>
+<span class="c1">#import pandas as pd</span>
+
+
+<div class="viewcode-block" id="OptDriver">
+<a class="viewcode-back" href="../../autosummary/wptherml.OptDriver.html#wptherml.OptDriver">[docs]</a>
+<span class="k">class</span> <span class="nc">OptDriver</span><span class="p">(</span><span class="n">TmmDriver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    TBD</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; fill_in_with_actual_example!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="OptDriver.__init__">
+<a class="viewcode-back" href="../../autosummary/wptherml.OptDriver.html#wptherml.OptDriver.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="c1"># store args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">args</span> <span class="o">=</span> <span class="n">args</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">start_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="c1"># ordinary tmm driver input</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_input</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_optimization_input</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">set_refractive_index_array</span><span class="p">()</span>
+        <span class="c1"># compute reflectivity spectrum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_spectrum</span><span class="p">()</span></div>
+
+        <span class="c1"># print(&quot;We started optimizing&quot;)</span>
+        <span class="c1"># self.optimize()</span>
+
+    <span class="k">def</span> <span class="nf">parse_optimization_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Parse additional options related to the optimization, including:</span>
+<span class="sd">        - the objective function to be optimized</span>
+<span class="sd">        - minimization or maximization of the objective</span>
+<span class="sd">        - the optimization method to be used</span>
+<span class="sd">        - lower- and upper-bounds on the layer thicknesses</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># which objective function do we want to optimize</span>
+        <span class="k">if</span> <span class="s2">&quot;objective_function&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective_function</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;objective_function&quot;</span><span class="p">]</span>
+        <span class="c1"># default to selective mirror</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">objective_function</span> <span class="o">=</span> <span class="s2">&quot;selective_mirror&quot;</span>
+
+        <span class="c1"># do we want to minimze the objective?</span>
+        <span class="k">if</span> <span class="s2">&quot;minimization&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mimimization</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;minimization&quot;</span><span class="p">]</span>
+        <span class="c1"># usually we want to mazimize, so default is false</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">minimization</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="c1"># set bounds on thickness of each layer</span>
+        <span class="k">if</span> <span class="s2">&quot;lower_bound&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;lower_bound&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="s2">&quot;upper_bound&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;upper_bound&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">=</span> <span class="mi">1000</span>
+
+        <span class="k">if</span> <span class="s2">&quot;combinatorial_optimization&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">combinatorial_optimization</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qubo_thickness_optimization</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimization_dictionary</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;optimization_dictionary&quot;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;qubo_thickness_optimization&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">qubo_thickness_optimization</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">combinatorial_optimization</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimization_dictionary</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;optimization_dictionary&quot;</span><span class="p">]</span>
+
+        <span class="k">if</span> <span class="s2">&quot;random_perturbation_scale&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">random_perturbation_scale</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;random_perturbation_scale&quot;</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># default will be 10%, so we can randomly perturb a given layer by +/- 10% </span>
+            <span class="c1"># between basin hopping cycles</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">random_perturbation_scale</span> <span class="o">=</span> <span class="mf">0.1</span>
+
+    <span class="k">def</span> <span class="nf">optimize_qubo</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">fom_function</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">combinatorial_optimization</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubo_combinatorial_structure_optimization</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">optimization_dictionary</span><span class="p">,</span> <span class="n">fom_function</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">learning_loop</span><span class="p">(</span><span class="n">num_to_train</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span> <span class="n">num_iterations</span><span class="o">=</span><span class="mi">10000</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">qubo_thickness_optimization</span> <span class="o">==</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_qubo_thickness_and_alloy_optimization</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span>
+                <span class="n">optimization_dict</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">optimization_dictionary</span><span class="p">,</span>
+                <span class="n">fom_func</span><span class="o">=</span><span class="n">fom_function</span><span class="p">,</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">optimizer</span><span class="o">.</span><span class="n">learning_loop</span><span class="p">(</span>
+                <span class="n">num_to_train</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+                <span class="n">n_epochs</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span>
+                <span class="n">l2_lambda</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
+                <span class="n">num_iterations</span><span class="o">=</span><span class="mi">400</span><span class="p">,</span>
+                <span class="n">reduction_factor</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+                <span class="n">l1_lambda</span><span class="o">=</span><span class="mf">0.000001</span><span class="p">,</span>
+                <span class="n">K</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
+                <span class="n">LR</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">optimize_bfgs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;</span>
+<span class="sd">        Method to wrap the l-bfgs-b optimizer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># initialize x array</span>
+        <span class="n">x_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness_array</span><span class="p">[</span><span class="mi">1</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e9</span>
+
+        <span class="c1"># set bounds</span>
+        <span class="n">bfgs_xmin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bfgs_xmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="c1"># rewrite the bounds in the way required by L-BFGS-B</span>
+        <span class="n">bfgs_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span> <span class="k">for</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bfgs_xmin</span><span class="p">,</span> <span class="n">bfgs_xmax</span><span class="p">)]</span>
+
+        <span class="n">fom_start</span><span class="p">,</span> <span class="n">grad_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_fom_and_gradient_from_thickness_array</span><span class="p">(</span>
+            <span class="n">x_start</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Initial FOM is </span><span class="si">{</span><span class="n">fom_start</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Initial Gradient is </span><span class="si">{</span><span class="n">grad_start</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">minimize</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">compute_fom_and_gradient_from_thickness_array</span><span class="p">,</span>
+            <span class="n">x_start</span><span class="p">,</span>
+            <span class="n">method</span><span class="o">=</span><span class="s2">&quot;L-BFGS-B&quot;</span><span class="p">,</span>
+            <span class="n">jac</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">bounds</span><span class="o">=</span><span class="n">bfgs_bounds</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">ret</span><span class="o">.</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">optimize_basin_hopping</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Method to wrap the l-bfgs-b optimizer</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">x_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thickness_array</span><span class="p">[</span><span class="mi">1</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">*</span> <span class="mf">1e9</span>
+
+        <span class="c1"># set bounds for L-BFGS-B local optimizations</span>
+        <span class="n">bfgs_xmin</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+        <span class="n">bfgs_xmax</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">-</span> <span class="mi">2</span><span class="p">)</span>
+
+        <span class="c1"># rewrite the bounds in the way required by L-BFGS-B</span>
+        <span class="n">bfgs_bounds</span> <span class="o">=</span> <span class="p">[(</span><span class="n">low</span><span class="p">,</span> <span class="n">high</span><span class="p">)</span> <span class="k">for</span> <span class="n">low</span><span class="p">,</span> <span class="n">high</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">bfgs_xmin</span><span class="p">,</span> <span class="n">bfgs_xmax</span><span class="p">)]</span>
+
+        <span class="n">fom_start</span><span class="p">,</span> <span class="n">grad_start</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_fom_and_gradient_from_thickness_array</span><span class="p">(</span>
+            <span class="n">x_start</span>
+        <span class="p">)</span>
+
+        <span class="c1"># should update to determine if &quot;jac&quot; : True is consistent with </span>
+        <span class="c1"># selected FOM</span>
+        <span class="n">minimizer_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;method&quot;</span><span class="p">:</span> <span class="s2">&quot;L-BFGS-B&quot;</span><span class="p">,</span> <span class="s2">&quot;jac&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> <span class="s2">&quot;bounds&quot;</span><span class="p">:</span> <span class="n">bfgs_bounds</span><span class="p">}</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Initial FOM is </span><span class="si">{</span><span class="n">fom_start</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Initial Gradient is </span><span class="si">{</span><span class="n">grad_start</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="n">basinhopping</span><span class="p">(</span>
+            <span class="n">func</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_fom_and_gradient_from_thickness_array</span><span class="p">,</span>
+            <span class="n">x0</span> <span class="o">=</span> <span class="n">x_start</span><span class="p">,</span>
+            <span class="n">minimizer_kwargs</span><span class="o">=</span><span class="n">minimizer_kwargs</span><span class="p">,</span>
+            <span class="n">niter</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span>
+            <span class="n">take_step</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_take_step</span><span class="p">,</span>
+            <span class="n">callback</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_print_callback</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="k">return</span> <span class="n">ret</span>
+
+    <span class="k">def</span> <span class="nf">_take_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">x</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; method to apply random perturbations to </span>
+<span class="sd">            the current structure x in the basin hopping routine</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">_x_perturbed</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+        <span class="n">dim</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">_x_perturbed</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span><span class="n">dim</span><span class="p">):</span>
+            <span class="n">_x_curr</span> <span class="o">=</span> <span class="n">_x_perturbed</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">_x_curr</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_perturbation_scale</span> <span class="o">&gt;</span> <span class="mf">1.0</span><span class="p">:</span>
+                <span class="n">_x_range</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">_x_curr</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">random_perturbation_scale</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_x_range</span> <span class="o">=</span> <span class="mi">1</span>
+            <span class="n">_pert</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randint</span><span class="p">(</span><span class="o">-</span><span class="n">_x_range</span><span class="p">,</span> <span class="n">_x_range</span><span class="p">)</span>
+            <span class="c1"># we don&#39;t want to perturb to less than the lower bound or greater than the upper bound</span>
+            <span class="n">_x_try</span> <span class="o">=</span> <span class="n">_x_curr</span> <span class="o">+</span> <span class="n">_pert</span> 
+            <span class="k">if</span> <span class="n">_x_try</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span> <span class="ow">and</span> <span class="n">_x_try</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">:</span>
+                <span class="n">_x_perturbed</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_x_try</span>
+            <span class="k">elif</span> <span class="n">_x_try</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">lower_bound</span><span class="p">:</span> 
+                <span class="n">_x_perturbed</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_x_curr</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">_pert</span><span class="p">)</span> <span class="c1">#&lt;== increase in thickness</span>
+            <span class="k">elif</span> <span class="n">_x_try</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">upper_bound</span><span class="p">:</span>
+                <span class="n">_x_perturbed</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_x_curr</span> <span class="o">-</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">_pert</span><span class="p">)</span> <span class="c1">#&lt;== decrease in thickness</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_x_perturbed</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_x_curr</span> <span class="c1">#&lt;== do not change</span>
+            
+        <span class="k">return</span> <span class="n">_x_perturbed</span>
+    
+    <span class="k">def</span> <span class="nf">_print_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">x</span><span class="p">,</span> <span class="n">f</span><span class="p">,</span> <span class="n">accepted</span><span class="p">):</span>
+        <span class="n">c_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2"> Time elapsed is </span><span class="si">{</span><span class="n">c_time</span><span class="o">-</span><span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Current structure is </span><span class="si">{</span><span class="n">x</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Current FOM is </span><span class="si">{</span><span class="n">f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">compute_fom_and_gradient_from_thickness_array</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x0</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; &quot;</span>
+<span class="sd">        Method to update the thickness array, the relevant spectra, objective function, and (if supported)</span>
+<span class="sd">        the gradient</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot; Computing figure of merit and graident from thickness array &quot;</span><span class="p">,</span> <span class="n">x0</span><span class="p">)</span>
+
+        <span class="c1"># need to add options to use other figures of merit</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thickness_array</span><span class="p">[</span><span class="mi">1</span> <span class="p">:</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_layers</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span> <span class="o">=</span> <span class="n">x0</span> <span class="o">*</span> <span class="mf">1e-9</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_spectrum</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_selective_mirror_fom</span><span class="p">()</span>
+        <span class="c1"># compute_selective_mirror_fom_gradient calls compute_spectrum_gradient()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_selective_mirror_fom_gradient</span><span class="p">()</span>
+
+        <span class="n">fom_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reflection_efficiency</span>
+        <span class="n">grad_1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reflection_efficiency_gradient</span>
+
+        <span class="n">fom_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reflection_selectivity</span>
+        <span class="n">grad_2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reflection_selectivity_gradient</span>
+
+        <span class="n">fom_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transmission_efficiency</span>
+        <span class="n">grad_3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transmission_efficiency_gradient</span>
+
+        <span class="n">_expected_fom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reflection_efficiency_weight</span> <span class="o">*</span> <span class="n">fom_1</span> 
+        <span class="n">_expected_fom</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">reflection_selectivity_weight</span> <span class="o">*</span> <span class="n">fom_2</span>
+        <span class="n">_expected_fom</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">transmission_efficiency_weight</span> <span class="o">*</span> <span class="n">fom_3</span> 
+
+        <span class="n">fom</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selective_mirror_fom</span>
+        <span class="n">grad</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selective_mirror_fom_gradient</span>
+
+        <span class="k">assert</span> <span class="n">np</span><span class="o">.</span><span class="n">isclose</span><span class="p">(</span><span class="n">_expected_fom</span><span class="p">,</span> <span class="n">fom</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">minimization</span><span class="p">:</span>
+            <span class="n">fom</span> <span class="o">*=</span> <span class="mi">1</span>
+            <span class="n">grad</span> <span class="o">*=</span> <span class="mf">1e-9</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">fom</span> <span class="o">*=</span> <span class="o">-</span><span class="mi">1</span>
+            <span class="n">grad</span> <span class="o">*=</span> <span class="o">-</span><span class="mf">1e-9</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Current FOM is </span><span class="si">{</span><span class="n">fom</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot; Current Gradient is </span><span class="si">{</span><span class="n">grad</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">fom</span><span class="p">,</span> <span class="n">grad</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Foley Lab. Project structure based on the Computational Molecular Science Python Cookiecutter version 1.5.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

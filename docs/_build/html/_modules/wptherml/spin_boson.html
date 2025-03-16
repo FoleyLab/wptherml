@@ -1,0 +1,1433 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wptherml.spin_boson &mdash; wptherml  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            wptherml
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wptherml</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">wptherml.spin_boson</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for wptherml.spin_boson</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy</span> <span class="kn">import</span> <span class="n">linalg</span> <span class="k">as</span> <span class="n">la</span> 
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">from</span> <span class="nn">.spectrum_driver</span> <span class="kn">import</span> <span class="n">SpectrumDriver</span>
+
+
+<div class="viewcode-block" id="SpinBosonDriver">
+<a class="viewcode-back" href="../../autosummary/wptherml.SpinBosonDriver.html#wptherml.SpinBosonDriver">[docs]</a>
+<span class="k">class</span> <span class="nc">SpinBosonDriver</span><span class="p">(</span><span class="n">SpectrumDriver</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;A class for computing the dynamics and spectra of coupled exciton-boson (e.g. QD - plasmon, exciton-polariton, etc) systems using</span>
+<span class="sd">       the spin boson for N 2-level systems coupled to an N&#39;-level Harmonic oscillator.  For conventions of exciton states and their</span>
+<span class="sd">       ladder operators, see here: https://www.phys.hawaii.edu/~yepez/Spring2013/lectures/Lecture2_Quantum_Gates_Notes.pdf</span>
+
+<span class="sd">       Important: We order the basis as |s&gt; \otimes |q1&gt; \otimes |q2&gt; ... \otimes |qn&gt;</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    number_of_excitons : int</span>
+<span class="sd">        number of excitonic subsystems</span>
+
+<span class="sd">    number_of_boson_levels : int</span>
+<span class="sd">        number of boson levels</span>
+
+<span class="sd">    exciton_energy_ev : float</span>
+<span class="sd">        energy of each exciton subsystem in eV</span>
+
+<span class="sd">    boson_energy_ev : float</span>
+<span class="sd">        fundamental energy of the boson subsystem in eV</span>
+
+<span class="sd">    exciton_energy_au : float</span>
+<span class="sd">        energy of each exciton subsystem in atomic units</span>
+
+<span class="sd">    boson_energy_au : float</span>
+<span class="sd">        fundamental energy of the boson subsystem in atomic units</span>
+
+<span class="sd">    exciton_boson_coupling_ev : float</span>
+<span class="sd">        coupling between each exciton subsystem and the boson subsystem in eV</span>
+
+<span class="sd">    exciton_boson_coupling_au : float</span>
+<span class="sd">        coupling between each exciton subsystem and the boson subsystem in atomic units</span>
+
+<span class="sd">    boson_dipole_magnitude_au : float</span>
+<span class="sd">        transition dipole moment of the bosonic subsystem</span>
+
+<span class="sd">    exciton_transition_dipole_magnitude_au : float</span>
+<span class="sd">        transition dipole moment of the excitonic subsystems</span>
+
+<span class="sd">    exciton_spontaneous_emission_rate_mev : float</span>
+<span class="sd">        the spontaneous emission rate for the exciton subsystem(s) in milli eV (i.e. hbar gamma -&gt; meV)</span>
+
+<span class="sd">    exciton_spontaneous_emission_rate_au : float</span>
+<span class="sd">        the spontaneous emission rate for the exciton subsystem(s) in atomic units</span>
+
+<span class="sd">    exciton_dephasing_rate_mev : float</span>
+<span class="sd">        the dephasing rate for the exciton subsystem(s) in milli eV (i.e. hbar gamma -&gt; meV)</span>
+
+<span class="sd">    exciton_dephasing_rate_au : float</span>
+<span class="sd">        the dephasing rate for the exciton subsystem(s) in atomic units</span>
+
+<span class="sd">    boson_spontaneous_emission_rate_mev : float</span>
+<span class="sd">        the spontaneous emission rate for the boson subsystem in milli eV (i.e. hbar gamma -&gt; meV)</span>
+
+<span class="sd">    boson_spontaneous_emission_rate_au : float</span>
+<span class="sd">        the spontaneous emission rate for the boson subsystem in atomic units</span>
+<span class="sd">    </span>
+<span class="sd">    boson_dephasing_rate_mev : float</span>
+<span class="sd">        the dephasing rate for the boson subsystem in milli eV (i.e. hbar gamma -&gt; meV)</span>
+
+<span class="sd">    boson_dephasing_rate_au : float</span>
+<span class="sd">        the dephasing rate for the boson subsystem in atomic units</span>
+
+<span class="sd">    exciton_ground_state_dipole_magnitude_au : float</span>
+<span class="sd">        permanent dipole moment of the excitonic ground state</span>
+
+<span class="sd">    exciton_excited_state_dipole_magnitude_au : float</span>
+<span class="sd">        permanent dipole moment of the excitonic excited state</span>
+
+<span class="sd">    single_exciton_basis : numpy matrix</span>
+<span class="sd">        basis states for a single excition</span>
+
+<span class="sd">    n_exciton_basis : numpy matrix</span>
+<span class="sd">        basis states for the collection of N excitons</span>
+
+<span class="sd">    boson_basis : numpy matrix</span>
+<span class="sd">        basis states for the N-level Harmonic oscillator</span>
+
+<span class="sd">    exciton_boson_basis : numpy matrix</span>
+<span class="sd">        basis states for the collection of N excitons and the N&#39;-level Harmonic oscillator</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    None</span>
+
+<span class="sd">    Examples</span>
+<span class="sd">    --------</span>
+<span class="sd">    &gt;&gt;&gt; fill_in_with_actual_example!</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="SpinBosonDriver.__init__">
+<a class="viewcode-back" href="../../autosummary/wptherml.SpinBosonDriver.html#wptherml.SpinBosonDriver.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;constructor for the SpinBosonDriver class&quot;&quot;&quot;</span>
+        <span class="c1"># make sure all keys are lowercase only</span>
+        <span class="n">args</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="o">.</span><span class="n">lower</span><span class="p">():</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">args</span><span class="o">.</span><span class="n">items</span><span class="p">()}</span>
+
+        <span class="c1"># conversion from eV to atomic units</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span> <span class="o">=</span> <span class="mf">3.6749322175665e-2</span>
+
+        <span class="c1"># parse user inputs</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">parse_input</span><span class="p">(</span><span class="n">args</span><span class="p">)</span>
+
+        <span class="c1"># compute spectrum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">compute_spectrum</span><span class="p">()</span></div>
+
+
+    <span class="k">def</span> <span class="nf">parse_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;number_of_excitons&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;number_of_excitons&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">=</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="s2">&quot;number_of_boson_levels&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;number_of_boson_levels&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># includes |0&gt; and |1&gt;</span>
+
+        <span class="k">if</span> <span class="s2">&quot;exciton_energy_ev&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_ev</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;exciton_energy_ev&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_ev</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="k">if</span> <span class="s2">&quot;boson_energy_ev&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_ev</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;boson_energy_ev&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_ev</span> <span class="o">=</span> <span class="mf">1.0</span>
+
+        <span class="k">if</span> <span class="s2">&quot;exciton_boson_coupling_ev&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_ev</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;exciton_boson_coupling_ev&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_ev</span> <span class="o">=</span> <span class="mf">0.01</span>
+
+        <span class="k">if</span> <span class="s2">&quot;boson_dipole_magnitude_au&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_dipole_magnitude_au</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;boson_dipole_magnitude_au&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_dipole_magnitude_au</span> <span class="o">=</span> <span class="mf">1000.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;exciton_transition_dipole_magnitude_au&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_transition_dipole_magnitude_au</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;exciton_transition_dipole_magnitude_au&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_transition_dipole_magnitude_au</span> <span class="o">=</span> <span class="mf">10.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;exciton_ground_state_dipole_magnitude_au&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_ground_state_dipole_magnitude_au</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;exciton_ground_state_dipole_magnitude_au&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_ground_state_dipole_magnitude_au</span> <span class="o">=</span> <span class="mf">10.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;exciton_excited_state_dipole_magnitude_au&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_excited_state_dipole_magnitude_au</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;exciton_excited_state_dipole_magnitude_au&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_excited_state_dipole_magnitude_au</span> <span class="o">=</span> <span class="mf">10.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;exciton_spontaneous_emission_rate_mev&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_spontaneous_emission_rate_mev</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;exciton_spontaneous_emission_rate_mev&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_spontaneous_emission_rate_mev</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;exciton_dephasing_rate_mev&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_dephasing_rate_mev</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;exciton_dephasing_rate_mev&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_dephasing_rate_mev</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;boson_spontaneous_emission_rate_mev&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_spontaneous_emission_rate_mev</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;boson_spontaneous_emission_rate_mev&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span> 
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_spontaneous_emission_rate_mev</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;boson_dephasing_rate_mev&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_dephasing_rate_mev</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;boson_dephasing_rate_mev&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_dephasing_rate_mev</span> <span class="o">=</span> <span class="mf">0.</span>
+
+        <span class="k">if</span> <span class="s2">&quot;time_step_au&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_step_au</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;time_step_au&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">time_step_au</span> <span class="o">=</span> <span class="mf">0.01</span>
+        
+        <span class="c1"># convert energies from eV to au</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_ev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_ev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_ev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span>
+
+        <span class="c1"># convert dissipation rates from meV to au</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_spontaneous_emission_rate_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_spontaneous_emission_rate_mev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span> <span class="o">*</span> <span class="mf">1e-3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_dephasing_rate_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_dephasing_rate_mev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span> <span class="o">*</span> <span class="mf">1e-3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boson_spontaneous_emission_rate_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_spontaneous_emission_rate_mev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span> <span class="o">*</span> <span class="mf">1e-3</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boson_dephasing_rate_au</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_dephasing_rate_mev</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span> <span class="o">*</span> <span class="mf">1e-3</span>
+
+    <span class="k">def</span> <span class="nf">build_boson_basis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;build the basis for the N-level Harmonic oscillator</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        ------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        number_of_boson_levels : int</span>
+<span class="sd">            number of boson levels</span>
+
+<span class="sd">        boson_basis : numpy matrix</span>
+<span class="sd">            basis states for the N-level Harmonic oscillator</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boson_basis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_exciton_basis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;build the basis for the N excitonic subsystems</span>
+
+<span class="sd">        Args</span>
+<span class="sd">        ------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        number_of_excitons : int</span>
+<span class="sd">            number of excitonic subsystems</span>
+
+<span class="sd">        single_exciton_basis : numpy matrix</span>
+<span class="sd">            basis states for a single excition</span>
+
+<span class="sd">        exciton_basis_dimension : int</span>
+<span class="sd">            dimension of the N-exciton hilbert space</span>
+
+<span class="sd">        n_exciton_basis : numpy matrix</span>
+<span class="sd">            basis states for the collection of N excitons</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_basis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span>  <span class="c1">#np.matrix(&quot;1 0 ; 0 1&quot;)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_basis_dimension</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">n_exciton_basis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_basis_dimension</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_exciton_boson_basis</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;build the basis for the N excitonic subsystems and the N&#39;-level Harmonic oscillator in order</span>
+<span class="sd">            |s&gt; \otimes |q_1&gt; \otimes |q_2&gt; \otimes ... \otimes |q_N&gt;</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n_exciton_basis : numpy matrix</span>
+<span class="sd">            basis states for the collection of N excitons</span>
+
+<span class="sd">        boson_basis : numpy matrix</span>
+<span class="sd">            basis states for the N&#39;-level Harmonic oscillator</span>
+
+<span class="sd">        exciton_boson_basis : numpy matrix</span>
+<span class="sd">            basis states for the collection of N excitons and the N&#39;-level Harmonic oscillator in order</span>
+<span class="sd">            |s&gt; \otimes |q_1&gt; \otimes |q_2&gt; \otimes ... \otimes |q_N&gt;</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boson_basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_exciton_basis</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_bosonic_ladder_operators</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;build the bosonic raising and lowering operators</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        number_of_boson_levels : int</span>
+<span class="sd">            number of boson levels</span>
+
+<span class="sd">        b_matrix : numpy matrix</span>
+<span class="sd">            matrix representation of the lowering operator</span>
+
+<span class="sd">        b_dagger_matrix : numpy matrix</span>
+<span class="sd">            matrix representation of the raising operator</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_matrix</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span>
+            <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">b_matrix</span><span class="p">[</span><span class="n">i</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">b_dagger_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_matrix</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span><span class="o">.</span><span class="n">conjugate</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">build_boson_energy_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;build the boson energy operator in the N&#39;-level bosonic - N-qd coupled Hilbert space</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        boson_energy_au : float</span>
+<span class="sd">            fundamental energy of the boson subsystem in atomic units</span>
+
+<span class="sd">        b_matrix : numpy matrix</span>
+<span class="sd">            matrix representation of the lowering operator</span>
+
+<span class="sd">        b_dagger_matrix : numpy matrix</span>
+<span class="sd">            matrix representation of the raising operator</span>
+
+<span class="sd">        boson_number_operator : numpy matrix</span>
+<span class="sd">            matrix representation of the bosonic number operator in the N&#39;-level bosonic Hilbert space</span>
+
+<span class="sd">        boson_energy_operator : numpy matrix</span>
+<span class="sd">            matrix representation of the bosonic energy operator in the N-excitonic N&#39;-level bosonic Hilbert space</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># build number operator in the N&#39;-level bosonic Hilbert space</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boson_number_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b_dagger_matrix</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_matrix</span><span class="p">)</span>
+
+        <span class="c1"># create the energy operator on the boson Hilbert space: \hbar \omega (\hat{N} + 1/2 I_S)</span>
+        <span class="n">_energy_operator_on_boson_space</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_au</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_number_operator</span>
+            <span class="o">+</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_au</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1">#print(&quot;Printing energy operator on boson space&quot;)</span>
+        <span class="c1">#print(_energy_operator_on_boson_space)</span>
+
+        <span class="c1"># build the boson energy operator in the coupled Hilbert space</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span>
+            <span class="n">_energy_operator_on_boson_space</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_exciton_basis</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_boson_dipole_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;build the boson energy operator in the N-qd N&#39;-level coupled Hilbert space</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        boson_dipole_magnitude_au : float</span>
+<span class="sd">            fundamental energy of the boson subsystem in atomic units</span>
+
+<span class="sd">        b_matrix : numpy matrix</span>
+<span class="sd">            matrix representation of the lowering operator</span>
+
+<span class="sd">        b_dagger_matrix : numpy matrix</span>
+<span class="sd">            matrix representation of the raising operator</span>
+
+<span class="sd">        boson_dipole_operator : numpy matrix</span>
+<span class="sd">            matrix representation of the bosonic energy operator in the N-excitonic N&#39;-level bosonic Hilbert space</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># build number operator in the N&#39;-level bosonic Hilbert space</span>
+        <span class="n">_boson_dipole_operator_on_boson_space</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_dipole_magnitude_au</span> <span class="o">*</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b_dagger_matrix</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">b_matrix</span><span class="p">)</span>
+
+
+        <span class="c1"># build the boson energy operator in the coupled Hilbert space</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">boson_dipole_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span>
+            <span class="n">_boson_dipole_operator_on_boson_space</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">n_exciton_basis</span>
+        <span class="p">)</span>
+
+
+    <span class="k">def</span> <span class="nf">build_operator_for_exciton_j</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">operator</span><span class="o">=</span><span class="s2">&quot;sigma_z&quot;</span><span class="p">,</span> <span class="n">factor</span> <span class="o">=</span> <span class="mi">1</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;build operator for the j-th exciton in the coupled N-exciton hilbert space.</span>
+<span class="sd">           THIS MUST BE LIFTED INTO THE COUPLED BOSON-EXCITON HILBERT SPACE OUTSIDE OF THIS METHOD!</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        operator : string</span>
+<span class="sd">            operator to build</span>
+
+<span class="sd">        j : int</span>
+<span class="sd">            index of the exciton; start count from 0</span>
+
+<span class="sd">        factor : float</span>
+<span class="sd">            scaling factor for the operator, defaults to 1</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        exciton_operator_j</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># define the operator on the single exciton hilbert space that we</span>
+        <span class="c1"># wish to use in the composite hilbert space</span>
+        <span class="k">if</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;sigma_z&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span>  <span class="c1">#np.matrix(&quot;1 0 ; 0 -1&quot;)</span>
+
+        <span class="k">elif</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;sigma_x&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span> <span class="c1">#np.matrix(&quot;0 1 ; 1 0&quot;)</span>
+
+        <span class="k">elif</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;sigma_y&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="n">j</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="n">j</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span> <span class="c1">#np.matrix(&quot;0 -1j ; 1j 0&quot;)</span>
+
+        <span class="k">elif</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;sigma_p&quot;</span><span class="p">:</span>  <span class="c1"># sigma_p |0&gt; == sigma_p [1 0].T = |1&gt; == [0 1].T</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span> <span class="c1">#np.matrix(&quot;0 0 ; 1 0&quot;)</span>
+
+        <span class="k">elif</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;sigma_m&quot;</span><span class="p">:</span>  <span class="c1"># sigma_m |1&gt; == sigma_m [0 1].T = |0&gt; == [1 0].T</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span> <span class="c1">#np.matrix(&quot;0 1 ; 0 0&quot;)</span>
+
+        <span class="k">elif</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;transition_dipole_operator&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_transition_dipole_magnitude_au</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span> <span class="c1">#np.matrix(&quot;0 1 ; 1 0&quot;)</span>
+
+        <span class="k">elif</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;total_dipole_operator&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_ground_state_dipole_magnitude_au</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_transition_dipole_magnitude_au</span><span class="p">],</span>
+                                                     <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_transition_dipole_magnitude_au</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_excited_state_dipole_magnitude_au</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span>
+        <span class="k">elif</span> <span class="n">operator</span> <span class="o">==</span> <span class="s2">&quot;sigma_pm&quot;</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span> <span class="c1">#np.matrix(&quot;0 0 ; 0 1&quot;)</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># if no valid option given, use an identity</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">]])</span> <span class="o">*</span> <span class="n">factor</span> <span class="c1">#np.matrix(&quot;1 0 ; 0 1&quot;)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># exciton_operator_j is just a single exciton operator</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># exciton_operator_j is either op(1) x Iq(2) or Iq(1) x op(2)</span>
+            <span class="n">_ID_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span><span class="p">,</span> <span class="n">_ID_q</span><span class="p">)</span>
+            <span class="k">elif</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_ID_q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span><span class="p">)</span>
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">&gt;</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># need to first see what j is to determine structure of exciton_operator_j</span>
+            <span class="k">if</span> <span class="n">j</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="c1"># exciton_operator_j is op(1) x Iq(2,..,N)</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">_ID_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span><span class="p">,</span> <span class="n">_ID_q</span><span class="p">)</span>
+
+            <span class="k">elif</span> <span class="n">j</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">-</span> <span class="mi">1</span><span class="p">:</span>
+                <span class="c1"># exciton_operator_j is Iq(1,...,N-1) x op(N)</span>
+                <span class="n">dim</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">_ID_q</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_ID_q</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span><span class="p">)</span>
+
+            <span class="k">else</span><span class="p">:</span>  <span class="c1"># exciton_operator_j is Iq(1,...,j-1) x op(j) x Iq(j+1,...,N)</span>
+                <span class="n">dim_L</span> <span class="o">=</span> <span class="mi">2</span><span class="o">**</span><span class="n">j</span>
+                <span class="n">dim_R</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">-</span> <span class="n">j</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+                <span class="n">_ID_q_L</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim_L</span><span class="p">)</span>
+                <span class="n">_ID_q_R</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="n">dim_R</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span>
+                    <span class="n">_ID_q_L</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_operator</span><span class="p">,</span> <span class="n">_ID_q_R</span><span class="p">)</span>
+                <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_exciton_energy_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute the exciton energy operator in the N-exciton N&#39;-level bosonic Hilbert space</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        exciton_energy_au : float</span>
+<span class="sd">            energy of each exciton subsystem in atomic units</span>
+
+<span class="sd">        exciton_energy_operator : numpy matrix</span>
+<span class="sd">            dim x dim x N tensor representation of the exciton energy operator in the N-exciton hilbert space</span>
+<span class="sd">            where dim is the size of the N-exciton N&#39;-level bosonic hilbert space</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># dimension of the coupled Hilbert space</span>
+        <span class="n">_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># identity on the boson Hilbert space</span>
+        <span class="n">_Is</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">)</span>
+
+        <span class="c1"># create tensor for exciton operators</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dim</span><span class="p">,</span> <span class="n">_dim</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span><span class="p">):</span>
+            <span class="c1"># get the sigma_+ \sigma_- operator for the ith exciton in the N-exciton Hilbert space</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_operator_for_exciton_j</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;sigma_pm&quot;</span><span class="p">,</span> <span class="n">factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_au</span><span class="p">)</span>
+
+            <span class="c1"># take tensor product of the identity on the boson Hilbert space with this exciton operator</span>
+            <span class="n">_Op</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_Is</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span><span class="p">)</span>
+
+            <span class="c1"># add this operator to exciton_energy_operator</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_operator</span>  <span class="o">+=</span> <span class="n">_Op</span>
+
+    <span class="k">def</span> <span class="nf">build_exciton_dipole_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute the exciton dipole operator in the N-exciton N&#39;-level bosonic Hilbert space</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        exciton_dipole_operator : numpy matrix</span>
+<span class="sd">            dim x dim x N tensor representation of the exciton energy operator in the N-exciton hilbert space</span>
+<span class="sd">            where dim is the size of the N-exciton N&#39;-level bosonic hilbert space</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># dimension of the coupled Hilbert space</span>
+        <span class="n">_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="c1"># identity on the boson Hilbert space</span>
+        <span class="n">_Is</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">)</span>
+
+        <span class="c1"># create tensor for exciton operators</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_dipole_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dim</span><span class="p">,</span> <span class="n">_dim</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span><span class="p">):</span>
+            <span class="c1"># get the sigma_+ \sigma_- operator for the ith exciton in the N-exciton Hilbert space</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_operator_for_exciton_j</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;total_dipole_operator&quot;</span><span class="p">)</span>
+
+            <span class="c1"># take tensor product of the identity on the boson Hilbert space with this exciton operator</span>
+            <span class="n">_Op</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_Is</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span><span class="p">)</span>
+
+            <span class="c1"># assign this operator to the ith position in the exciton_energy_operator</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_dipole_operator</span> <span class="o">+=</span> <span class="n">_Op</span>
+
+
+    <span class="k">def</span> <span class="nf">build_exciton_boson_coupling_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute the exciton-boson coupling operator in the N-exciton N&#39;-level bosonic Hilbert space</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        exciton_boson_coupling_au : float</span>
+<span class="sd">            interaction energy between the excitonic subsystems and the bosonic subsystem</span>
+
+<span class="sd">        exciton_boson_coupling_operator_sp_b : numpy matrix</span>
+<span class="sd">            dim x dim representation of the coupling operator proportional to b sigma^+  in the N-exciton N&#39;-level hilbert space</span>
+<span class="sd">            where dim is the size of the N-exciton N&#39;-level bosonic hilbert space</span>
+
+<span class="sd">        exciton_boson_coupling_operator_sm_bd : numpy matrix</span>
+<span class="sd">            dim x dim matrix representation of the coupling operator proportional to b^+ sigma^-  in the N-exciton N&#39;-level hilbert space</span>
+<span class="sd">            where dim is the size of the N-exciton N&#39;-level bosonic hilbert space</span>
+
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># dimension of the coupled Hilbert space</span>
+        <span class="n">_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+
+        <span class="c1"># create tensor for coupling operators</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_b_sp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dim</span><span class="p">,</span> <span class="n">_dim</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_bd_sm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dim</span><span class="p">,</span> <span class="n">_dim</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dim</span><span class="p">,</span> <span class="n">_dim</span><span class="p">))</span>
+
+        <span class="c1"># build bosonic ladder operator</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_bosonic_ladder_operators</span><span class="p">()</span>
+
+        <span class="c1"># loop through excitons</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span><span class="p">):</span>
+
+            <span class="c1"># get the sigma_+ for the ith exciton in the N-exciton Hilbert space</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_operator_for_exciton_j</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;sigma_p&quot;</span><span class="p">,</span> <span class="n">factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_au</span><span class="p">)</span>
+
+            <span class="c1"># take tensor product of the bosonic lowering operator and the sigma^+ operator times the coupling constant</span>
+            <span class="n">_Op</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b_matrix</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span><span class="p">)</span>
+
+            <span class="c1"># assign this operator to the ith position in the exciton_boson_coupling_operator_b_sp</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_b_sp</span> <span class="o">+=</span> <span class="n">_Op</span>
+
+            <span class="c1"># get the sigma_- operator for the ith exciton in the N-exciton Hilbert space</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">build_operator_for_exciton_j</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;sigma_m&quot;</span><span class="p">,</span> <span class="n">factor</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_au</span><span class="p">)</span>
+
+            <span class="c1"># take tensor product of the bosonic raising operator and the sigma^- operator times the coupling constant</span>
+            <span class="n">_Op</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b_dagger_matrix</span><span class="p">,</span>  <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span><span class="p">)</span>
+
+            <span class="c1"># assign this operator to the ith position in the exciton_boson_coupling_operator_b_sp</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_bd_sm</span> <span class="o">+=</span> <span class="n">_Op</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_b_sp</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_bd_sm</span>
+
+
+    <span class="k">def</span> <span class="nf">compute_boson_energy_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bra</span><span class="p">,</span> <span class="n">ket</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute the energy elements of the bosonic basis states</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bra : numpy matrix</span>
+<span class="sd">            bra state in the coupled Hilbert space</span>
+
+<span class="sd">        ket : numpy matrix</span>
+<span class="sd">            ket state in the coupled Hilbert space</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        boson_energy_operator : numpy matrix</span>
+<span class="sd">            matrix representation of the bosonic energy operator in the N-exciton N&#39;-level boson hilbert space</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># This dot product will still be an array type</span>
+        <span class="n">E_boson_element</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">bra</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_operator</span><span class="p">,</span> <span class="n">ket</span><span class="p">))</span>
+
+        <span class="k">return</span> <span class="n">E_boson_element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">compute_exciton_energy_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bra</span><span class="p">,</span> <span class="n">ket</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute matrix element &lt;bra|H_QD|ket&gt;</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bra : numpy matrix</span>
+<span class="sd">            bra state in the coupled Hilbert space</span>
+
+<span class="sd">        ket : numpy matrix</span>
+<span class="sd">            ket state in the coupled Hilbert space</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        
+        <span class="n">E_exciton_element</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">bra</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_operator</span><span class="p">,</span> <span class="n">ket</span><span class="p">))</span>
+        <span class="k">return</span> <span class="n">E_exciton_element</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+    
+    <span class="k">def</span> <span class="nf">compute_dipole_matrix_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bra_coeffs</span><span class="p">,</span> <span class="n">ket_coeffs</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; compute the matrix element &lt;bra | mu | ket&gt;</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        bra_coeffs : numpy array</span>
+<span class="sd">            coefficients of the bra state </span>
+
+<span class="sd">        ket_coeffs : numpy array</span>
+<span class="sd">            coefficients of the ket state</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">dipole_element</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="n">_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_dim</span><span class="p">):</span>
+            <span class="n">_bra</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+            <span class="c1">#print(&quot;Printing Bra Basis Vector&quot;)</span>
+            <span class="c1">#print(_bra)</span>
+            <span class="c1">#print(&quot;Printing bra coeff&quot;)</span>
+            <span class="c1">#print(bra_coeffs[i])</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">_dim</span><span class="p">):</span>
+                <span class="n">_ket</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span><span class="p">[:,</span> <span class="n">i</span><span class="p">])</span><span class="o">.</span><span class="n">T</span> <span class="c1">#double check that this works!</span>
+                <span class="n">_boson_term</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">_bra</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boson_dipole_operator</span><span class="p">,</span> <span class="n">_ket</span><span class="p">))</span>
+                <span class="n">_exciton_term</span> <span class="o">=</span> <span class="mf">0.</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span><span class="p">):</span>
+                    <span class="n">_exciton_term</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">_bra</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_dipole_operator</span><span class="p">[:,:,</span><span class="n">k</span><span class="p">],</span> <span class="n">_ket</span><span class="p">))</span>
+
+                <span class="n">dipole_element</span> <span class="o">+=</span> <span class="n">bra_coeffs</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">*</span> <span class="n">ket_coeffs</span><span class="p">[</span><span class="n">j</span><span class="p">]</span> <span class="o">*</span> <span class="p">(</span><span class="n">_boson_term</span> <span class="o">+</span> <span class="n">_exciton_term</span><span class="p">)</span>
+
+        <span class="k">pass</span> 
+
+    <span class="k">def</span> <span class="nf">compute_exciton_boson_coupling_element</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">bra</span><span class="p">,</span> <span class="n">ket</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;compute matrix element &lt;bra|H_c|ket&gt;</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        bra : numpy matrix</span>
+<span class="sd">            bra state in the coupled Hilbert space</span>
+
+<span class="sd">        ket : numpy matrix</span>
+<span class="sd">            ket state in the coupled Hilbert space</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">E_coupling_element</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span><span class="p">):</span>
+            <span class="c1"># this dot product will still be an array type</span>
+            <span class="n">_term</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span>
+                <span class="n">bra</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_b_sp</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ket</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">E_coupling_element</span> <span class="o">+=</span> <span class="n">_term</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_term</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span>
+                <span class="n">bra</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator_bd_sm</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">ket</span><span class="p">)</span>
+            <span class="p">)</span>
+            <span class="n">E_coupling_element</span> <span class="o">+=</span> <span class="n">_term</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="n">E_coupling_element</span>
+    
+    <span class="k">def</span> <span class="nf">build_dipole_squared_operator</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; method to build the dipole squared operator on the coupled boson-N-excition space</span>
+<span class="sd">            currently just works for 2-spin boson system</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># build mu matrix for a single exciton</span>
+        <span class="n">mu_matrix</span> <span class="o">=</span>  <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_ground_state_dipole_magnitude_au</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_transition_dipole_magnitude_au</span><span class="p">],</span>
+                               <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_transition_dipole_magnitude_au</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_excited_state_dipole_magnitude_au</span><span class="p">]])</span>
+        
+        <span class="c1"># build identities for spin and boson system</span>
+        <span class="n">_Is</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+
+        <span class="n">_Ib</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_boson_levels</span><span class="p">)</span>
+        
+        <span class="n">mu_squared</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span> <span class="n">mu_matrix</span> <span class="o">@</span> <span class="n">mu_matrix</span><span class="p">,</span> <span class="n">_Is</span><span class="p">)</span> <span class="o">+</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">mu_matrix</span><span class="p">,</span> <span class="n">mu_matrix</span><span class="p">)</span> <span class="o">+</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_Is</span><span class="p">,</span> <span class="n">mu_matrix</span> <span class="o">@</span> <span class="n">mu_matrix</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">mu_squared_operator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">mu_squared</span><span class="p">)</span> <span class="c1"># np.kron(_Ib, mu_squared)</span>
+    
+    
+    <span class="k">def</span> <span class="nf">compute_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method that will build spin-boson Hamiltonian, diagonalize it, and return eigenvalues&quot;&quot;&quot;</span>
+
+        <span class="c1"># build bases</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_boson_basis</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_exciton_basis</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_exciton_boson_basis</span><span class="p">()</span>
+
+        <span class="c1"># build operators (really matrix representations of operators)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_exciton_boson_coupling_operator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_exciton_energy_operator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_boson_energy_operator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_boson_dipole_operator</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_exciton_dipole_operator</span><span class="p">()</span>
+
+
+
+        <span class="c1"># define total Hamiltonian as the sum of these matrices</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">hamiltonian_matrix</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_energy_operator</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_energy_operator</span><span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_coupling_operator</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">energy_eigenvalues</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_eigenvectors</span> <span class="o">=</span> <span class="n">la</span><span class="o">.</span><span class="n">eigh</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hamiltonian_matrix</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Energy Eigenvalues in atomic units are&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_eigenvalues</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Energy eigenvalues in eV are&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">energy_eigenvalues</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">ev_to_au</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">build_rho_from_eigenstate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">state_index</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Method to build the density matrix from a particular energy eigenstate</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        state_index : int</span>
+<span class="sd">            the index for the energy eigenstate</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        energy_eigenvectors : numpy arrays</span>
+<span class="sd">            the energy eigenvectors</span>
+
+<span class="sd">        psi : numpy array</span>
+<span class="sd">            ket representation of the state</span>
+
+<span class="sd">        rho : numpy array</span>
+<span class="sd">            density matrix representation of the state </span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># get the size of the ket vector</span>
+        <span class="n">_dim</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_boson_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># store ket as a column vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ket</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">energy_eigenvectors</span><span class="p">[:,</span><span class="n">state_index</span><span class="p">]</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">_dim</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+        
+        <span class="c1"># store bra as a row vector</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">bra</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ket</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
+
+        <span class="c1"># compute density matrix as |state&gt;&lt;state|</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ket</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">bra</span> 
+
+
+    <span class="k">def</span> <span class="nf">build_rho_from_ket</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ket</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Method to build the density matrix from a particular ket state</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        ket : numpy array</span>
+<span class="sd">            the ket state</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        psi : numpy array</span>
+<span class="sd">            ket representation of the state</span>
+
+<span class="sd">        psi_star : numpy array</span>
+<span class="sd">            bra representation of the state</span>
+
+<span class="sd">        rho : numpy array</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># store ket as a column vector to self.psi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psi</span> <span class="o">=</span> <span class="n">ket</span>
+
+        <span class="c1"># store bra as a row vector to self.psi_star</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">psi_star</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psi</span><span class="o">.</span><span class="n">T</span><span class="o">.</span><span class="n">conj</span><span class="p">()</span>
+
+        <span class="c1"># compute density matrix as |state&gt;&lt;state|</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">psi</span> <span class="o">@</span> <span class="bp">self</span><span class="o">.</span><span class="n">psi_star</span>
+
+    <span class="k">def</span> <span class="nf">kron_index_map_AB</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span><span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Creates a map between the row and column of the Kronecker product of two arrays</span>
+<span class="sd">            and the composite indices corresponding to the original arrays.</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        A : numpy array</span>
+<span class="sd">            first array</span>
+
+<span class="sd">        B : numpy array</span>
+<span class="sd">            second array</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        index_map : dictionary</span>
+<span class="sd">            dictionary with keys as the row and column indices and values as the composite indices </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rowsA</span><span class="p">,</span> <span class="n">colsA</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">rowsB</span><span class="p">,</span> <span class="n">colsB</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="n">index_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">rowAB</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rowsA</span> <span class="o">*</span> <span class="n">rowsB</span><span class="p">):</span>
+            <span class="n">rowA</span> <span class="o">=</span> <span class="n">rowAB</span> <span class="o">//</span> <span class="n">rowsB</span>
+            <span class="n">rowB</span> <span class="o">=</span> <span class="n">rowAB</span> <span class="o">%</span> <span class="n">rowsB</span>
+            <span class="k">for</span> <span class="n">colAB</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">colsA</span> <span class="o">*</span> <span class="n">colsB</span><span class="p">):</span>
+                <span class="n">colA</span> <span class="o">=</span> <span class="n">colAB</span> <span class="o">//</span> <span class="n">colsB</span>
+                <span class="n">colB</span> <span class="o">=</span> <span class="n">colAB</span> <span class="o">%</span> <span class="n">colsB</span>
+                <span class="n">index_map</span><span class="p">[(</span><span class="n">rowAB</span><span class="p">,</span> <span class="n">colAB</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">rowA</span><span class="p">,</span> <span class="n">colA</span><span class="p">,</span> <span class="n">rowB</span><span class="p">,</span> <span class="n">colB</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">index_map</span>
+    
+
+    <span class="k">def</span> <span class="nf">kron_index_map_ABC</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">A</span><span class="p">,</span> <span class="n">B</span><span class="p">,</span> <span class="n">C</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Creates a map between the row and column of the Kronecker product of three arrays</span>
+<span class="sd">            and the composite indices corresponding to the original arrays.</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ----------</span>
+<span class="sd">        A : numpy array</span>
+<span class="sd">            first array</span>
+<span class="sd">        B : numpy array</span>
+<span class="sd">            second array</span>
+<span class="sd">        C : numpy array</span>
+<span class="sd">            third array</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        index_map : dictionary</span>
+<span class="sd">            dictionary with keys as the row and column indices and values as the composite indices </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rowsA</span><span class="p">,</span> <span class="n">colsA</span> <span class="o">=</span> <span class="n">A</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">rowsB</span><span class="p">,</span> <span class="n">colsB</span> <span class="o">=</span> <span class="n">B</span><span class="o">.</span><span class="n">shape</span>
+        <span class="n">rowsC</span><span class="p">,</span> <span class="n">colsC</span> <span class="o">=</span> <span class="n">C</span><span class="o">.</span><span class="n">shape</span>
+
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Rows and Cols of A, B, C&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">rowsA</span><span class="p">,</span> <span class="n">colsA</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">rowsB</span><span class="p">,</span> <span class="n">colsB</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="n">rowsC</span><span class="p">,</span> <span class="n">colsC</span><span class="p">)</span>
+        <span class="n">index_map</span> <span class="o">=</span> <span class="p">{}</span>
+        <span class="k">for</span> <span class="n">rowABC</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">rowsA</span> <span class="o">*</span> <span class="n">rowsB</span> <span class="o">*</span> <span class="n">rowsC</span><span class="p">):</span>
+            <span class="k">for</span> <span class="n">colABC</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">colsA</span> <span class="o">*</span> <span class="n">colsB</span> <span class="o">*</span> <span class="n">colsC</span><span class="p">):</span>
+                <span class="n">i</span> <span class="o">=</span> <span class="n">rowABC</span> <span class="o">//</span> <span class="p">(</span><span class="n">rowsB</span> <span class="o">*</span> <span class="n">rowsC</span><span class="p">)</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="n">rowABC</span> <span class="o">%</span> <span class="p">(</span><span class="n">rowsB</span> <span class="o">*</span> <span class="n">rowsC</span><span class="p">)</span>
+                <span class="n">k</span> <span class="o">=</span> <span class="n">temp</span> <span class="o">//</span> <span class="n">rowsC</span>
+                <span class="n">m</span> <span class="o">=</span> <span class="n">temp</span> <span class="o">%</span> <span class="n">rowsC</span>
+
+                <span class="n">j</span> <span class="o">=</span> <span class="n">colABC</span> <span class="o">//</span> <span class="p">(</span><span class="n">colsB</span> <span class="o">*</span> <span class="n">colsC</span><span class="p">)</span>
+                <span class="n">temp</span> <span class="o">=</span> <span class="n">colABC</span> <span class="o">%</span> <span class="p">(</span><span class="n">colsB</span> <span class="o">*</span> <span class="n">colsC</span><span class="p">)</span>
+                <span class="n">l</span> <span class="o">=</span> <span class="n">temp</span> <span class="o">//</span> <span class="n">colsC</span>
+                <span class="n">n</span> <span class="o">=</span> <span class="n">temp</span> <span class="o">%</span> <span class="n">colsC</span>
+
+                <span class="n">index_map</span><span class="p">[(</span><span class="n">rowABC</span><span class="p">,</span> <span class="n">colABC</span><span class="p">)]</span> <span class="o">=</span> <span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span><span class="p">,</span> <span class="n">l</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">index_map</span>
+
+
+    <span class="k">def</span> <span class="nf">compute_partial_traces</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rho</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Method to compute all possible single partial traces of a composite density matrix; currently</span>
+<span class="sd">            supports a caivty x spin1 system or a cavity x spin 1 x spin 2 system  </span>
+<span class="sd">            The order of the subsystems is assumed to be |cavity&gt; x |spin1&gt; x |spin2&gt;</span>
+<span class="sd">        </span>
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        rho : numpy array</span>
+<span class="sd">            the density matrix</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        rdm_cavity : numpy array</span>
+<span class="sd">            reduced density matrix for the cavity</span>
+
+<span class="sd">        rdm_spin1 : numpy array </span>
+<span class="sd">            reduced density matrix for the first spin</span>
+
+<span class="sd">        rdm_spin2 : numpy array (if applicable)</span>
+<span class="sd">            reduced density matrix for the second spin</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># right now only support partial trace when we have 1 or 2 spin systems and 1 boson system</span>
+        <span class="c1"># we will consider the single spin system case first</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+            <span class="c1"># get the index map for the Kronecker product of the boson and single exciton basis</span>
+            <span class="n">_index_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kron_index_map_AB</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boson_basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_basis</span><span class="p">)</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">rdm_cavity</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boson_basis</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rdm_spin1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_basis</span><span class="p">)</span>
+
+            <span class="c1"># take both partial traces</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">_row</span><span class="p">,</span> <span class="n">_col</span><span class="p">),</span> <span class="p">(</span><span class="n">_i</span><span class="p">,</span> <span class="n">_j</span><span class="p">,</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_l</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_index_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+                <span class="k">if</span> <span class="n">_k</span><span class="o">==</span><span class="n">_l</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rdm_cavity</span><span class="p">[</span><span class="n">_i</span><span class="p">,</span> <span class="n">_j</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rho</span><span class="p">[</span><span class="n">_row</span><span class="p">,</span> <span class="n">_col</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">_i</span><span class="o">==</span><span class="n">_j</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rdm_spin1</span><span class="p">[</span><span class="n">_k</span><span class="p">,</span> <span class="n">_l</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rho</span><span class="p">[</span><span class="n">_row</span><span class="p">,</span> <span class="n">_col</span><span class="p">]</span>   
+
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span> <span class="o">==</span> <span class="mi">2</span><span class="p">:</span>
+            <span class="c1"># get the index map for the Kronecker product of the boson and two exciton basis</span>
+            <span class="n">_index_map</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">kron_index_map_ABC</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boson_basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_basis</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_basis</span><span class="p">)</span>
+
+            <span class="c1"># get dimensions of three individual sub-matrices</span>
+            <span class="n">_dimA</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_dimB</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">_dimC</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">single_exciton_basis</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+            <span class="c1"># initialize the three possible 2-rdms</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rdm_cavity_spin1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dimA</span> <span class="o">*</span> <span class="n">_dimB</span><span class="p">,</span> <span class="n">_dimA</span> <span class="o">*</span> <span class="n">_dimB</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rdm_cavity_spin2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dimA</span> <span class="o">*</span> <span class="n">_dimC</span><span class="p">,</span> <span class="n">_dimA</span> <span class="o">*</span> <span class="n">_dimC</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rdm_spin1_spin2</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_dimB</span> <span class="o">*</span> <span class="n">_dimC</span><span class="p">,</span> <span class="n">_dimB</span> <span class="o">*</span> <span class="n">_dimC</span><span class="p">))</span>
+
+            <span class="c1"># take all three partial traces</span>
+            <span class="k">for</span> <span class="p">(</span><span class="n">_row</span><span class="p">,</span> <span class="n">_col</span><span class="p">),</span> <span class="p">(</span><span class="n">_i</span><span class="p">,</span> <span class="n">_j</span><span class="p">,</span> <span class="n">_k</span><span class="p">,</span> <span class="n">_l</span><span class="p">,</span> <span class="n">_m</span><span class="p">,</span> <span class="n">_n</span><span class="p">)</span> <span class="ow">in</span> <span class="n">_index_map</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+
+                <span class="c1"># partial trace over spin 2</span>
+                <span class="k">if</span> <span class="n">_m</span> <span class="o">==</span> <span class="n">_n</span><span class="p">:</span>
+                    <span class="n">_trow</span> <span class="o">=</span> <span class="n">_i</span> <span class="o">*</span> <span class="n">_dimB</span> <span class="o">+</span> <span class="n">_k</span>
+                    <span class="n">_tcol</span> <span class="o">=</span> <span class="n">_j</span> <span class="o">*</span> <span class="n">_dimB</span> <span class="o">+</span> <span class="n">_l</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rdm_cavity_spin1</span><span class="p">[</span><span class="n">_trow</span><span class="p">,</span> <span class="n">_tcol</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rho</span><span class="p">[</span><span class="n">_row</span><span class="p">,</span> <span class="n">_col</span><span class="p">]</span>
+
+                <span class="c1"># partial trace over spin 1</span>
+                <span class="k">if</span> <span class="n">_k</span> <span class="o">==</span> <span class="n">_l</span><span class="p">:</span>
+                    <span class="n">_trow</span> <span class="o">=</span> <span class="n">_i</span> <span class="o">*</span> <span class="n">_dimC</span> <span class="o">+</span> <span class="n">_m</span>
+                    <span class="n">_tcol</span> <span class="o">=</span> <span class="n">_j</span> <span class="o">*</span> <span class="n">_dimC</span> <span class="o">+</span> <span class="n">_n</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rdm_cavity_spin2</span><span class="p">[</span><span class="n">_trow</span><span class="p">,</span> <span class="n">_tcol</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rho</span><span class="p">[</span><span class="n">_row</span><span class="p">,</span> <span class="n">_col</span><span class="p">]</span>
+
+                <span class="c1"># partial trace over cavity</span>
+                <span class="k">if</span> <span class="n">_i</span> <span class="o">==</span> <span class="n">_j</span><span class="p">:</span>
+                    <span class="n">_trow</span> <span class="o">=</span> <span class="n">_k</span> <span class="o">*</span> <span class="n">_dimC</span> <span class="o">+</span> <span class="n">_m</span>
+                    <span class="n">_tcol</span> <span class="o">=</span> <span class="n">_l</span> <span class="o">*</span> <span class="n">_dimC</span> <span class="o">+</span> <span class="n">_n</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">rdm_spin1_spin2</span><span class="p">[</span><span class="n">_trow</span><span class="p">,</span> <span class="n">_tcol</span><span class="p">]</span> <span class="o">+=</span> <span class="n">rho</span><span class="p">[</span><span class="n">_row</span><span class="p">,</span> <span class="n">_col</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">compute_entanglement_entropy</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">rdm</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot; Method to compute the entanglement entropy of a reduced density matrix</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        rdm : numpy array</span>
+<span class="sd">            the reduced density matrix</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        entropy : float</span>
+<span class="sd">            the entanglement entropy</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_eigenvalues</span> <span class="o">=</span> <span class="n">la</span><span class="o">.</span><span class="n">eigvalsh</span><span class="p">(</span><span class="n">rdm</span><span class="p">)</span>
+        <span class="n">_entropy</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">for</span> <span class="n">_eig</span> <span class="ow">in</span> <span class="n">_eigenvalues</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_eig</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">_entropy</span> <span class="o">-=</span> <span class="n">_eig</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="n">_eig</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_entropy</span>
+                
+
+    
+    <span class="k">def</span> <span class="nf">compute_lindblad_exciton_i_on_rho</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">i</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the Lindblad superoperator contribution for a specific spin on the density matrix.</span>
+
+<span class="sd">        This method calculates the contribution to the time derivative of the density matrix (`rho`) </span>
+<span class="sd">        due to the Lindblad superoperator associated with spin `i`. It includes terms for spontaneous </span>
+<span class="sd">        emission and dephasing processes in the exciton system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        i : int</span>
+<span class="sd">            Index of the spin (exciton) for which the Lindblad superoperator is computed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The time derivative of the density matrix (`rho`) contributed by the Lindblad superoperator </span>
+<span class="sd">            for spin `i`. The result is an array of the same shape as the density matrix.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The Lindblad terms are constructed as:</span>
+<span class="sd">        </span>
+<span class="sd">        - Spontaneous emission term:</span>
+<span class="sd">        \[</span>
+<span class="sd">        T_{se} = \sigma^+ \sigma^- \rho + \rho \sigma^+ \sigma^- - 2 \sigma^- \rho \sigma^+</span>
+<span class="sd">        \]</span>
+<span class="sd">        </span>
+<span class="sd">        - Dephasing term:</span>
+<span class="sd">        \[</span>
+<span class="sd">        T_d = \sigma^+ \sigma^- \rho + \rho \sigma^+ \sigma^- - 2 \sigma^+ \sigma^- \rho \sigma^+ \sigma^-</span>
+<span class="sd">        \]</span>
+<span class="sd">        </span>
+<span class="sd">        The final time derivative of the density matrix is given by:</span>
+<span class="sd">        \[</span>
+<span class="sd">        \dot{\rho} = -\frac{\gamma_p}{2} T_{se} - \gamma_d T_d</span>
+<span class="sd">        \]</span>
+<span class="sd">        where \(\gamma_p\) is the spontaneous emission rate and \(\gamma_d\) is the dephasing rate.</span>
+
+<span class="sd">        The operators \(\sigma^+ \sigma^-\), \(\sigma^+\), and \(\sigma^-\) are constructed for the specified </span>
+<span class="sd">        spin `i` and are extended to the full Hilbert space via a tensor product with the bosonic identity.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># get the gamma factors</span>
+        <span class="n">_gamma_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_spontaneous_emission_rate_au</span>
+        <span class="n">_gamma_d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_dephasing_rate_au</span>
+
+        <span class="c1"># copy current density matrix</span>
+        <span class="n">_rho_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        
+        <span class="c1"># build identity on the boson space</span>
+        <span class="n">_Is</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">boson_basis</span><span class="p">)</span>
+
+        <span class="c1"># get sigma^+ sigma^- operator for spin i</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_operator_for_exciton_j</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;sigma_pm&quot;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+
+        <span class="c1"># take tensor product of boson identity with this exciton operator</span>
+        <span class="n">_sigma_pm</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_Is</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span><span class="p">)</span>
+
+        <span class="c1"># get sigma^+ operator for spin i</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_operator_for_exciton_j</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;sigma_p&quot;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+
+        <span class="c1"># take tensor product of boson identity with this exciton operator</span>
+        <span class="n">_sigma_p</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_Is</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span><span class="p">)</span>
+
+        <span class="c1"># get sigma^- operator for spin i</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">build_operator_for_exciton_j</span><span class="p">(</span><span class="n">i</span><span class="p">,</span> <span class="s2">&quot;sigma_m&quot;</span><span class="p">,</span> <span class="mf">1.</span><span class="p">)</span>
+
+        <span class="c1"># take tensor product of boson identity with this exciton operator</span>
+        <span class="n">_sigma_m</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="n">_Is</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">exciton_operator_j</span><span class="p">)</span>
+
+        <span class="c1"># compute spontaneous emission term</span>
+        <span class="n">_T_se</span> <span class="o">=</span> <span class="n">_sigma_pm</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">+</span> <span class="n">_rho_t</span> <span class="o">@</span> <span class="n">_sigma_pm</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_sigma_m</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">@</span> <span class="n">_sigma_p</span> 
+
+        <span class="c1"># compute dephasing term</span>
+        <span class="n">_T_d</span> <span class="o">=</span> <span class="n">_sigma_pm</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">+</span> <span class="n">_rho_t</span> <span class="o">@</span>  <span class="n">_sigma_pm</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_sigma_pm</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">@</span> <span class="n">_sigma_pm</span> 
+
+        <span class="c1"># take total time derivative of rho coming from Lindblad term for exciton i</span>
+        <span class="n">_rho_dot</span> <span class="o">=</span> <span class="o">-</span><span class="n">_gamma_p</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_T_se</span> <span class="o">-</span> <span class="n">_gamma_d</span> <span class="o">*</span> <span class="n">_T_d</span>
+
+        <span class="k">return</span> <span class="n">_rho_dot</span>
+    
+    <span class="k">def</span> <span class="nf">compute_lindblad_boson_on_rho</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the Lindblad superoperator contribution for the boson on the density matrix.</span>
+
+<span class="sd">        This method calculates the contribution to the time derivative of the density matrix (`rho`) </span>
+<span class="sd">        due to the Lindblad superoperator associated with the bosonic subsystem. It includes terms for spontaneous </span>
+<span class="sd">        emission and dephasing processes in the exciton system.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        i : int</span>
+<span class="sd">            Index of the spin (exciton) for which the Lindblad superoperator is computed.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The time derivative of the density matrix (`rho`) contributed by the Lindblad superoperator </span>
+<span class="sd">            for spin `i`. The result is an array of the same shape as the density matrix.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        The Lindblad terms are constructed as:</span>
+<span class="sd">        </span>
+<span class="sd">        - Spontaneous emission term:</span>
+<span class="sd">        \[</span>
+<span class="sd">        T_{se} = b^+ b \rho + \rho b^+ b - 2 b \rho b^+</span>
+<span class="sd">        \]</span>
+<span class="sd">        </span>
+<span class="sd">        - Dephasing term:</span>
+<span class="sd">        \[</span>
+<span class="sd">        T_d = b^+ b \rho + \rho b^+ b - 2 b^+ b \rho b^+ b</span>
+<span class="sd">        \]</span>
+<span class="sd">        </span>
+<span class="sd">        The final time derivative of the density matrix is given by:</span>
+<span class="sd">        \[</span>
+<span class="sd">        \dot{\rho} = -\frac{\gamma_p}{2} T_{se} - \gamma_d T_d</span>
+<span class="sd">        \]</span>
+<span class="sd">        where \(\gamma_p\) is the spontaneous emission rate and \(\gamma_d\) is the dephasing rate.</span>
+
+<span class="sd">        The operators \(b^+ b \), \(b^+ \), and \(b \) are constructed for the boson system</span>
+<span class="sd">        and are extended to the full Hilbert space via a tensor product with the identity for N spins.</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># get the gamma factors</span>
+        <span class="n">_gamma_p</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_spontaneous_emission_rate_au</span>
+        <span class="n">_gamma_d</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">boson_dephasing_rate_au</span>
+
+        <span class="c1"># copy current density matrix</span>
+        <span class="n">_rho_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+        
+        <span class="c1"># build identity on the boson space</span>
+        <span class="n">_Is</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">eye</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exciton_basis_dimension</span><span class="p">)</span>
+
+        <span class="c1"># get b^+ and b operators tensor products with exciton identity</span>
+        <span class="n">_bd</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b_dagger_matrix</span><span class="p">,</span> <span class="n">_Is</span><span class="p">)</span>
+        <span class="n">_b</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">kron</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">b_matrix</span><span class="p">,</span> <span class="n">_Is</span><span class="p">)</span>
+
+        <span class="c1"># compute spontaneous emission term</span>
+        <span class="n">_T_se</span> <span class="o">=</span> <span class="n">_bd</span> <span class="o">@</span> <span class="n">_b</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">+</span> <span class="n">_rho_t</span> <span class="o">@</span> <span class="n">_bd</span> <span class="o">@</span> <span class="n">_b</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_b</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">@</span> <span class="n">_bd</span>
+
+        <span class="c1"># compute dephasing term</span>
+        <span class="n">_T_d</span> <span class="o">=</span> <span class="n">_bd</span> <span class="o">@</span> <span class="n">_b</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">+</span> <span class="n">_rho_t</span> <span class="o">@</span>  <span class="n">_bd</span> <span class="o">@</span> <span class="n">_b</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_bd</span> <span class="o">@</span> <span class="n">_b</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">@</span> <span class="n">_bd</span> <span class="o">@</span> <span class="n">_b</span>
+
+        <span class="c1"># take total time derivative of rho coming from Lindblad term for exciton i</span>
+        <span class="n">_rho_dot</span> <span class="o">=</span> <span class="o">-</span><span class="n">_gamma_p</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">_T_se</span> <span class="o">-</span> <span class="n">_gamma_d</span> <span class="o">*</span> <span class="n">_T_d</span>
+
+        <span class="k">return</span> <span class="n">_rho_dot</span>
+    
+    <span class="k">def</span> <span class="nf">compute_hamiltonian_on_rho</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the time derivative of the density matrix from the Hamiltonian commutator.</span>
+
+<span class="sd">        This method calculates the unitary contribution to the time evolution of the density </span>
+<span class="sd">        matrix (`rho`) based on the commutator with the system Hamiltonian.</span>
+
+<span class="sd">        The evolution is given by:</span>
+<span class="sd">        \[</span>
+<span class="sd">        \dot{\rho} = -i [H, \rho]</span>
+<span class="sd">        \]</span>
+<span class="sd">        where \([H, \rho] = H \rho - \rho H\) is the commutator of the Hamiltonian (`H`) </span>
+<span class="sd">        and the density matrix (`rho`).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The time derivative of the density matrix (`rho_dot`) as an array of the same shape.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The Hamiltonian matrix (`H`) is assumed to be Hermitian, as required in quantum mechanics.</span>
+<span class="sd">        - The computation uses the imaginary unit \(i = \sqrt{-1}\), represented as `1j` in Python.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Assuming `self.hamiltonian_matrix` and `self.rho` are properly initialized:</span>
+<span class="sd">        </span>
+<span class="sd">        &gt;&gt;&gt; rho_dot = obj.compute_hamiltonian_on_rho()</span>
+<span class="sd">        &gt;&gt;&gt; print(rho_dot)</span>
+<span class="sd">        [[...]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># imaginary unit</span>
+        <span class="n">ci</span> <span class="o">=</span> <span class="mi">0</span><span class="o">+</span><span class="mi">1</span><span class="n">j</span>
+
+        <span class="c1"># copy density matrix</span>
+        <span class="n">_rho_t</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+
+        <span class="c1"># copy Hamiltonian</span>
+        <span class="n">_H</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">hamiltonian_matrix</span><span class="p">)</span>
+
+        <span class="c1"># compute commutator</span>
+        <span class="n">_rho_dot</span> <span class="o">=</span> <span class="o">-</span><span class="n">ci</span> <span class="o">*</span> <span class="p">(</span> <span class="n">_H</span> <span class="o">@</span> <span class="n">_rho_t</span> <span class="o">-</span> <span class="n">_rho_t</span> <span class="o">@</span> <span class="n">_H</span> <span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">_rho_dot</span>
+    
+
+    <span class="k">def</span> <span class="nf">compute_time_derivative_of_rho</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Compute the total time derivative of the density matrix.</span>
+
+<span class="sd">        This method calculates the time derivative of the density matrix (`rho`) </span>
+<span class="sd">        by combining the unitary evolution due to the system Hamiltonian and </span>
+<span class="sd">        the non-unitary evolution from Lindblad operators, which account for </span>
+<span class="sd">        dissipation and decoherence.</span>
+
+<span class="sd">        The total time derivative is given by:</span>
+<span class="sd">        \[</span>
+<span class="sd">        \dot{\rho} = -i [H, \rho] + \mathcal{L}_{\text{boson}}[\rho] + \sum_i \mathcal{L}_{\text{exciton}, i}[\rho]</span>
+<span class="sd">        \]</span>
+<span class="sd">        where:</span>
+<span class="sd">        - \([H, \rho]\) is the commutator capturing unitary evolution.</span>
+<span class="sd">        - \(\mathcal{L}_{\text{boson}}[\rho]\) is the Lindblad contribution from the bosonic mode.</span>
+<span class="sd">        - \(\mathcal{L}_{\text{exciton}, i}[\rho]\) is the Lindblad contribution from the \(i\)-th exciton.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray</span>
+<span class="sd">            The time derivative of the density matrix (`rho_dot`) as an array </span>
+<span class="sd">            of the same shape.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        - The method uses `compute_hamiltonian_on_rho` for the unitary evolution.</span>
+<span class="sd">        - The non-unitary evolution contributions are calculated by `compute_lindblad_boson_on_rho` </span>
+<span class="sd">        and `compute_lindblad_exciton_i_on_rho` for each exciton.</span>
+<span class="sd">        - The computed time derivative is stored in `self.rho_dot` for later use.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        Assuming `self.hamiltonian_matrix`, `self.rho`, and relevant Lindblad rates are initialized:</span>
+
+<span class="sd">        &gt;&gt;&gt; rho_dot = obj.compute_time_derivative_of_rho()</span>
+<span class="sd">        &gt;&gt;&gt; print(rho_dot)</span>
+<span class="sd">        [[...]]</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># compute the unitary contributions</span>
+        <span class="n">_rho_dot</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_hamiltonian_on_rho</span><span class="p">()</span>
+
+        <span class="c1"># compute non-unitary contribution from boson</span>
+        <span class="n">_rho_dot</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_lindblad_boson_on_rho</span><span class="p">()</span>
+
+        <span class="c1"># for each exciton, compute non-unitary contribution from each excition</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">number_of_excitons</span><span class="p">):</span>
+            <span class="n">_rho_dot</span> <span class="o">+=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_lindblad_exciton_i_on_rho</span><span class="p">(</span><span class="n">i</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho_dot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">_rho_dot</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">_rho_dot</span>
+    
+
+    <span class="k">def</span> <span class="nf">rk4_update_on_rho</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Performs RK4 update on attribute self.rho which is the density matrix</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        self.rho : numpy array</span>
+<span class="sd">            the density matrix</span>
+
+<span class="sd">        self.time_step_au : float</span>
+<span class="sd">            the time step in atomic units</span>
+
+<span class="sd">        Return</span>
+<span class="sd">        ------</span>
+<span class="sd">        None</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get time step variable</span>
+        <span class="n">_h</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">time_step_au</span>
+
+        <span class="c1"># copy current rho</span>
+        <span class="n">_rho_tn</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rho</span><span class="p">)</span>
+
+        <span class="c1"># get rate for first Euler update</span>
+        <span class="n">_k1</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_time_derivative_of_rho</span><span class="p">()</span>
+
+        <span class="c1"># perform half update</span>
+        <span class="n">_rho_u1</span> <span class="o">=</span> <span class="n">_rho_tn</span> <span class="o">+</span> <span class="n">_h</span><span class="o">/</span><span class="mi">2</span> <span class="o">*</span> <span class="n">_k1</span>
+
+        <span class="c1"># copy half updated rho to self.rho</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">_rho_u1</span><span class="p">)</span>
+
+        <span class="c1"># get rate for second Euler update</span>
+        <span class="n">_k2</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_time_derivative_of_rho</span><span class="p">()</span>
+
+        <span class="c1"># perform half update</span>
+        <span class="n">_rho_u2</span> <span class="o">=</span> <span class="n">_rho_tn</span> <span class="o">+</span> <span class="n">_h</span><span class="o">/</span><span class="mi">2</span> <span class="o">*</span> <span class="n">_k2</span>
+
+        <span class="c1"># copy half updated rho to self.rho</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">_rho_u2</span><span class="p">)</span>
+
+        <span class="c1"># get rate for third Euler update</span>
+        <span class="n">_k3</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_time_derivative_of_rho</span><span class="p">()</span>
+
+        <span class="c1"># perform full update</span>
+        <span class="n">_rho_u3</span> <span class="o">=</span> <span class="n">_rho_tn</span> <span class="o">+</span> <span class="n">_h</span> <span class="o">*</span> <span class="n">_k3</span>
+
+        <span class="c1"># copy updated rho to self.rho</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">_rho_u3</span><span class="p">)</span>
+
+        <span class="c1"># get rate for fourth Euler update</span>
+        <span class="n">_k4</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">compute_time_derivative_of_rho</span><span class="p">()</span>
+
+        <span class="c1"># perform full update</span>
+        <span class="n">_rho_update</span> <span class="o">=</span> <span class="n">_rho_tn</span> <span class="o">+</span> <span class="n">_h</span><span class="o">/</span><span class="mi">6</span> <span class="o">*</span> <span class="p">(</span><span class="n">_k1</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">_k2</span> <span class="o">+</span> <span class="mi">2</span><span class="o">*</span><span class="n">_k3</span> <span class="o">+</span> <span class="n">_k4</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rho</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">copy</span><span class="p">(</span><span class="n">_rho_update</span><span class="p">)</span>
+        
+        <span class="k">return</span> <span class="n">_rho_update</span></div>
+
+
+
+
+
+
+
+        
+
+
+
+
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Foley Lab. Project structure based on the Computational Molecular Science Python Cookiecutter version 1.5.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wptherml.therml &mdash; wptherml  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            wptherml
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">API Documentation</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">wptherml</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../index.html">Module code</a></li>
+      <li class="breadcrumb-item active">wptherml.therml</li>
+      <li class="wy-breadcrumbs-aside">
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <h1>Source code for wptherml.therml</h1><div class="highlight"><pre>
+<span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">scipy.interpolate</span> <span class="kn">import</span> <span class="n">UnivariateSpline</span>
+
+
+<div class="viewcode-block" id="Therml">
+<a class="viewcode-back" href="../../autosummary/wptherml.Therml.html#wptherml.Therml">[docs]</a>
+<span class="k">class</span> <span class="nc">Therml</span><span class="p">:</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Collects methods for the computation of thermal radiative figures of merit</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    self.temperture : float</span>
+<span class="sd">        temperature of the structure in Kelvin</span>
+
+<span class="sd">    self.atmospheric_temperature : float</span>
+<span class="sd">        temperature of the atmosphere in Kelvin</span>
+
+<span class="sd">    self.lambda_bandgap : float</span>
+<span class="sd">        bandgap wavelength of the target PV for PV or STPV in meters</span>
+
+<span class="sd">    self.solar_angle : float</span>
+<span class="sd">        angle of the incident solar spectrum in radians</span>
+
+<span class="sd">    self.blackbody_spectrum : numpy array of floats</span>
+<span class="sd">        Planck&#39;s blackbody spectrum for a given temperature</span>
+
+<span class="sd">    self.thermal_emission_array : numpy array of floats</span>
+<span class="sd">        thermal emission spectrum of structure for a given temperature</span>
+
+<span class="sd">    self.blackbody_power_density : float</span>
+<span class="sd">        total power density radiated into a hemisphere of a blackbody at a given temperature</span>
+
+<span class="sd">    self.power_density : float</span>
+<span class="sd">        total power density radiated by structure at a given temperature</span>
+
+<span class="sd">    self.power_density_gradient : numpy array of floats (will be computed by this function)</span>
+<span class="sd">        the gradient vector related to the total power density wrt changes in thicknesses of each layer</span>
+
+<span class="sd">    self.photopic_luminosity_array : numpy array of floats</span>
+<span class="sd">        the array of photopic luminosity values corresponding to each value of wavelength_array</span>
+
+<span class="sd">    self.stpv_power_density : float (will be computed by this function)</span>
+<span class="sd">        useful (sub-bandgap) power density radiated into a hemisphere</span>
+
+<span class="sd">    self.stpv_power_density_gradient : numpy array of floats (will be computed by this function)</span>
+<span class="sd">        the gradient vector related to the stpv power density wrt changes in thicknesses of each layer</span>
+
+<span class="sd">    self.stpv_spectral_efficiency : float (will be computed by this function)</span>
+<span class="sd">        spectral efficiency of an stpv emitter</span>
+
+<span class="sd">    self.stpv_spectral_efficiency_gradient : numpy array of floats (will be computed by this function)</span>
+<span class="sd">        the gradient vector related to the spectral efficiency wrt changes in thicknesses of each layer</span>
+
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">    &quot;&quot;&quot;</span>
+
+<div class="viewcode-block" id="Therml.__init__">
+<a class="viewcode-back" href="../../autosummary/wptherml.Therml.html#wptherml.Therml.__init__">[docs]</a>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;constructor for the Therml class&quot;&quot;&quot;</span>
+        <span class="c1"># parse args</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_parse_therml_input</span><span class="p">(</span><span class="n">args</span><span class="p">)</span></div>
+
+        <span class="c1"># self._compute_therml_spectrum()</span>
+        <span class="c1"># self._compute_power_density()</span>
+
+    <span class="k">def</span> <span class="nf">_parse_therml_input</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to parse the user inputs and define structures / simulation</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="s2">&quot;temperature&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="c1"># user input expected in kelvin</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;temperature&quot;</span><span class="p">]</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># default temperature is 300 K</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="mi">300</span>
+
+        <span class="k">if</span> <span class="s2">&quot;bandgap wavelength&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lambda_bandgap</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;bandgap wavelength&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># default is ~InGaAsSb bandgap</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">lambda_bandgap</span> <span class="o">=</span> <span class="mf">2254e-9</span>
+
+        <span class="k">if</span> <span class="s2">&quot;atmospheric temperature&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">atmospheric_temperature</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;atmospheric temperature&quot;</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">atmospheric_temperature</span> <span class="o">=</span> <span class="mi">300</span>
+
+        <span class="k">if</span> <span class="s2">&quot;solar angle&quot;</span> <span class="ow">in</span> <span class="n">args</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solar_angle</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="s2">&quot;solar angle&quot;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solar_angle</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">solar_angle</span> <span class="o">=</span> <span class="mi">30</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mi">180</span>
+
+    <span class="k">def</span> <span class="nf">_compute_therml_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">,</span> <span class="n">emissivity_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute thermal emission spectrum of a structure</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the array of wavelengths across which thermal emission spectrum will be computed</span>
+
+<span class="sd">        emissivity_array : numpy array of floats</span>
+<span class="sd">            the array of emissivity spectrum for the structure that you will compute the thermal emission of</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        blackbody_spectrum : numpy array of floats</span>
+<span class="sd">            Planck&#39;s blackbody spectrum for a given temperature</span>
+
+<span class="sd">        thermal_emission_array : numpy array of floats</span>
+<span class="sd">            thermal emission spectrum of structure for a given temperature</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        blackbody spectrum : Eq. (13) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+
+<span class="sd">        thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+<span class="sd">        with $\theta=0$</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_blackbody_spectrum</span><span class="p">(</span>
+            <span class="n">wavelength_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_array</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span> <span class="o">*</span> <span class="n">emissivity_array</span>
+
+    <span class="k">def</span> <span class="nf">_compute_therml_spectrum_gradient</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">,</span> <span class="n">emissivity_gradient_array</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute thermal emission spectrum of a structure</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the array of wavelengths across which thermal emission spectrum will be computed</span>
+
+<span class="sd">        emissivity_array : numpy array of floats</span>
+<span class="sd">            the array of emissivity spectrum for the structure that you will compute the thermal emission of</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        blackbody_spectrum : numpy array of floats</span>
+<span class="sd">            Planck&#39;s blackbody spectrum for a given temperature</span>
+
+<span class="sd">        thermal_emission_array : numpy array of floats</span>
+<span class="sd">            thermal emission spectrum of structure for a given temperature</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        blackbody spectrum : Eq. (13) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+
+<span class="sd">        thermal_emission_array : Eq (12) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+<span class="sd">        with $\theta=0$</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get the dimension of the gradient vector</span>
+        <span class="n">_ngr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissivity_gradient_array</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="c1"># get the number of wavelengths</span>
+        <span class="n">_nwl</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="c1"># initialize the gradient array</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">_nwl</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_compute_blackbody_spectrum</span><span class="p">(</span>
+            <span class="n">wavelength_array</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span>
+        <span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span> <span class="o">*</span> <span class="n">emissivity_gradient_array</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_blackbody_spectrum</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">,</span> <span class="n">T</span><span class="p">):</span>
+        <span class="c1"># speed of light in SI</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mi">299792458</span>
+        <span class="c1"># plancks constant in SI</span>
+        <span class="n">h</span> <span class="o">=</span> <span class="mf">6.62607004e-34</span>
+        <span class="c1"># boltzmanns constant in SI</span>
+        <span class="n">kb</span> <span class="o">=</span> <span class="mf">1.38064852e-23</span>
+
+        <span class="n">_bb_spectrum</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">h</span> <span class="o">*</span> <span class="n">c</span><span class="o">**</span><span class="mi">2</span> <span class="o">/</span> <span class="n">wavelength_array</span><span class="o">**</span><span class="mi">5</span>
+        <span class="n">_bb_spectrum</span> <span class="o">/=</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="n">h</span> <span class="o">*</span> <span class="n">c</span> <span class="o">/</span> <span class="p">(</span><span class="n">wavelength_array</span> <span class="o">*</span> <span class="n">kb</span> <span class="o">*</span> <span class="n">T</span><span class="p">))</span> <span class="o">-</span> <span class="mi">1</span>
+        <span class="k">return</span> <span class="n">_bb_spectrum</span>
+
+    <span class="k">def</span> <span class="nf">_compute_pv_stpv_power_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the radiated power density of a PV-STPV structure specifically</span>
+<span class="sd">        in the 0.3 - 0.5 eV range (~2450-4150 nm range)</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># set lower- and upper limits on wavelength for integration</span>
+        <span class="n">_lambda_min</span> <span class="o">=</span> <span class="mf">2450e-9</span>
+        <span class="n">_lambda_max</span> <span class="o">=</span> <span class="mf">4150e-9</span>
+
+        <span class="c1"># get the index associated with these upper- and lower-wavelengths</span>
+        <span class="n">_min_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wavelength_array</span> <span class="o">-</span> <span class="n">_lambda_min</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+        <span class="n">_max_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wavelength_array</span> <span class="o">-</span> <span class="n">_lambda_max</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+
+        <span class="c1"># integrate the thermal emission spectrum over wavelength range using np.trapz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pv_stpv_exciton_splitting_power</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_array</span><span class="p">[</span><span class="n">_min_idx</span><span class="p">:</span><span class="n">_max_idx</span><span class="p">],</span>
+            <span class="n">wavelength_array</span><span class="p">[</span><span class="n">_min_idx</span><span class="p">:</span><span class="n">_max_idx</span><span class="p">],</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_power_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the power density from blackbody spectrum and thermal emission spectrum</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        self.blackbody_power_density : float</span>
+<span class="sd">            total power density radiated into a hemisphere of a blackbody at a given temperature</span>
+
+<span class="sd">        self.power_density : float</span>
+<span class="sd">            total power density radiated by structure at a given temperature</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Equation (15) and (16) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># integrate blackbody spectrum over wavelength using np.trapz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_power_density</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span><span class="p">,</span> <span class="n">wavelength_array</span>
+        <span class="p">)</span>
+
+        <span class="c1"># integrate the thermal emission spectrum over wavelength using np.trapz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">power_density</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_array</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+
+        <span class="c1"># account for angular integrals over hemisphere (assuming no angle dependence of emissivity)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_power_density</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">power_density</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+        <span class="c1"># compute Blackbody power density from Stefan-Boltzmann law for validation</span>
+        <span class="c1"># Stefan-Boltzmann constant</span>
+        <span class="n">sig</span> <span class="o">=</span> <span class="mf">5.670374419e-8</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stefan_boltzmann_law</span> <span class="o">=</span> <span class="n">sig</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span><span class="o">**</span><span class="mi">4</span>
+
+    <span class="k">def</span> <span class="nf">_compute_power_density_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the gradient of the power density of a thermal emitter</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the wavelengths over which the power density spectrum has been computed</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        self.power_density_gradient : numpy array of floats (will be computed by this function)</span>
+<span class="sd">            the gradient vector related to the total power density wrt changes in thicknesses of each layer</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_ngr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="c1"># integrate the thermal emission spectrum over wavelength using np.trapz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">power_density_gradient</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">_ngr</span><span class="p">)</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">power_density_gradient</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">wavelength_array</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_photopic_luminosity</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;computes the photopic luminosity function from a Gaussian fit</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the array of wavelengths over which you will compute the photopic luminosity</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        self.photopic_luminosity_array : numpy array of floats</span>
+<span class="sd">            the array of photopic luminosity values corresponding to each value of wavelength_array</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Data taken from http://www.cvrl.org/database/data/lum/linCIE2008v2e_5.htm</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">a</span> <span class="o">=</span> <span class="mf">1.02433</span>
+        <span class="n">b</span> <span class="o">=</span> <span class="mf">2.59462e14</span>
+        <span class="n">c</span> <span class="o">=</span> <span class="mf">5.60186e-07</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_photopic_luminosity_array</span> <span class="o">=</span> <span class="n">a</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="n">b</span> <span class="o">*</span> <span class="p">(</span><span class="n">wavelength_array</span> <span class="o">-</span> <span class="n">c</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_stpv_power_density</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the stpv power density from the thermal emission spectrum of a structure</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the wavelengths over which the thermal emission spectrum is known</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        thermal_emission_array : numpy array of floats (already assigned)</span>
+<span class="sd">            the thermal emission spectrum for each value of wavelength array for the stpv structure</span>
+
+<span class="sd">        lambda_bandgap : float (already assigned)</span>
+<span class="sd">            the bandgap wavelength -&gt; upper limit on the integral for the stpv_power_density</span>
+
+<span class="sd">        stpv_power_density : float (will be computed by this function)</span>
+<span class="sd">            useful (sub-bandgap) power density radiated into a hemisphere</span>
+
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Equation (17) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># compute the useful power density spectrum</span>
+        <span class="n">power_density_array</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_array</span> <span class="o">*</span> <span class="n">wavelength_array</span>
+        <span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_bandgap</span>
+
+        <span class="c1"># determine the index corresponding to lambda_bandgap in the wavelength_array</span>
+        <span class="c1"># which will be used to determine the appropriate slice to feed to np.trapz</span>
+        <span class="n">bg_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wavelength_array</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_bandgap</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+
+        <span class="c1"># integrate the power density between 0 to lambda_bandgap</span>
+        <span class="c1"># by feeding the slice of the power_density_array and wavelength_array</span>
+        <span class="c1"># from 0:bg_idx to the trapz function</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stpv_power_density</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+            <span class="n">power_density_array</span><span class="p">[:</span><span class="n">bg_idx</span><span class="p">],</span> <span class="n">wavelength_array</span><span class="p">[:</span><span class="n">bg_idx</span><span class="p">]</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_stpv_power_density_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the power density from blackbody spectrum and thermal emission spectrum</span>
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the wavelengths over which the power density spectrum has been computed</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        self.stpv_power_density_gradient : numpy array of floats (will be computed by this function)</span>
+<span class="sd">            the gradient vector related to the stpv power density wrt changes in thicknesses of each layer</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Equation (5) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">_ngr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="c1"># integrate the thermal emission spectrum over wavelength using np.trapz</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stpv_power_density_gradient</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">_ngr</span><span class="p">)</span>
+        <span class="c1"># compute the useful power density spectrum</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">):</span>
+            <span class="n">stpv_power_density_array_prime</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+                <span class="o">*</span> <span class="n">wavelength_array</span>
+                <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_bandgap</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stpv_power_density_gradient</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+                <span class="n">stpv_power_density_array_prime</span><span class="p">,</span> <span class="n">wavelength_array</span>
+            <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_stpv_spectral_efficiency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the stpv spectral efficiency from the thermal emission spectrum of a structure</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the wavelengths over which the thermal emission spectrum is known</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        thermal_emission_array : numpy array of floats (already assigned)</span>
+<span class="sd">            the thermal emission spectrum for each value of wavelength array for the stpv structure</span>
+
+<span class="sd">        lambda_bandgap : float (already assigned)</span>
+<span class="sd">            the bandgap wavelength -&gt; upper limit on the integral for the stpv_power_density</span>
+
+<span class="sd">        stpv_power_density : float (will be computed by this function)</span>
+<span class="sd">            useful (sub-bandgap) power density radiated into a hemisphere</span>
+
+<span class="sd">        power_density : float (will be computed by this function)</span>
+<span class="sd">            total power density radiated into a hemisphere</span>
+
+<span class="sd">        stpv_spectral_efficiency : float (will be computed by this function)</span>
+<span class="sd">            spectral efficiency of an stpv emitter</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Equation (18) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_stpv_power_density</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_power_density</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stpv_spectral_efficiency</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stpv_power_density</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_density</span>
+
+    <span class="k">def</span> <span class="nf">_compute_stpv_spectral_efficiency_gradient</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the gradient of the</span>
+<span class="sd">           stpv spectral efficiency from the thermal emission spectrum of a structure</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the wavelengths over which the thermal emission spectrum is known</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        self.stpv_spectral_efficiency_gradient : numpy array of floats (will be computed by this function)</span>
+<span class="sd">            the gradient vector related to the spectral efficiency wrt changes in thicknesses of each layer</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Equation (4) of https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get the number of elements in the gradient</span>
+        <span class="n">_ngr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+
+        <span class="c1"># initialize the gradient array</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">stpv_spectral_efficiency_gradient</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">_ngr</span><span class="p">)</span>
+
+        <span class="c1"># using the notation from Eq. (4)</span>
+        <span class="c1"># from https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.2.013018</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_stpv_power_density</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_power_density</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">)</span>
+
+        <span class="n">_P</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">power_density</span>
+        <span class="n">_rho</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">stpv_power_density</span>
+
+        <span class="c1"># determine the index corresponding to lambda_bandgap in the wavelength_array</span>
+        <span class="c1"># which will be used to determine the appropriate slice to feed to np.trapz</span>
+        <span class="n">_bg_idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">wavelength_array</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_bandgap</span><span class="p">)</span><span class="o">.</span><span class="n">argmin</span><span class="p">()</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">):</span>
+            <span class="n">_rho_prime_integrand</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[:</span><span class="n">_bg_idx</span><span class="p">,</span> <span class="n">i</span><span class="p">]</span>
+                <span class="o">*</span> <span class="n">wavelength_array</span><span class="p">[:</span><span class="n">_bg_idx</span><span class="p">]</span>
+                <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">lambda_bandgap</span>
+            <span class="p">)</span>
+            <span class="n">_rho_prime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+                <span class="n">_rho_prime_integrand</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">[:</span><span class="n">_bg_idx</span><span class="p">]</span>
+            <span class="p">)</span>
+            <span class="n">_P_prime</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_gradient_array</span><span class="p">[:,</span> <span class="n">i</span><span class="p">],</span> <span class="n">wavelength_array</span>
+            <span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stpv_spectral_efficiency_gradient</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">_rho_prime</span> <span class="o">*</span> <span class="n">_P</span> <span class="o">-</span> <span class="n">_P_prime</span> <span class="o">*</span> <span class="n">_rho</span>
+            <span class="p">)</span> <span class="o">/</span> <span class="p">(</span><span class="n">_P</span> <span class="o">*</span> <span class="n">_P</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_pv_short_circuit_current</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">,</span> <span class="n">absorptivity_array</span><span class="p">,</span> <span class="n">spectral_response</span><span class="p">,</span> <span class="n">solar_spectrum</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to approximate the short circuit current of a PV cell</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the wavelengths over which the absorptivity of the structure is known</span>
+
+<span class="sd">        absorptivity_array : numpy array of floats</span>
+<span class="sd">            the absorptivity / emissivity spectrum of the PV structure</span>
+
+<span class="sd">        spectral_response : numpy array of floats</span>
+<span class="sd">            the mapping between power in  (W) / current out (Amps) of the active layer</span>
+
+<span class="sd">        solar_spectrum : numpy array of floats</span>
+<span class="sd">            the solar spectrum incident on the PV structure</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        self.short_circuit_current : float</span>
+<span class="sd">            the short circuit current in Amps / m^2 of the surface</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">pv_short_circuit_current</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+            <span class="n">absorptivity_array</span> <span class="o">*</span> <span class="n">spectral_response</span> <span class="o">*</span> <span class="n">solar_spectrum</span><span class="p">,</span> <span class="n">wavelength_array</span>
+        <span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_compute_luminous_efficiency</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;method to compute the luminous efficiency for an incandescent from the thermal emission spectrum of a structure</span>
+
+<span class="sd">        Arguments</span>
+<span class="sd">        ---------</span>
+<span class="sd">        wavelength_array : numpy array of floats</span>
+<span class="sd">            the wavelengths over which the thermal emission spectrum is known</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+
+<span class="sd">        self.thermal_emission_array : numpy array of floats (already assigned)</span>
+<span class="sd">            the thermal emission spectrum for each value of wavelength array for the stpv structure</span>
+
+<span class="sd">        self.photopic_luminosity_array : numpy array of floats (can be computed by calling self._compute_photopic_luminosity(wavelength_array))</span>
+<span class="sd">            photopic luminosity function values corresponding to wavelength_array</span>
+
+<span class="sd">        self.luminous_efficiency : float (will be computed by this function)</span>
+<span class="sd">            the spectral efficiency of the incandescent source</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        Equation (27) of https://github.com/FoleyLab/wptherml/blob/master/docs/Equations.pdf</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># self._compute_therml_spectrum(wavelength_array, emissivity_array)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_photopic_luminosity</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="n">vl</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_photopic_luminosity_array</span>
+        <span class="n">TE</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">thermal_emission_array</span>
+
+        <span class="n">Numerator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">vl</span> <span class="o">*</span> <span class="n">TE</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="n">Denominator</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">TE</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">luminous_efficiency</span> <span class="o">=</span> <span class="n">Numerator</span> <span class="o">/</span> <span class="n">Denominator</span>
+
+    <span class="k">def</span> <span class="nf">_compute_thermal_radiated_power</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">emissivity_array_s</span><span class="p">,</span>
+        <span class="n">emissivity_array_p</span><span class="p">,</span>
+        <span class="n">theta_vals</span><span class="p">,</span>
+        <span class="n">theta_weights</span><span class="p">,</span>
+        <span class="n">wavelength_array</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to compute the power radiated by the cooling structure</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        P_rad</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        See Eq. (2) of https://www.nature.com/articles/nature13883</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">num_angles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_therml_spectrum</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">,</span> <span class="n">emissivity_array_s</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+
+        <span class="c1"># loop over angles</span>
+        <span class="n">P_rad</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_angles</span><span class="p">):</span>
+            <span class="n">_TE</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span>
+                <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+                <span class="o">*</span> <span class="mf">0.5</span>
+                <span class="o">*</span> <span class="p">(</span><span class="n">emissivity_array_p</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">emissivity_array_s</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="p">)</span>
+            <span class="n">_TE_INT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">_TE</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+            <span class="n">P_rad</span> <span class="o">+=</span> <span class="n">_TE_INT</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta_weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+
+        <span class="n">P_rad</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mi">2</span>
+
+        <span class="k">return</span> <span class="n">P_rad</span>
+
+    <span class="k">def</span> <span class="nf">_compute_thermal_radiated_power_gradient</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">emissivity_gradient_array_s</span><span class="p">,</span>
+        <span class="n">emissivity_gradient_array_p</span><span class="p">,</span>
+        <span class="n">theta_vals</span><span class="p">,</span>
+        <span class="n">theta_weights</span><span class="p">,</span>
+        <span class="n">wavelength_array</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to compute the gradient of the power radiated by the cooling structure</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _emitted_thermal_spectrum_gradient</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        See Eq. (2) of https://www.nature.com/articles/nature13883</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_angles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">)</span>
+        <span class="c1"># we don&#39;t care about the emissivity - just calling this for the blackbody spectrum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_therml_spectrum</span><span class="p">(</span>
+            <span class="n">wavelength_array</span><span class="p">,</span> <span class="n">emissivity_gradient_array_p</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+
+        <span class="n">_ngr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissivity_gradient_array_s</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">_nth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissivity_gradient_array_s</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+
+        <span class="c1"># instantiate P_rad_prime</span>
+        <span class="n">_emitted_thermal_spectrum_gradient</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">_ngr</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">):</span>
+            <span class="n">_P_rad_prime</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_nth</span><span class="p">):</span>
+                <span class="n">_TE</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span>
+                    <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                    <span class="o">*</span> <span class="mf">0.5</span>
+                    <span class="o">*</span> <span class="p">(</span>
+                        <span class="n">emissivity_gradient_array_p</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="n">emissivity_gradient_array_s</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">_TE_INT</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">_TE</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+
+                <span class="n">_P_rad_prime</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">_TE_INT</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta_weights</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="n">_emitted_thermal_spectrum_gradient</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">_P_rad_prime</span>
+
+        <span class="k">return</span> <span class="n">_emitted_thermal_spectrum_gradient</span>
+
+    <span class="k">def</span> <span class="nf">_compute_atmospheric_radiated_power</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">atmospheric_transmissivity</span><span class="p">,</span>
+        <span class="n">emissivity_array_s</span><span class="p">,</span>
+        <span class="n">emissivity_array_p</span><span class="p">,</span>
+        <span class="n">theta_vals</span><span class="p">,</span>
+        <span class="n">theta_weights</span><span class="p">,</span>
+        <span class="n">wavelength_array</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to compute the power radiated by the atmosphere and absorbed by cooling structure</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        P_atm</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        See Eq. (3) of https://www.nature.com/articles/nature13883</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">num_angles</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">)</span>
+
+        <span class="c1"># make sure we are getting the blackbody spectrum of the atmosphere</span>
+        <span class="c1"># store the structure temperature</span>
+        <span class="n">_T_temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span>
+        <span class="c1"># update the structure temperature, which is the attribute that</span>
+        <span class="c1"># is used for computing the blackbody spectrum in _compute_therml_spectrum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atmospheric_temperature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_therml_spectrum</span><span class="p">(</span><span class="n">wavelength_array</span><span class="p">,</span> <span class="n">emissivity_array_s</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="c1"># set the structure temperature back to _T_temp in case</span>
+        <span class="c1"># one wants to compute the thermal emission of the structure again!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">_T_temp</span>
+        <span class="n">P_atm</span> <span class="o">=</span> <span class="mf">0.0</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">num_angles</span><span class="p">):</span>
+            <span class="c1"># get the term that goes in the exponent of the atmospheric transmissivity</span>
+            <span class="n">_o_over_cos_t</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">_emissivity_atm</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">atmospheric_transmissivity</span><span class="p">))</span>
+                <span class="o">-</span> <span class="n">atmospheric_transmissivity</span><span class="o">**</span><span class="n">_o_over_cos_t</span>
+            <span class="p">)</span>
+            <span class="n">_TE_atm</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span> <span class="o">*</span> <span class="n">_emissivity_atm</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">i</span><span class="p">])</span>
+            <span class="n">_absorbed_TE_spectrum</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">_TE_atm</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">emissivity_array_p</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:]</span> <span class="o">+</span> <span class="n">emissivity_array_s</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span>
+            <span class="p">)</span>
+            <span class="n">_absorbed_TE</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">_absorbed_TE_spectrum</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+            <span class="n">P_atm</span> <span class="o">+=</span> <span class="n">_absorbed_TE</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">i</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta_weights</span><span class="p">[</span><span class="n">i</span><span class="p">]</span>
+        <span class="n">P_atm</span> <span class="o">*=</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span>
+
+        <span class="k">return</span> <span class="n">P_atm</span>
+
+    <span class="k">def</span> <span class="nf">_compute_atmospheric_radiated_power_gradient</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">atmospheric_transmissivity</span><span class="p">,</span>
+        <span class="n">emissivity_gradient_array_s</span><span class="p">,</span>
+        <span class="n">emissivity_gradient_array_p</span><span class="p">,</span>
+        <span class="n">theta_vals</span><span class="p">,</span>
+        <span class="n">theta_weights</span><span class="p">,</span>
+        <span class="n">wavelength_array</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to compute the gradient of the power radiated by the atmosphere and absorbed by the cooling structure</span>
+
+<span class="sd">        Attribute</span>
+<span class="sd">        ---------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _absorbed_solar_spectrum_gradient</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="n">_nth</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">)</span>
+        <span class="n">_ngr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissivity_gradient_array_p</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">_absorbed_atmospheric_radiation_gradient</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">_ngr</span><span class="p">)</span>
+
+        <span class="c1"># make sure we are getting the blackbody spectrum of the atmosphere</span>
+        <span class="c1"># store the structure temperature</span>
+        <span class="n">_T_temp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span>
+        <span class="c1"># update the structure temperature, which is the attribute that</span>
+        <span class="c1"># is used for computing the blackbody spectrum in _compute_therml_spectrum</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">atmospheric_temperature</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_compute_therml_spectrum</span><span class="p">(</span>
+            <span class="n">wavelength_array</span><span class="p">,</span> <span class="n">emissivity_gradient_array_p</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
+        <span class="p">)</span>
+        <span class="c1"># set the structure temperature back to _T_temp in case</span>
+        <span class="c1"># one wants to compute the thermal emission of the structure again!</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">temperature</span> <span class="o">=</span> <span class="n">_T_temp</span>
+
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">):</span>
+            <span class="n">P_atm_prime</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="k">for</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_nth</span><span class="p">):</span>
+                <span class="c1"># get the term that goes in the exponent of the atmospheric transmissivity</span>
+                <span class="n">_o_over_cos_t</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                <span class="n">_emissivity_atm</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">ones</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">atmospheric_transmissivity</span><span class="p">))</span>
+                    <span class="o">-</span> <span class="n">atmospheric_transmissivity</span><span class="o">**</span><span class="n">_o_over_cos_t</span>
+                <span class="p">)</span>
+                <span class="n">_TE_atm</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">blackbody_spectrum</span> <span class="o">*</span> <span class="n">_emissivity_atm</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">j</span><span class="p">])</span>
+                <span class="p">)</span>
+                <span class="n">_absorbed_TE_spectrum</span> <span class="o">=</span> <span class="p">(</span>
+                    <span class="n">_TE_atm</span>
+                    <span class="o">*</span> <span class="mf">0.5</span>
+                    <span class="o">*</span> <span class="p">(</span>
+                        <span class="n">emissivity_gradient_array_p</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span>
+                        <span class="o">+</span> <span class="n">emissivity_gradient_array_s</span><span class="p">[</span><span class="n">j</span><span class="p">,</span> <span class="p">:,</span> <span class="n">i</span><span class="p">]</span>
+                    <span class="p">)</span>
+                <span class="p">)</span>
+                <span class="n">_absorbed_TE</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">_absorbed_TE_spectrum</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+                <span class="n">P_atm_prime</span> <span class="o">+=</span> <span class="p">(</span>
+                    <span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">_absorbed_TE</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">sin</span><span class="p">(</span><span class="n">theta_vals</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">*</span> <span class="n">theta_weights</span><span class="p">[</span><span class="n">j</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="n">_absorbed_atmospheric_radiation_gradient</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">P_atm_prime</span>
+
+        <span class="k">return</span> <span class="n">_absorbed_atmospheric_radiation_gradient</span>
+
+    <span class="k">def</span> <span class="nf">_compute_solar_radiated_power</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">solar_spectrum</span><span class="p">,</span> <span class="n">emissivity_array_s</span><span class="p">,</span> <span class="n">emissivity_array_p</span><span class="p">,</span> <span class="n">wavelength_array</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to compute the solar power absorbed by the cooling structure</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        P_sun</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        See Eq. (4) of https://www.nature.com/articles/nature13883</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># compute the absorbed solar spectrum</span>
+        <span class="n">_absorbed_solar_spectrum</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">solar_spectrum</span> <span class="o">*</span> <span class="mf">0.5</span> <span class="o">*</span> <span class="p">(</span><span class="n">emissivity_array_p</span> <span class="o">+</span> <span class="n">emissivity_array_s</span><span class="p">)</span>
+        <span class="p">)</span>
+        <span class="c1"># integrate it!</span>
+        <span class="n">P_sun</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span><span class="n">_absorbed_solar_spectrum</span><span class="p">,</span> <span class="n">wavelength_array</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">P_sun</span>
+
+    <span class="k">def</span> <span class="nf">_compute_solar_radiated_power_gradient</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">solar_spectrum</span><span class="p">,</span>
+        <span class="n">emissivity_gradient_array_s</span><span class="p">,</span>
+        <span class="n">emissivity_gradient_array_p</span><span class="p">,</span>
+        <span class="n">wavelength_array</span><span class="p">,</span>
+    <span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Method to compute the gradient of the solar power absorbed by the cooling structure</span>
+
+<span class="sd">        Attributes</span>
+<span class="sd">        ----------</span>
+<span class="sd">        None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        _absorbed_solar_spectrum_gradient</span>
+
+<span class="sd">        References</span>
+<span class="sd">        ----------</span>
+<span class="sd">        See Eq. (4) of https://www.nature.com/articles/nature13883</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># get the dimension of the gradient vector</span>
+        <span class="n">_ngr</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">emissivity_gradient_array_s</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:])</span>
+        <span class="n">_absorbed_solar_spectrum_gradient</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="n">_ngr</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">_ngr</span><span class="p">):</span>
+            <span class="n">_absorbed_solar_spectrum_prime</span> <span class="o">=</span> <span class="p">(</span>
+                <span class="n">solar_spectrum</span>
+                <span class="o">*</span> <span class="mf">0.5</span>
+                <span class="o">*</span> <span class="p">(</span>
+                    <span class="n">emissivity_gradient_array_p</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+                    <span class="o">+</span> <span class="n">emissivity_gradient_array_s</span><span class="p">[:,</span> <span class="n">i</span><span class="p">]</span>
+                <span class="p">)</span>
+            <span class="p">)</span>
+            <span class="c1"># integrate it!</span>
+            <span class="n">_absorbed_solar_spectrum_gradient</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">trapz</span><span class="p">(</span>
+                <span class="n">_absorbed_solar_spectrum_prime</span><span class="p">,</span> <span class="n">wavelength_array</span>
+            <span class="p">)</span>
+        <span class="k">return</span> <span class="n">_absorbed_solar_spectrum_gradient</span></div>
+
+</pre></div>
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Foley Lab. Project structure based on the Computational Molecular Science Python Cookiecutter version 1.5.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

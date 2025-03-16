@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wptherml.TmmDriver &mdash; wptherml  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="wptherml.MieDriver" href="wptherml.MieDriver.html" />
+    <link rel="prev" title="wptherml.spectrum_driver" href="wptherml.spectrum_driver.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            wptherml
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="wptherml.spectrum_driver.html">wptherml.spectrum_driver</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">wptherml.TmmDriver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#wptherml.TmmDriver"><code class="docutils literal notranslate"><span class="pre">TmmDriver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#wptherml.TmmDriver.__init__"><code class="docutils literal notranslate"><span class="pre">TmmDriver.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.MieDriver.html">wptherml.MieDriver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.Therml.html">wptherml.Therml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.Materials.html">wptherml.Materials</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">wptherml</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API Documentation</a></li>
+      <li class="breadcrumb-item active">wptherml.TmmDriver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/autosummary/wptherml.TmmDriver.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="wptherml-tmmdriver">
+<h1>wptherml.TmmDriver<a class="headerlink" href="#wptherml-tmmdriver" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="wptherml.TmmDriver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">wptherml.</span></span><span class="sig-name descname"><span class="pre">TmmDriver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/wptherml/em.html#TmmDriver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wptherml.TmmDriver" title="Link to this definition"></a></dt>
+<dd><dl class="simple">
+<dt>Collects methods for computing the reflectivity, absorptivity/emissivity, and transmissivity</dt><dd><p>of multilayer structures using the Transfer Matrix Method.</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>number_of_layers</strong> (<em>int</em>) – the number of layers in the multilayer</p></li>
+<li><p><strong>number_of_wavelengths</strong> (<em>int</em>) – the number of wavelengths in the wavelength_array</p></li>
+<li><p><strong>thickness_array</strong> (<em>1 x number_of_layers numpy array</em><em> of </em><em>floats</em>) – the thickness of each layer</p></li>
+<li><p><strong>material_array</strong> (<em>1 x number_of_layers numpy array</em><em> of </em><em>str</em>) – the materia of each layer</p></li>
+<li><p><strong>wavelength_array</strong> (<em>numpy array</em><em> of </em><em>floats</em>) – the array of wavelengths in meters over which you will compute the spectra</p></li>
+<li><p><strong>incident_angle</strong> (<em>float</em>) – the incident angle of light relative to the normal to the multilayer (0 = normal incidence!)</p></li>
+<li><p><strong>polarization</strong> (<em>str</em>) – indicates if incident light is ‘s’ or ‘p’ polarized</p></li>
+<li><p><strong>reflectivity_array</strong> (<em>1 x number_of_wavelengths numpy array</em><em> of </em><em>floats</em>) – the reflection spectrum</p></li>
+<li><p><strong>transmissivity_array</strong> (<em>1 x number_of_wavelengths numpy array</em><em> of </em><em>floats</em>) – the transmission spectrum</p></li>
+<li><p><strong>emissivity_array</strong> (<em>1 x number_of_wavelengths numpy array</em><em> of </em><em>floats</em>) – the absorptivity / emissivity spectrum</p></li>
+<li><p><strong>_refractive_index_array</strong> (<em>number_of_layers x number_of_wavelengths numpy array</em><em> of </em><em>complex floats</em>) – the array of refractive index values corresponding to wavelength_array</p></li>
+<li><p><strong>_tm</strong> (<em>2 x 2 x number_of_wavelengths numpy array</em><em> of </em><em>complex floats</em>) – the transfer matrix for each wavelength</p></li>
+<li><p><strong>_kz_array</strong> (<em>1 x number_lf_layers x number_of_wavelengths numpy array</em><em> of </em><em>complex floats</em>) – the z-component of the wavevector in each layer of the multilayer for each wavelength</p></li>
+<li><p><strong>_k0_array</strong> (<em>1 x number_of_wavelengths numpy array</em><em> of </em><em>floats</em>) – the wavevector magnitude in the incident layer for each wavelength</p></li>
+<li><p><strong>_kx_array</strong> (<em>1 x number_of_wavelengths numpy array</em><em> of </em><em>floats</em>) – the x-component of the wavevector for each wavelength (conserved throughout layers)</p></li>
+<li><p><strong>_pm</strong> (<em>2 x 2 x</em><em> (</em><em>number_of_layers-2</em><em>) </em><em>x number_of_wavelengths numpy array</em><em> of </em><em>complex floats</em>) – the P matrix for each of the finite-thickness layers for each wavelength</p></li>
+<li><p><strong>_dm</strong> (<em>2 x 2 x number_of_layers x number_of_wavelengths numpy array</em><em> of </em><em>complex floats</em>) – the D matrix for each of the layers for each wavelength</p></li>
+<li><p><strong>_dim</strong> (<em>2 x 2 x number_of_layers x number_of_wavelengts numpy array</em><em> of </em><em>complex floats</em>) – the inverse of the D matrix for each of the layers for each wavelength</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<dl class="py method">
+<dt class="sig sig-object py" id="wptherml.TmmDriver.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/wptherml/em.html#TmmDriver.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wptherml.TmmDriver.__init__" title="Link to this definition"></a></dt>
+<dd><p>constructor for the TmmDriver class
+Assign values for attributes thickness_array, material_array then call
+compute_spectrum to compute values for attributes reflectivity_array,
+transmissivity_array, and emissivity_array</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#wptherml.TmmDriver.__init__" title="wptherml.TmmDriver.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(args)</p></td>
+<td><p>constructor for the TmmDriver class Assign values for attributes thickness_array, material_array then call compute_spectrum to compute values for attributes reflectivity_array, transmissivity_array, and emissivity_array</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_cooling</span></code>()</p></td>
+<td><p>Method to compute the radiative cooling figures of merit</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_cooling_gradient</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_explicit_angle_spectrum</span></code>()</p></td>
+<td><p>computes the following attributes: :ivar reflectivity_array_s: the reflectivity spectrum vs wavelength and angle with s-polarization :vartype reflectivity_array_s: N_deg x number_of_wavelengths numpy array of floats :ivar reflectivity_array_p: the reflectivity spectrum vs wavelength and angle with p-polarization</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_explicit_angle_spectrum_gradient</span></code>()</p></td>
+<td><p>computes the following attributes: :ivar reflectivity_gradient_array_s: the gradient of the s-polarized reflectivity spectrum vs angle</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_pv_stpv</span></code>()</p></td>
+<td><p>A method to compute the different figures of merit for PV-STPV, which should follow a similar pattern as compute_stpv() on line 944</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_pv_stpv_short_circuit_current</span></code>()</p></td>
+<td><p>Function to compute the f_C figure of merit for pv-stpv, Eq.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_pv_stpv_short_circuit_current_gradient_gradient</span></code>()</p></td>
+<td><p>Computes the following attributes for short circuit current calculation:</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_pv_stpv_splitting_power</span></code>()</p></td>
+<td><p>Docstring</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_pv_stpv_splitting_power_spectrum</span></code>()</p></td>
+<td><p>Docstring</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_pv_stpv_total_incident_power</span></code>()</p></td>
+<td><p>Docstring Use equation npv = Jsc * Voc * FF Jsc = short circuit current Voc = open circuit current FF = fill factor/ratio of ontainable power to short circuit * open circuit voltage</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_selective_mirror_fom</span></code>()</p></td>
+<td><p>compute the figure of merit for selective tranmission and reflection according</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_selective_mirror_fom_gradient</span></code>()</p></td>
+<td><p>compute the figure of merit for selective tranmission and reflection according</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_self_consistent_temperature</span></code>()</p></td>
+<td><p>Method to compute the self-consistent temperature that balances emitted with absorbed power for pv-stpv applications</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_spectrum</span></code>()</p></td>
+<td><p>computes the following attributes: :ivar reflectivity_array: the reflectivity spectrum :vartype reflectivity_array: 1 x number_of_wavelengths numpy array of floats :ivar transmissivity_array: the transmissivity spectrum :vartype transmissivity_array: 1 x number_of_wavelengths numpy array of floats :ivar emissivity_array: the absorptivity / emissivity spectrum :vartype emissivity_array: 1 x number_of_wavelengths numpy array of floats</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_spectrum_gradient</span></code>()</p></td>
+<td><p>computes the following attributes: :ivar reflectivity_gradient_array: the reflectivity spectrum :vartype reflectivity_gradient_array: number_of_wavelengths x len(gradient_list) numpy array of floats :ivar transmissivity_gradient_array: the transmissivity spectrum :vartype transmissivity_gradient_array: number_of_wavelengths x len(gradient_list) numpy array of floats :ivar emissivity_gradient_array: the absorptivity / emissivity spectrum :vartype emissivity_gradient_array: number_of_wavelengths x len(gradient_list) numpy array of floats</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_stpv</span></code>()</p></td>
+<td><p>compute the figures of merit for STPV applications, including</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_stpv_gradient</span></code>()</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">insert_layer</span></code>(layer_number, layer_thickness)</p></td>
+<td><p>insert an air layer between layer_number-1 and layer_number e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air and you issue insert_layer(1), the new structure will be Air/Air/SiO2/HfO2/Ag/Air if you issue insert_layer(2), the new structure will be Air/SiO2/Air/HfO2/Ag/Air.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_2D_HOIP</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Ag</span></code>(layer_number[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Air</span></code>(layer_number)</p></td>
+<td><p>defines the refractive index layer of layer_number to be air assuming static refractive index of n = 1.0 + 0j</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Al</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Al2O3</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Al2O3_UDM</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_AlN</span></code>(layer_number[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Au</span></code>(layer_number[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_H2O</span></code>(layer_number)</p></td>
+<td><p>defines the refractive index layer of layer_number to be water assuming static refractive index of n = 1.33 + 0j</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_HfO2</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_HfO2_UDM</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_HfO2_UDM_v2</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_MgF2_UDM</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Pb</span></code>(layer_number[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Pt</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Re</span></code>(layer_number[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Rh</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Ru</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Si</span></code>(layer_number[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Si3N4</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_SiO2</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_SiO2_UDM</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_SiO2_UDM_v2</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_Ta2O5</span></code>(layer_number[, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_TiN</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_TiO2</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_W</span></code>(layer_number[, wavelength_range, ...])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_ZrO2</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_from_file</span></code>(layer_number, file_name)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_polystyrene</span></code>(layer_number)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">material_static_refractive_index</span></code>(...)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_input</span></code>(args)</p></td>
+<td><p>method to parse the user inputs and define structures / simulation :rtype: None</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">randomize_materials_array</span></code>()</p></td>
+<td><p>Function to randomize the materials array</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">randomize_thickness_array</span></code>()</p></td>
+<td><p>Function to randomize the thickness array</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">remove_layer</span></code>(layer_number)</p></td>
+<td><p>remove layer number layer_number from your stack.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">render_color</span></code>(string[, colorblindness])</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">reverse_stack</span></code>()</p></td>
+<td><p>reverse the order of the stack e.g. if you have a structure that is Air/SiO2/HfO2/Ag/Air and you issue reverse_stack, the new structrure will be Air/Ag/HfO2/SiO2/Air.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_refractive_index_array</span></code>()</p></td>
+<td><p>once materials are specified, define the refractive_index_array values</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="wptherml.spectrum_driver.html" class="btn btn-neutral float-left" title="wptherml.spectrum_driver" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="wptherml.MieDriver.html" class="btn btn-neutral float-right" title="wptherml.MieDriver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Foley Lab. Project structure based on the Computational Molecular Science Python Cookiecutter version 1.5.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

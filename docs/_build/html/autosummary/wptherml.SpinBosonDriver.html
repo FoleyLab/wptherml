@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../">
+<head>
+  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.18.1: http://docutils.sourceforge.net/" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>wptherml.SpinBosonDriver &mdash; wptherml  documentation</title>
+      <link rel="stylesheet" type="text/css" href="../_static/pygments.css?v=92fd9be5" />
+      <link rel="stylesheet" type="text/css" href="../_static/css/theme.css?v=19f00094" />
+
+  
+  <!--[if lt IE 9]>
+    <script src="../_static/js/html5shiv.min.js"></script>
+  <![endif]-->
+  
+        <script src="../_static/jquery.js?v=5d32c60e"></script>
+        <script src="../_static/_sphinx_javascript_frameworks_compat.js?v=2cd50e6c"></script>
+        <script src="../_static/documentation_options.js?v=5929fcd5"></script>
+        <script src="../_static/doctools.js?v=9a2dae69"></script>
+        <script src="../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../_static/js/theme.js"></script>
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
+    <link rel="next" title="wptherml.OptDriver" href="wptherml.OptDriver.html" />
+    <link rel="prev" title="wptherml.Materials" href="wptherml.Materials.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../index.html" class="icon icon-home">
+            wptherml
+          </a>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <p class="caption" role="heading"><span class="caption-text">Contents:</span></p>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="../quickstart.html">Quickstart Guide</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../getting_started.html">Getting Started</a></li>
+<li class="toctree-l1 current"><a class="reference internal" href="../api.html">API Documentation</a><ul class="current">
+<li class="toctree-l2"><a class="reference internal" href="wptherml.spectrum_driver.html">wptherml.spectrum_driver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.TmmDriver.html">wptherml.TmmDriver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.MieDriver.html">wptherml.MieDriver</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.Therml.html">wptherml.Therml</a></li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.Materials.html">wptherml.Materials</a></li>
+<li class="toctree-l2 current"><a class="current reference internal" href="#">wptherml.SpinBosonDriver</a><ul>
+<li class="toctree-l3"><a class="reference internal" href="#wptherml.SpinBosonDriver"><code class="docutils literal notranslate"><span class="pre">SpinBosonDriver</span></code></a><ul>
+<li class="toctree-l4"><a class="reference internal" href="#wptherml.SpinBosonDriver.__init__"><code class="docutils literal notranslate"><span class="pre">SpinBosonDriver.__init__()</span></code></a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="wptherml.OptDriver.html">wptherml.OptDriver</a></li>
+</ul>
+</li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../index.html">wptherml</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../index.html" class="icon icon-home" aria-label="Home"></a></li>
+          <li class="breadcrumb-item"><a href="../api.html">API Documentation</a></li>
+      <li class="breadcrumb-item active">wptherml.SpinBosonDriver</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../_sources/autosummary/wptherml.SpinBosonDriver.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="wptherml-spinbosondriver">
+<h1>wptherml.SpinBosonDriver<a class="headerlink" href="#wptherml-spinbosondriver" title="Link to this heading"></a></h1>
+<dl class="py class">
+<dt class="sig sig-object py" id="wptherml.SpinBosonDriver">
+<em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">wptherml.</span></span><span class="sig-name descname"><span class="pre">SpinBosonDriver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/wptherml/spin_boson.html#SpinBosonDriver"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wptherml.SpinBosonDriver" title="Link to this definition"></a></dt>
+<dd><dl>
+<dt>A class for computing the dynamics and spectra of coupled exciton-boson (e.g. QD - plasmon, exciton-polariton, etc) systems using</dt><dd><p>the spin boson for N 2-level systems coupled to an N’-level Harmonic oscillator.  For conventions of exciton states and their
+ladder operators, see here: <a class="reference external" href="https://www.phys.hawaii.edu/~yepez/Spring2013/lectures/Lecture2_Quantum_Gates_Notes.pdf">https://www.phys.hawaii.edu/~yepez/Spring2013/lectures/Lecture2_Quantum_Gates_Notes.pdf</a></p>
+<p>Important: We order the basis as <a href="#id1"><span class="problematic" id="id2">|</span></a>s&gt; otimes <a href="#id3"><span class="problematic" id="id4">|</span></a>q1&gt; otimes <a href="#id5"><span class="problematic" id="id6">|</span></a>q2&gt; … otimes <a href="#id7"><span class="problematic" id="id8">|</span></a>qn&gt;</p>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Variables<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>number_of_excitons</strong> (<em>int</em>) – number of excitonic subsystems</p></li>
+<li><p><strong>number_of_boson_levels</strong> (<em>int</em>) – number of boson levels</p></li>
+<li><p><strong>exciton_energy_ev</strong> (<em>float</em>) – energy of each exciton subsystem in eV</p></li>
+<li><p><strong>boson_energy_ev</strong> (<em>float</em>) – fundamental energy of the boson subsystem in eV</p></li>
+<li><p><strong>exciton_energy_au</strong> (<em>float</em>) – energy of each exciton subsystem in atomic units</p></li>
+<li><p><strong>boson_energy_au</strong> (<em>float</em>) – fundamental energy of the boson subsystem in atomic units</p></li>
+<li><p><strong>exciton_boson_coupling_ev</strong> (<em>float</em>) – coupling between each exciton subsystem and the boson subsystem in eV</p></li>
+<li><p><strong>exciton_boson_coupling_au</strong> (<em>float</em>) – coupling between each exciton subsystem and the boson subsystem in atomic units</p></li>
+<li><p><strong>boson_dipole_magnitude_au</strong> (<em>float</em>) – transition dipole moment of the bosonic subsystem</p></li>
+<li><p><strong>exciton_transition_dipole_magnitude_au</strong> (<em>float</em>) – transition dipole moment of the excitonic subsystems</p></li>
+<li><p><strong>exciton_spontaneous_emission_rate_mev</strong> (<em>float</em>) – the spontaneous emission rate for the exciton subsystem(s) in milli eV (i.e. hbar gamma -&gt; meV)</p></li>
+<li><p><strong>exciton_spontaneous_emission_rate_au</strong> (<em>float</em>) – the spontaneous emission rate for the exciton subsystem(s) in atomic units</p></li>
+<li><p><strong>exciton_dephasing_rate_mev</strong> (<em>float</em>) – the dephasing rate for the exciton subsystem(s) in milli eV (i.e. hbar gamma -&gt; meV)</p></li>
+<li><p><strong>exciton_dephasing_rate_au</strong> (<em>float</em>) – the dephasing rate for the exciton subsystem(s) in atomic units</p></li>
+<li><p><strong>boson_spontaneous_emission_rate_mev</strong> (<em>float</em>) – the spontaneous emission rate for the boson subsystem in milli eV (i.e. hbar gamma -&gt; meV)</p></li>
+<li><p><strong>boson_spontaneous_emission_rate_au</strong> (<em>float</em>) – the spontaneous emission rate for the boson subsystem in atomic units</p></li>
+<li><p><strong>boson_dephasing_rate_mev</strong> (<em>float</em>) – the dephasing rate for the boson subsystem in milli eV (i.e. hbar gamma -&gt; meV)</p></li>
+<li><p><strong>boson_dephasing_rate_au</strong> (<em>float</em>) – the dephasing rate for the boson subsystem in atomic units</p></li>
+<li><p><strong>exciton_ground_state_dipole_magnitude_au</strong> (<em>float</em>) – permanent dipole moment of the excitonic ground state</p></li>
+<li><p><strong>exciton_excited_state_dipole_magnitude_au</strong> (<em>float</em>) – permanent dipole moment of the excitonic excited state</p></li>
+<li><p><strong>single_exciton_basis</strong> (<em>numpy matrix</em>) – basis states for a single excition</p></li>
+<li><p><strong>n_exciton_basis</strong> (<em>numpy matrix</em>) – basis states for the collection of N excitons</p></li>
+<li><p><strong>boson_basis</strong> (<em>numpy matrix</em>) – basis states for the N-level Harmonic oscillator</p></li>
+<li><p><strong>exciton_boson_basis</strong> (<em>numpy matrix</em>) – basis states for the collection of N excitons and the N’-level Harmonic oscillator</p></li>
+</ul>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>None</p>
+</dd>
+</dl>
+<p class="rubric">Examples</p>
+<div class="doctest highlight-default notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt; fill_in_with_actual_example!
+</pre></div>
+</div>
+<dl class="py method">
+<dt class="sig sig-object py" id="wptherml.SpinBosonDriver.__init__">
+<span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/wptherml/spin_boson.html#SpinBosonDriver.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#wptherml.SpinBosonDriver.__init__" title="Link to this definition"></a></dt>
+<dd><p>constructor for the SpinBosonDriver class</p>
+</dd></dl>
+
+<p class="rubric">Methods</p>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#wptherml.SpinBosonDriver.__init__" title="wptherml.SpinBosonDriver.__init__"><code class="xref py py-obj docutils literal notranslate"><span class="pre">__init__</span></code></a>(args)</p></td>
+<td><p>constructor for the SpinBosonDriver class</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_boson_basis</span></code>()</p></td>
+<td><p>build the basis for the N-level Harmonic oscillator</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_boson_dipole_operator</span></code>()</p></td>
+<td><p>build the boson energy operator in the N-qd N'-level coupled Hilbert space</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_boson_energy_operator</span></code>()</p></td>
+<td><p>build the boson energy operator in the N'-level bosonic - N-qd coupled Hilbert space</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_bosonic_ladder_operators</span></code>()</p></td>
+<td><p>build the bosonic raising and lowering operators</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_dipole_squared_operator</span></code>()</p></td>
+<td><p>method to build the dipole squared operator on the coupled boson-N-excition space currently just works for 2-spin boson system</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_exciton_basis</span></code>()</p></td>
+<td><p>build the basis for the N excitonic subsystems</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_exciton_boson_basis</span></code>()</p></td>
+<td><p>build the basis for the N excitonic subsystems and the N'-level Harmonic oscillator in order</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_exciton_boson_coupling_operator</span></code>()</p></td>
+<td><p>compute the exciton-boson coupling operator in the N-exciton N'-level bosonic Hilbert space</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_exciton_dipole_operator</span></code>()</p></td>
+<td><p>compute the exciton dipole operator in the N-exciton N'-level bosonic Hilbert space</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_exciton_energy_operator</span></code>()</p></td>
+<td><p>compute the exciton energy operator in the N-exciton N'-level bosonic Hilbert space</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_operator_for_exciton_j</span></code>(j[, operator, ...])</p></td>
+<td><p>build operator for the j-th exciton in the coupled N-exciton hilbert space.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_rho_from_eigenstate</span></code>(state_index)</p></td>
+<td><p>Method to build the density matrix from a particular energy eigenstate</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_rho_from_ket</span></code>(ket)</p></td>
+<td><p>Method to build the density matrix from a particular ket state</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_boson_energy_element</span></code>(bra, ket)</p></td>
+<td><p>compute the energy elements of the bosonic basis states</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_dipole_matrix_element</span></code>(bra_coeffs, ...)</p></td>
+<td><p>compute the matrix element &lt;bra | mu | ket&gt;</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_entanglement_entropy</span></code>(rdm)</p></td>
+<td><p>Method to compute the entanglement entropy of a reduced density matrix</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_exciton_boson_coupling_element</span></code>(bra, ket)</p></td>
+<td><p>compute matrix element &lt;bra|H_c|ket&gt;</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_exciton_energy_element</span></code>(bra, ket)</p></td>
+<td><p>compute matrix element &lt;bra|H_QD|ket&gt;</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_hamiltonian_on_rho</span></code>()</p></td>
+<td><p>Compute the time derivative of the density matrix from the Hamiltonian commutator.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_lindblad_boson_on_rho</span></code>()</p></td>
+<td><p>Compute the Lindblad superoperator contribution for the boson on the density matrix.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_lindblad_exciton_i_on_rho</span></code>(i)</p></td>
+<td><p>Compute the Lindblad superoperator contribution for a specific spin on the density matrix.</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_partial_traces</span></code>(rho)</p></td>
+<td><p>Method to compute all possible single partial traces of a composite density matrix; currently</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_spectrum</span></code>()</p></td>
+<td><p>method that will build spin-boson Hamiltonian, diagonalize it, and return eigenvalues</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_time_derivative_of_rho</span></code>()</p></td>
+<td><p>Compute the total time derivative of the density matrix.</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">kron_index_map_AB</span></code>(A, B)</p></td>
+<td><p>Creates a map between the row and column of the Kronecker product of two arrays</p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">kron_index_map_ABC</span></code>(A, B, C)</p></td>
+<td><p>Creates a map between the row and column of the Kronecker product of three arrays</p></td>
+</tr>
+<tr class="row-even"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_input</span></code>(args)</p></td>
+<td><p></p></td>
+</tr>
+<tr class="row-odd"><td><p><code class="xref py py-obj docutils literal notranslate"><span class="pre">rk4_update_on_rho</span></code>()</p></td>
+<td><p>Performs RK4 update on attribute self.rho which is the density matrix</p></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</section>
+
+
+           </div>
+          </div>
+          <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
+        <a href="wptherml.Materials.html" class="btn btn-neutral float-left" title="wptherml.Materials" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="wptherml.OptDriver.html" class="btn btn-neutral float-right" title="wptherml.OptDriver" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+    </div>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2021, Foley Lab. Project structure based on the Computational Molecular Science Python Cookiecutter version 1.5.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
