@@ -1,15 +1,36 @@
-# readthedocs.yml
-
 version: 2
 
+# Specify the build environment
 build:
-  image: latest
+  os: ubuntu-22.04
+  tools:
+    python: "3.9"  # Adjust to match your package's Python version
 
+# Sphinx configuration
+sphinx:
+  configuration: docs/conf.py  # Path to your conf.py file
+
+# Python dependencies
 python:
-  version: 3.8
   install:
-    - method: pip
-      path: .
+    - requirements: docs/requirements.yaml  # Ensures dependencies are installed
 
-conda:
-  environment: docs/requirements.yaml
+# Enable automatic API documentation generation (if using `sphinx-apidoc`)
+build.commands:
+  - sphinx-apidoc -o docs/source path/to/your/package --force
+  - make html  # Or sphinx-build -b html docs/source docs/build
+
+# Optional: Define explicit submodules if using Git submodules
+submodules:
+  include: true
+
+# Optional: Custom build settings
+formats:
+  - html
+  - pdf
+  - epub
+
+# Enable MkDocs if using it alongside Sphinx
+# mkdocs:
+#   configuration: mkdocs.yml
+
