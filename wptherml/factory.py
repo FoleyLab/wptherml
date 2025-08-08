@@ -2,7 +2,8 @@ from .spectrum_driver import SpectrumDriver
 
 # child classes
 from .mie import MieDriver
-from .em import TmmDriver
+#from .em import TmmDriver
+from .bare_tmm import TMMDriver
 from .therml import Therml
 from .optdriver import OptDriver
 from .exciton import ExcitonDriver

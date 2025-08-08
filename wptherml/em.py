@@ -7,7 +7,9 @@ from matplotlib.patches import Circle
 import matplotlib.colors as colors
 import matplotlib.cm as cmx
 from scipy.linalg.blas import zgemm  # BLAS-optimized complex matrix multiplication
+import logging
 
+logger = logging.getLogger(__name__)
 
 #@jit(nopython=True)
 def _compute_dm(refractive_index, cosine_theta, polarization):
@@ -234,302 +236,312 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
             # call _compute_solar_radiated_power() function
 
-    def parse_input(self, args):
-        """method to parse the user inputs and define structures / simulation
+
+    def parse_input(self, args: dict) -> None:
+        """
+        Parse user inputs from a dictionary and set attributes for simulation.
+        
+        Parameters
+        ----------
+        args : dict
+            Dictionary containing user input parameters.
+        
+        Raises
+        ------
+        ValueError
+            If critical inputs are malformed or inconsistent, e.g.,
+            mismatched lengths of thickness and material arrays.
+        
         Returns
         -------
         None
         """
-        if "incident_angle" in args:
-            # user input expected in deg so convert to radians
-            self.incident_angle = args["incident_angle"] * np.pi / 180.0
-        else:
-            self.incident_angle = 0.0
 
-        if "polarization" in args:
-            self.polarization = args["polarization"]
-            self.polarization = self.polarization.lower()
-        else:
-            self.polarization = "p"
 
-        if "wavelength_list" in args:
-            lamlist = args["wavelength_list"]
-            self.wavelength_array = np.linspace(lamlist[0], lamlist[1], int(lamlist[2]))
-            self.number_of_wavelengths = int(lamlist[2])
-            self.wavenumber_array = 1 / self.wavelength_array
-        # default wavelength array
-        else:
-            self.wavelength_array = np.linspace(400e-9, 800e-9, 10)
-            self.number_of_wavelengths = 10
-            self.wavenumber_array = 1 / self.wavelength_array
-
-        # need to throw some exceptions if len(self.thickness_array)!=len(self.material_array)
-        if "thickness_list" in args:
-            self.thickness_array = np.array(args["thickness_list"])
-        # default structure
-        else:
-            print("  Thickness array not specified!")
-            print("  Proceeding with default structure - optically thick W! ")
-            self.thickness_array = np.array([0, 900e-9, 0])
-
-        if "material_list" in args:
-            self.material_array = args["material_list"]
-            self.number_of_layers = len(self.material_array)
-        else:
-            print("  Material array not specified!")
-            print("  Proceeding with default structure - Air / SiO2 / Air ")
-            self.material_array = ["Air", "SiO2", "Air"]
-            self.number_of_layers = 3
-            
-        # see if we want to specify certain layers to randomize the thickness of
-        if "random_thickness_layers" in args:
-            self.random_thickness_list = np.array(
-                args["random_thickness_layers"], dtype=int
-            )
-        else:
-            # default is that all layers can be randomized in thickness
-            self.random_thickness_list = np.linspace(
-                1, self.number_of_layers - 2, self.number_of_layers - 2, dtype=int
-            )
-
-        # do we want to put bounds on the random thicknesses (specified in nanometers)
-        if "random_thickness_bounds_nm" in args:
-            bounds = args["random_thickness_bounds"]
-            self.minimum_thickness_nm = bounds[0]
-            self.maximum_thickness_nm = bounds[1]
-        else:
-            # default to 1 nm for minimum and 1000 nm for maximum
-            self.minimum_thickness_nm = 1
-            self.maximum_thickness_nm = 1000
-
-        # see if we want to specifiy only certain layers with materials
-        # that can be randomized
-        if "random_material_layers" in args:
-            self.random_materials_list = np.array(
-                args["random_material_layers"], dtype=int
-            )
-
-        # default is that all layers can be randomized
-        else:
-            self.random_materials_list = np.linspace(
-                1, self.number_of_layers - 2, self.number_of_layers - 2, dtype=int
-            )
-
-        # see if there are specific materials we would like to draw from
-        if "possible_random_materials" in args:
-            self.possible_materials = args["possible_random_materials"]
-        else:
-            # default materials to draw from
-            self.possible_materials = ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
-
-        if "transmission_efficiency_weight" in args:
-            print("Found transmission efficiency weight (TEW) arg")
-            self.transmission_efficiency_weight = args["transmission_efficiency_weight"]
-        else:
-            self.transmission_efficiency_weight = 1./3.
-        print(F'TEW is {self.transmission_efficiency_weight}')
+        # --- Incident Angles (list of degrees -> radians) ---
+        incident_angles = args.get("incident_angle", [0.0])
         
-        if "reflection_efficiency_weight" in args:
-            self.reflection_efficiency_weight = args["reflection_efficiency_weight"]
-            print("Found reflection efficiency weight (REW) arg")
+        # If a scalar is provided instead of list, convert to list for uniformity
+        if isinstance(incident_angles, (int, float)):
+            incident_angles = [incident_angles]
+        elif not isinstance(incident_angles, (list, tuple, np.ndarray)):
+            raise ValueError(f"incident_angle must be a scalar or list/array, got {type(incident_angles)}")
+        
+        self.incident_angle = np.deg2rad(np.array(incident_angles, dtype=float))
+        
+        # --- Number of Angles ---
+        self.number_of_angles = len(self.incident_angle)
+        
+        # --- Polarization ---
+        # Default logic:
+        # - If single angle at 0°, default to "p"
+        # - Otherwise compute both "p" and "s" unless user explicitly provides a polarization list/string
+        
+        user_polarization = args.get("polarization", None)
+        
+        if self.number_of_angles == 1 and np.isclose(self.incident_angle[0], 0.0):
+            # Single normal incidence angle: p and s are identical
+            if user_polarization is None:
+                self.polarization = ["p"]  # default to p polarization
+            else:
+                # accept single string or list with one polarization
+                if isinstance(user_polarization, str):
+                    self.polarization = [user_polarization.lower()]
+                elif isinstance(user_polarization, (list, tuple)):
+                    if len(user_polarization) != 1:
+                        raise ValueError("polarization list length must be 1 for single incident angle")
+                    self.polarization = [user_polarization[0].lower()]
+                else:
+                    raise ValueError("polarization must be string or list of strings")
         else:
-            self.reflection_efficiency_weight = 1./3.
-        print(F'REW is {self.reflection_efficiency_weight}')
+            # Multiple angles or nonzero angle: polarization must cover both 'p' and 's' unless specified
+            if user_polarization is None:
+                self.polarization = ["p", "s"]
+            else:
+                # User provided polarization — accept string or list, normalize to list
+                if isinstance(user_polarization, str):
+                    self.polarization = [user_polarization.lower()]
+                elif isinstance(user_polarization, (list, tuple)):
+                    self.polarization = [p.lower() for p in user_polarization]
+                else:
+                    raise ValueError("polarization must be string or list of strings")
 
-        if "reflection_selectivity_weight" in args:
-            print("Found reflection selectivity weight (RSW) arg")
-            self.reflection_selectivity_weight = args["reflection_selectivity_weight"]
+        # You can add validation here to ensure polarization values are valid ('p' and/or 's')
+        valid_pols = {"p", "s"}
+        if not all(p in valid_pols for p in self.polarization):
+            raise ValueError(f"polarization entries must be 'p' or 's', got {self.polarization}")
+
+        # --- Now self.incident_angle is an array of radians, 
+        # --- self.number_of_angles matches its length,
+        # --- and self.polarization is a list like ['p'] or ['p','s'] ready for downstream use.
+
+        # --- Wavelength list and related arrays ---
+        lamlist = args.get("wavelength_list", [400e-9, 800e-9, 10])
+        if (
+            not isinstance(lamlist, (list, tuple)) or
+            len(lamlist) != 3 or
+            not all(isinstance(x, (int, float)) for x in lamlist)
+        ):
+            raise ValueError(f"Invalid wavelength_list format: {lamlist}")
+        
+        start, stop, num = lamlist
+        num = int(num)
+        if num <= 0:
+            raise ValueError(f"Number of wavelengths must be positive, got {num}")
+        self.wavelength_array = np.linspace(start, stop, num)
+        self.number_of_wavelengths = num
+        self.wavenumber_array = 1 / self.wavelength_array
+
+        # --- Thickness array ---
+        thickness_list = args.get("thickness_list")
+        if thickness_list is None:
+            logger.warning("Thickness array not specified, proceeding with default [0, 900e-9, 0].")
+            self.thickness_array = np.array([0, 900e-9, 0])
         else:
-            self.reflection_selectivity_weight = 1./3.
-        print(F'RSW is {self.reflection_selectivity_weight}')
+            self.thickness_array = np.array(thickness_list, dtype=float)
 
-
-
-        _tot_weight = (
-            self.transmission_efficiency_weight + self.reflection_efficiency_weight + self.reflection_selectivity_weight
-        )
-        print(_tot_weight)
-        self.transmission_efficiency_weight /= _tot_weight
-        self.reflection_efficiency_weight /= _tot_weight
-        self.reflection_selectivity_weight /= _tot_weight
-
-        # user can specify which layers to compute gradients with respect to
-        # i.e. for a structure like ['Air', 'SiO2', 'Ag', 'TiO2', 'Air]
-        # the gradient list [1, 2] would take the gradients
-        # with respect to layer 1 (top-most SiO2) and layer 2 (silver) only, while
-        # leaving out layer 3 (TiO2)
-        if "gradient_list" in args:
-            self.gradient_list = np.array(args["gradient_list"])
-        # default is all layers
+        # --- Material array ---
+        material_list = args.get("material_list")
+        if material_list is None:
+            logger.warning("Material array not specified, proceeding with default ['Air', 'SiO2', 'Air'].")
+            self.material_array = ["Air", "SiO2", "Air"]
         else:
-            self.gradient_list = np.linspace(
-                1, self.number_of_layers - 2, self.number_of_layers - 2, dtype=int
+            if not isinstance(material_list, (list, tuple)):
+                raise ValueError("material_list must be a list or tuple")
+            self.material_array = material_list
+        
+        self.number_of_layers = len(self.material_array)
+
+        # --- Check consistency of thickness and material arrays ---
+        if len(self.thickness_array) != self.number_of_layers:
+            raise ValueError(
+                f"Thickness array length ({len(self.thickness_array)}) does not match material array length ({self.number_of_layers})"
             )
 
-        # if we specify a number of angles to compute the spectra over
-        # this only gets used if we need explicit inclusion of angle of incidence/emission
-        # for a given quantity
-        if "number_of_angles" in args:
-            self.number_of_angles = args["number_of_angles"]
+        # --- Random thickness layers ---
+        if "random_thickness_layers" in args:
+            self.random_thickness_list = np.array(args["random_thickness_layers"], dtype=int)
         else:
-            # this is a good default empirically if
-            # Gauss-Legendre quadrature is used for angular spectra
-            self.number_of_angles = 7
-            
-        # some keywords for the visible transmissive and IR reflective Stacks for Blake and Michael
-        #
-        if "transmissive_window_nm" in args:
-            lamlist = args["transmissive_window_nm"]
-            # in nanometers
-            self.transmissive_window_start_nm = lamlist[0]
-            self.transmissive_window_stop_nm = lamlist[1]
-            # in SI units
-            self.transmissive_window_start = lamlist[0] * 1e-9
-            self.transmissive_window_stop = lamlist[1] * 1e-9
+            # Default: all layers except first and last (interface layers)
+            if self.number_of_layers > 2:
+                self.random_thickness_list = np.arange(1, self.number_of_layers - 1, dtype=int)
+            else:
+                self.random_thickness_list = np.array([], dtype=int)
+
+        # --- Random thickness bounds in nanometers ---
+        bounds = args.get("random_thickness_bounds_nm", [1, 1000])
+        if (
+            not isinstance(bounds, (list, tuple)) or
+            len(bounds) != 2 or
+            not all(isinstance(b, (int, float)) for b in bounds)
+        ):
+            raise ValueError(f"Invalid random_thickness_bounds_nm format: {bounds}")
+        self.minimum_thickness_nm, self.maximum_thickness_nm = bounds
+
+        # --- Random material layers ---
+        if "random_material_layers" in args:
+            self.random_materials_list = np.array(args["random_material_layers"], dtype=int)
         else:
-            # default to visible
-            self.transmissive_window_start = 350e-9
-            self.transmissive_window_stop = 700e-9
+            if self.number_of_layers > 2:
+                self.random_materials_list = np.arange(1, self.number_of_layers - 1, dtype=int)
+            else:
+                self.random_materials_list = np.array([], dtype=int)
 
-        self.transmissive_envelope = np.zeros_like(self.wavelength_array)
-        for i in range(self.number_of_wavelengths):
-            if (
-                self.wavelength_array[i] >= self.transmissive_window_start
-                and self.wavelength_array[i] <= self.transmissive_window_stop
-            ):
-                self.transmissive_envelope[i] = 1.0
+        # --- Possible random materials ---
+        self.possible_materials = args.get(
+            "possible_random_materials",
+            ["SiO2", "Al2O3", "TiO2", "Ag", "Au", "Ta2O5"]
+        )
 
-        if "reflective_window_wn" in args:
-            lamlist = args["reflective_window_wn"]
-            # in inverse cm
-            self.reflective_window_start_wn = lamlist[0]
-            self.reflective_window_stop_wn = lamlist[1]
-            # in SI units
-            self.reflective_window_start = 10000000 / lamlist[1] * 1e-9
-            self.reflective_window_stop = 10000000 / lamlist[0] * 1e-9
+        # --- Efficiency Weights with normalization ---
+        def get_weight(key, default, name):
+            value = args.get(key, default)
+            logger.info(f"Using {name}: {value}")
+            return float(value)
+
+        tew = get_weight("transmission_efficiency_weight", 1.0/3.0, "Transmission Efficiency Weight (TEW)")
+        rew = get_weight("reflection_efficiency_weight", 1.0/3.0, "Reflection Efficiency Weight (REW)")
+        rsw = get_weight("reflection_selectivity_weight", 1.0/3.0, "Reflection Selectivity Weight (RSW)")
+
+        total_weight = tew + rew + rsw
+        if total_weight == 0:
+            raise ValueError("Sum of efficiency weights cannot be zero.")
+        self.transmission_efficiency_weight = tew / total_weight
+        self.reflection_efficiency_weight = rew / total_weight
+        self.reflection_selectivity_weight = rsw / total_weight
+
+        # --- Gradient list ---
+        if "gradient_list" in args:
+            self.gradient_list = np.array(args["gradient_list"], dtype=int)
         else:
-            # default to 2000 - 2400 wavenumbers
-            self.reflective_window_start_wn = 2000
-            self.reflective_window_stop_wn = 2400
-            # in SI units
-            self.reflective_window_start = 10000000 / 2400 * 1e-9
-            self.reflective_window_stop = 10000000 / 2000 * 1e-9
+            if self.number_of_layers > 2:
+                self.gradient_list = np.arange(1, self.number_of_layers - 1, dtype=int)
+            else:
+                self.gradient_list = np.array([], dtype=int)
 
-        self.reflective_envelope = np.zeros_like(self.wavelength_array)
-        for i in range(self.number_of_wavelengths):
-            if (
-                self.wavelength_array[i] >= self.reflective_window_start
-                and self.wavelength_array[i] <= self.reflective_window_stop
-            ):
-                self.reflective_envelope[i] = 1.0
 
-        # Retrieve psc thickness for _EQE_spectral_response
-        if "psc_thickness_option" in args:
-            self.psc_thickness_option = args["psc_thickness_option"]
-        # default to 200
-        else:
-            self.psc_thickness_option = 200
+        # --- Transmissive window (nm) ---
+        transmissive_window_nm = args.get("transmissive_window_nm", [350, 700])
+        if (
+            not isinstance(transmissive_window_nm, (list, tuple)) or
+            len(transmissive_window_nm) != 2
+        ):
+            raise ValueError(f"Invalid transmissive_window_nm format: {transmissive_window_nm}")
 
-        if "pv_lambda_bandgap" in args:
-            self.pv_lambda_bandgap = args["pv_lambda_bandgap"]
-        else:
-            self.pv_lambda_bandgap = 750e-9
-            
-        # for now always get solar spectrum!
+        self.transmissive_window_start_nm, self.transmissive_window_stop_nm = transmissive_window_nm
+        self.transmissive_window_start = self.transmissive_window_start_nm * 1e-9
+        self.transmissive_window_stop = self.transmissive_window_stop_nm * 1e-9
+
+        self.transmissive_envelope = np.where(
+            (self.wavelength_array >= self.transmissive_window_start) &
+            (self.wavelength_array <= self.transmissive_window_stop),
+            1.0,
+            0.0
+        )
+
+        # --- Reflective window (wavenumbers cm^-1) ---
+        reflective_window_wn = args.get("reflective_window_wn", [2000, 2400])
+        if (
+            not isinstance(reflective_window_wn, (list, tuple)) or
+            len(reflective_window_wn) != 2
+        ):
+            raise ValueError(f"Invalid reflective_window_wn format: {reflective_window_wn}")
+
+        self.reflective_window_start_wn, self.reflective_window_stop_wn = reflective_window_wn
+
+        # Convert wavenumbers to wavelength in meters: λ = 1 / (wn in m^-1)
+        # wavenumber is in cm^-1 so convert to m^-1 by multiplying by 100
+        self.reflective_window_start = 1 / (self.reflective_window_stop_wn * 100)
+        self.reflective_window_stop = 1 / (self.reflective_window_start_wn * 100)
+
+        self.reflective_envelope = np.where(
+            (self.wavelength_array >= self.reflective_window_start) &
+            (self.wavelength_array <= self.reflective_window_stop),
+            1.0,
+            0.0
+        )
+
+        # --- PSC Thickness Option ---
+        self.psc_thickness_option = int(args.get("psc_thickness_option", 200))
+
+        # --- PV Lambda Bandgap ---
+        self.pv_lambda_bandgap = args.get("pv_lambda_bandgap", 750e-9)
+
+        # --- Load solar spectrum and atmospheric transmissivity ---
         self._solar_spectrum = self._read_AM()
-
-        # for now always get atmospheric transmissivity spectru
         self._atmospheric_transmissivity = self._read_Atmospheric_Transmissivity()
 
+    def set_refractive_index_array(self) -> None:
+        """
+        Define the refractive index array for each layer and wavelength based on specified materials.
+
+        - Initializes refractive index array with dummy values.
+        - Sets terminal layers to Air by default.
+        - Assigns refractive indices to intermediate layers based on material names.
+        - If material name is not recognized, attempts to load from file.
+
+        Raises
+        ------
+        ValueError
+            If the length of self.material_array does not match self.number_of_layers.
+        """
         
+        if len(self.material_array) != self.number_of_layers:
+            raise ValueError(
+                f"material_array length ({len(self.material_array)}) does not match number_of_layers ({self.number_of_layers})"
+            )
 
-    def set_refractive_index_array(self):
-        """once materials are specified, define the refractive_index_array values"""
+        # Initialize refractive index array with complex ones
+        ri_list = np.ones(self.number_of_layers, dtype=complex)
+        self._refractive_index_array = np.tile(ri_list, (self.number_of_wavelengths, 1))
 
-        # initialize _ri_list based on the number of layers
-        _ri_list = np.ones(self.number_of_layers, dtype=complex)
-
-        # initialize the _refractive_index_array with dummy values define the true values later!
-        self._refractive_index_array = np.reshape(
-            np.tile(_ri_list, self.number_of_wavelengths),
-            (self.number_of_wavelengths, self.number_of_layers),
-        )
-
-        # terminal layers default to air for now... generalize later!
+        # Default terminal layers to Air
         self.material_Air(0)
         self.material_Air(self.number_of_layers - 1)
-        for i in range(1, self.number_of_layers - 1):
-            # get lower clase version of the material string
-            # to avoid any conflicts with variation in cases
-            # given by the user
-            _lm = self.material_array[i].lower()
-            # keep the original string too in case it is a file name
-            _original_string = self.material_array[i]
 
-            # check all possible values of the material string
-            # and set material as appropriate.
-            # in future probably good to create a single wrapper
-            # function in materials.py that will do this so
-            # that MieDriver and TmmDriver can just use it rather
-            # than duplicating this kind of code in both classes
-            if _lm == "air":
-                self.material_Air(i)
-            elif _lm == "ag":
-                self.material_Ag(i)
-            elif _lm == "al":
-                self.material_Al(i)
-            elif _lm == "al2o3":
-                self.material_Al2O3(i)
-            elif _lm == "al2o3_udm":
-                self.material_Al2O3_UDM(i)
-            elif _lm == "aln":
-                self.material_AlN(i)
-            elif _lm == "au":
-                self.material_Au(i)
-            elif _lm == "hfo2":
-                self.material_HfO2(i)
-            elif _lm == "hfo2_udm":
-                self.material_HfO2_UDM(i) #<== from this source http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk - recommended for ALD HfO2
-            elif _lm == "hfo2_udm_no_loss":
-                self.material_HfO2_UDM_v2(i) #<== from this source http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk but k set to 0.0
-            elif _lm == "mgf2":
-                self.material_MgF2_UDM(i) #<== from this source http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk - recommended for ALD MgF2
-            elif _lm == "pb":
-                self.material_Pb(i)
-            elif _lm == "polystyrene":
-                self.material_polystyrene(i)
-            elif _lm == "pt":
-                self.material_Pt(i)
-            elif _lm == "re":
-                self.material_Re(i)
-            elif _lm == "rh":
-                self.material_Rh(i)
-            elif _lm == "ru":
-                self.material_Ru(i)
-            elif _lm == "si":
-                self.material_Si(i)
-            elif _lm == "sio2":
-                self.material_SiO2(i)
-            elif _lm == "sio2_udm": 
-                self.material_SiO2_UDM(i)
-            elif _lm == "sio2_udm_v2": #<== from this source http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk - recommended for ALD SiO2
-                self.material_SiO2_UDM_v2(i)
-            elif _lm == "ta2o5":
-              self.material_Ta2O5(i)
-            elif _lm == "tin":
-                self.material_TiN(i)
-            elif _lm == "tio2":
-                self.material_TiO2(i)
-            elif _lm == "w":
-                self.material_W(i)
-            elif _lm == "zro2":
-                self.material_ZrO2(i)
-            elif _lm == "si3n4":
-                self.material_Si3N4(i)
-            # if we don't match one of these strings, then we assume the user has passed
-            # a filename
+        # Mapping from lowercase material string to corresponding method name
+        material_methods = {
+            "air": self.material_Air,
+            "ag": self.material_Ag,
+            "al": self.material_Al,
+            "al2o3": self.material_Al2O3,
+            "al2o3_udm": self.material_Al2O3_UDM,
+            "aln": self.material_AlN,
+            "au": self.material_Au,
+            "hfo2": self.material_HfO2,
+            "hfo2_udm": self.material_HfO2_UDM,  # from http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk
+            "hfo2_udm_no_loss": self.material_HfO2_UDM_v2,  # k set to 0.0
+            "mgf2": self.material_MgF2_UDM,  # from http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk
+            "pb": self.material_Pb,
+            "polystyrene": self.material_polystyrene,
+            "pt": self.material_Pt,
+            "re": self.material_Re,
+            "rh": self.material_Rh,
+            "ru": self.material_Ru,
+            "si": self.material_Si,
+            "sio2": self.material_SiO2,
+            "sio2_udm": self.material_SiO2_UDM,
+            "sio2_udm_v2": self.material_SiO2_UDM_v2,  # from http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk
+            "ta2o5": self.material_Ta2O5,
+            "tin": self.material_TiN,
+            "tio2": self.material_TiO2,
+            "w": self.material_W,
+            "zro2": self.material_ZrO2,
+            "si3n4": self.material_Si3N4,
+        }
+
+        # Assign refractive index for each internal layer
+        for i in range(1, self.number_of_layers - 1):
+            material_name = self.material_array[i]
+            material_key = material_name.lower()
+
+            if material_key in material_methods:
+                logger.debug(f"Assigning refractive index for layer {i}: {material_name}")
+                material_methods[material_key](i)
             else:
-                self.material_from_file(i, _original_string)
+                # Assume material_name is a filename if not matched
+                logger.info(f"Material '{material_name}' not recognized; loading from file for layer {i}.")
+                self.material_from_file(i, material_name)
 
     def reverse_stack(self):
         """reverse the order of the stack
@@ -1527,7 +1539,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             _k0_array : 1 x number of wavelengths float
                 the wavenumbers that will illuminate the structure in SI units
         """
-        self._k0_array = np.pi * 2 / self.wavelength_array
+        self._k0_array = np.pi * 2 / self.wavelength_array # in units of 1/m
 
     def _compute_kx(self):
         """computes the _kx_array
@@ -1543,11 +1555,18 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
                 the wavevector magnitude in the incident layer for each wavelengthhe wavenumbers that will illuminate the structure in SI units
         """
         # compute kx_array
-        self._kx_array = (
-            self._refractive_index_array[:, 0]
-            * np.sin(self.incident_angle)
-            * self._k0_array
-        )
+        incident_angle = self.incident_angle.reshape(1,-1) # (1, N_angles)
+        k0 = self._k0_array.reshape(-1, 1) # (N_wavelengths, 1)
+        n0 = self._refractive_index_array[:, 0].reshape(-1, 1) # (N_wavelengths, 1)
+
+        self._kx_array = ( n0 * np.sin(incident_angle) * k0 )
+
+        ## compute kx_array
+        #self._kx_array = (
+        #    self._refractive_index_array[:, 0]
+        #    * np.sin(self.incident_angle)
+        #    * self._k0_array
+        #)
 
     #def _compute_tm_gradient(self, _refractive_index, _k0, _kz, _d, _ln):
     """compute the transfer matrix for each wavelength
