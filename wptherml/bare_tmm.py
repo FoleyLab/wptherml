@@ -1,5 +1,4 @@
-from .spectrum_driver import SpectrumDriver
-from .materials import Materials
+
 import numpy as np
 from scipy.linalg.blas import zgemm  # BLAS-optimized complex matrix multiplication
 import logging
@@ -34,17 +33,17 @@ def compute_dm_vectorized(n_layer, cos_t, pol):
 
     return D, D_inv
 
-    # --- Helper function to compute P matrices vectorized ---
-    def compute_pm_vectorized(phil_layer):
-        # phil_layer shape: (N_lambda, N_theta)
-        shape = phil_layer.shape + (2, 2)
-        P = np.zeros(shape, dtype=np.complex128)
-        exp_minus = np.exp(-1j * phil_layer)
-        exp_plus = np.exp(1j * phil_layer)
+# --- Helper function to compute P matrices vectorized ---
+def compute_pm_vectorized(phil_layer):
+    # phil_layer shape: (N_lambda, N_theta)
+    shape = phil_layer.shape + (2, 2)
+    P = np.zeros(shape, dtype=np.complex128)
+    exp_minus = np.exp(-1j * phil_layer)
+    exp_plus = np.exp(1j * phil_layer)
 
-        P[..., 0, 0] = exp_minus
-        P[..., 1, 1] = exp_plus
-        return P
+    P[..., 0, 0] = exp_minus
+    P[..., 1, 1] = exp_plus
+    return P
 
 
 def batch_matmul(A, B):
@@ -56,9 +55,9 @@ def batch_matmul(A, B):
     return np.einsum('...ij,...jk->...ik', A, B)
 
 
-class TmmDriver(SpectrumDriver, Materials):
+class TmmDriver:
     """Collects methods for computing the reflectivity, absorptivity/emissivity, and transmissivity
-       of multilayer structures using the Transfer Matrix Method.
+       of multilayer structures using the Transfer Matrix Method
 
     Attributes
     ----------
@@ -114,7 +113,7 @@ class TmmDriver(SpectrumDriver, Materials):
         # parse user inputs
         self.parse_input(args)
         # set refractive index array
-        self.set_refractive_index_array()
+        self.set_refractive_index_array(test=True)
         # compute reflectivity spectrum
         self.compute_spectrum()
 
@@ -351,11 +350,9 @@ class TmmDriver(SpectrumDriver, Materials):
         # --- PV Lambda Bandgap ---
         self.pv_lambda_bandgap = args.get("pv_lambda_bandgap", 750e-9)
 
-        # --- Load solar spectrum and atmospheric transmissivity ---
-        self._solar_spectrum = self._read_AM()
-        self._atmospheric_transmissivity = self._read_Atmospheric_Transmissivity()
 
-    def set_refractive_index_array(self) -> None:
+
+    def set_refractive_index_array(self, test : bool = False) -> None:
         """
         Define the refractive index array for each layer and wavelength based on specified materials.
 
@@ -370,62 +367,105 @@ class TmmDriver(SpectrumDriver, Materials):
             If the length of self.material_array does not match self.number_of_layers.
         """
         
-        if len(self.material_array) != self.number_of_layers:
-            raise ValueError(
-                f"material_array length ({len(self.material_array)}) does not match number_of_layers ({self.number_of_layers})"
-            )
+        if test:
+            # Define constants
+            n_air = 1.0 + 0j
+            n_1 = 1.5 + 0j
+            n_2 = 2.2 + 0.01j
 
-        # Initialize refractive index array with complex ones
-        ri_list = np.ones(self.number_of_layers, dtype=complex)
-        self._refractive_index_array = np.tile(ri_list, (self.number_of_wavelengths, 1))
+            # Number of physical layers in the test stack (excluding air layers)
+            physical_layers = 10
+            total_layers = physical_layers + 2  # add incident and exit air layers
+
+            # Update number_of_layers accordingly
+            self.number_of_layers = total_layers
+
+            # Ensure wavelength array is defined
+            if not hasattr(self, 'number_of_wavelengths'):
+                raise RuntimeError("number_of_wavelengths not set before calling set_refractive_index_array")
+
+            # Create empty array for refractive indices: shape (N_lambda, total_layers)
+            self._refractive_index_array = np.zeros((self.number_of_wavelengths, total_layers), dtype=np.complex128)
+
+            # Set air layers
+            self._refractive_index_array[:, 0] = n_air
+            self._refractive_index_array[:, -1] = n_air
+
+            # Fill alternating layers
+            for layer in range(1, total_layers -1):
+                if layer % 2 == 1:
+                    # Odd layer index: n_1
+                    self._refractive_index_array[:, layer] = n_1
+                else:
+                    # Even layer index: n_2
+                    self._refractive_index_array[:, layer] = n_2
+
+            # Optionally log this setup
+            logger.info(f"Test refractive index array created with shape {self._refractive_index_array.shape}")
+
+            # Set thickness array to default for 12 layers if not set:
+            if not hasattr(self, 'thickness_array') or len(self.thickness_array) != total_layers:
+                self.thickness_array = np.ones(total_layers) * 100e-9  # example thickness 100 nm each
+                self.thickness_array[0] = 0.0  # incident layer infinite
+                self.thickness_array[-1] = 0.0  # exit layer infinite
+
+            # Update material array for completeness if needed
+            self.material_array = ["Air"] + ["n_1" if i % 2 == 1 else "n_2" for i in range(1, total_layers-1)] + ["Air"]
+
+        else:
+            if len(self.material_array) != self.number_of_layers:
+                raise ValueError(
+                    f"material_array length ({len(self.material_array)}) does not match number_of_layers ({self.number_of_layers})"
+                )
+
 
         # Default terminal layers to Air
-        self.material_Air(0)
-        self.material_Air(self.number_of_layers - 1)
+        #self.material_Air(0)
+        #self.material_Air(self.number_of_layers - 1)
 
         # Mapping from lowercase material string to corresponding method name
-        material_methods = {
-            "air": self.material_Air,
-            "ag": self.material_Ag,
-            "al": self.material_Al,
-            "al2o3": self.material_Al2O3,
-            "al2o3_udm": self.material_Al2O3_UDM,
-            "aln": self.material_AlN,
-            "au": self.material_Au,
-            "hfo2": self.material_HfO2,
-            "hfo2_udm": self.material_HfO2_UDM,  # from http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk
-            "hfo2_udm_no_loss": self.material_HfO2_UDM_v2,  # k set to 0.0
-            "mgf2": self.material_MgF2_UDM,  # from http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk
-            "pb": self.material_Pb,
-            "polystyrene": self.material_polystyrene,
-            "pt": self.material_Pt,
-            "re": self.material_Re,
-            "rh": self.material_Rh,
-            "ru": self.material_Ru,
-            "si": self.material_Si,
-            "sio2": self.material_SiO2,
-            "sio2_udm": self.material_SiO2_UDM,
-            "sio2_udm_v2": self.material_SiO2_UDM_v2,  # from http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk
-            "ta2o5": self.material_Ta2O5,
-            "tin": self.material_TiN,
-            "tio2": self.material_TiO2,
-            "w": self.material_W,
-            "zro2": self.material_ZrO2,
-            "si3n4": self.material_Si3N4,
-        }
+        #material_methods = {
+        #    "air": self.material_Air,
+        #    "ag": self.material_Ag,
+        #    "al": self.material_Al,
+        #    "al2o3": self.material_Al2O3,
+        #    "al2o3_udm": self.material_Al2O3_UDM,
+        #    "aln": self.material_AlN,
+        #    "au": self.material_Au,
+        #    "hfo2": self.material_HfO2,
+        #    "hfo2_udm": self.material_HfO2_UDM,  # from http://newad.physics.muni.cz/table-udm/HfO2-X2194-AO54_9108.Enk
+        #    "hfo2_udm_no_loss": self.material_HfO2_UDM_v2,  # k set to 0.0
+        #    "mgf2": self.material_MgF2_UDM,  # from http://newad.physics.muni.cz/table-udm/MgF2-X2935-SPIE9628.Enk
+        #    "pb": self.material_Pb,
+        #    "polystyrene": self.material_polystyrene,
+        #    "pt": self.material_Pt,
+        #    "re": self.material_Re,
+        #    "rh": self.material_Rh,
+        #    "ru": self.material_Ru,
+        #    "si": self.material_Si,
+        #    "sio2": self.material_SiO2,
+        #    "sio2_udm": self.material_SiO2_UDM,
+        #    "sio2_udm_v2": self.material_SiO2_UDM_v2,  # from http://newad.physics.muni.cz/table-udm/LithosilQ2-SPIE9890.Enk
+        #    "ta2o5": self.material_Ta2O5,
+        #    "tin": self.material_TiN,
+        #    "tio2": self.material_TiO2,
+        #    "w": self.material_W,
+        #    "zro2": self.material_ZrO2,
+        #    "si3n4": self.material_Si3N4,
+        #}
 
         # Assign refractive index for each internal layer
-        for i in range(1, self.number_of_layers - 1):
-            material_name = self.material_array[i]
-            material_key = material_name.lower()
+        #for i in range(1, self.number_of_layers - 1):
+        #    material_name = self.material_array[i]
+        #    material_key = material_name.lower()
 
-            if material_key in material_methods:
-                logger.debug(f"Assigning refractive index for layer {i}: {material_name}")
-                material_methods[material_key](i)
-            else:
-                # Assume material_name is a filename if not matched
-                logger.info(f"Material '{material_name}' not recognized; loading from file for layer {i}.")
-                self.material_from_file(i, material_name)
+        #    if material_key in material_methods:
+        #        logger.debug(f"Assigning refractive index for layer {i}: {material_name}")
+        #        material_methods[material_key](i)
+        #    else:
+        #        # Assume material_name is a filename if not matched
+        #        logger.info(f"Material '{material_name}' not recognized; loading from file for layer {i}.")
+        #        self.material_from_file(i, material_name)
 
     
     def compute_spectrum(self):
@@ -639,37 +679,28 @@ logging.basicConfig(level=logging.INFO)
 # Example input dictionary
 test_args = {
     "wavelength_list": [400e-9, 800e-9, 100],  # 100 wavelengths from 400 to 800 nm
-    "material_list": ["Air", "SiO2", "Au", "Air"],
-    "thickness_list": [0, 200e-9, 10e-9, 0],
+    "material_list": ["Air", "SiO2", "Au", "SiO2", "Au", "SiO2", "Au", "SiO2", "Au", "SiO2", "Au", "Air"],
+    "thickness_list": [0, 200e-9, 10e-9,200e-9, 10e-9,200e-9, 10e-9,200e-9, 10e-9,200e-9, 10e-9,  0],
     # You can specify incident angle as scalar or list, default is [0.0]
-    # "incident_angle": [0.0],
+    "incident_angle": [0.0],
     # You can specify polarization, but default works fine for single angle
-    # "polarization": "p",
+    "polarization": "p",
 }
 
-def run_tmm_example():
-    # Assuming TmmDriver is imported and available
-    driver = TmmDriver(test_args)
+driver = TmmDriver(test_args)  # normal init
 
-    # The constructor calls parse_input, set_refractive_index_array, and compute_spectrum already
+# Override number_of_layers and number_of_wavelengths if needed (usually set by parse_input)
+driver.number_of_layers = 12
+driver.number_of_wavelengths = len(driver.wavelength_array)
 
-    # Let's print the shapes of computed spectra
-    print(f"Reflectivity array shape: {driver.reflectivity_array.shape}")   # Expected (100, 1, 1)
-    print(f"Transmissivity array shape: {driver.transmissivity_array.shape}")
-    print(f"Emissivity array shape: {driver.emissivity_array.shape}")
+# Call with test=True to build synthetic refractive index array
+driver.set_refractive_index_array(test=True)
 
-    # Print spectra at normal incidence and p-polarization (index 0)
-    wavelengths_nm = driver.wavelength_array * 1e9
+# Now compute the spectrum
+driver.compute_spectrum()
 
-    R = driver.reflectivity_array[:, 0, 0]
-    T = driver.transmissivity_array[:, 0, 0]
-    E = driver.emissivity_array[:, 0, 0]
+# Print or plot results...
+print(driver.reflectivity_array.shape)  # Should be (N_lambda, N_theta, N_pol)
 
-    print("\nWavelength (nm) | Reflectivity | Transmissivity | Emissivity")
-    print("-" * 55)
-    for wl, r, t, e in zip(wavelengths_nm, R, T, E):
-        print(f"{wl:10.1f}       | {r:10.4f}    | {t:12.4f}   | {e:9.4f}")
-
-if __name__ == "__main__":
-    run_tmm_example()
-
+# print reflectivity for first wavelength, first angle, first polarization
+print("Reflectivity at first wavelength, angle, polarization:", driver.reflectivity_array[0, 0, 0])
