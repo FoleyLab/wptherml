@@ -34,6 +34,10 @@ def _compute_dm(refractive_index, cosine_theta, polarization):
     _dim[1, 0] = -_det * _dm[1, 0]
     _dim[1, 1] = _det * _dm[0, 0]
 
+    #print("GOING TO PRINT D")
+    #print(_dm)
+    #print("GOING TO PRINT D_INV")
+    #print(_dim)
     return _dm, _dim
 
 
@@ -44,7 +48,8 @@ def _compute_pm(phil):
 
     _pm[0, 0] = np.exp(-_ci * phil)
     _pm[1, 1] = np.exp(_ci * phil)
-
+    #print("GOING TO PRINT P")
+    #print(_pm)
     return _pm
 
 #@jit(nopython=True)
@@ -646,6 +651,8 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             _tm, _theta_array, _cos_theta_array = self._compute_tm(
                 _ri, _k0, _kz, self.thickness_array
             )
+            #print(F"GOING TO PRINT TM FOR WAVELENGTH {self.wavelength_array[i]*1e9} nm")
+            #print(_tm)
 
             # if self.gradient==True:
             #    _tmg = self._compute_tm_grad(_ri, _k0, _kz, self.thickness_array)
@@ -1610,22 +1617,34 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # Initialize matrices
         _DM, _tm = _compute_dm(_refractive_index[0], _CTHETA[0], self.polarization)
+        #print(f"Layer 0 D matrix (_DM):\n{_DM}")
+        #print(f"Initial transfer matrix (_tm):\n{_tm}")
 
         # Loop through layers (optimized)
         for i in range(1, self.number_of_layers - 1):
             _DM, _DIM = _compute_dm(_refractive_index[i], _CTHETA[i], self.polarization)
             _PM = _compute_pm(_PHIL[i])
 
+            #print(f"\nLayer {i} D matrix (_DM):\n{_DM}")
+            #print(f"Layer {i} P matrix (_PM):\n{_PM}")
+            #print(f"Layer {i} Phil is {_PHIL[i]}")
+            #print(f"Layer {i} D_inv matrix (_DIM):\n{_DIM}")
+
             # Use BLAS-optimized multiplication
             _tm = zgemm(1.0, _tm, _DM)  # In-place multiplication
+            #print(f"Transfer matrix after multiplying with D (layer {i}):\n{_tm}")
             _tm = zgemm(1.0, _tm, _PM)
+            #print(f"Transfer matrix after multiplying with P (layer {i}):\n{_tm}")
             _tm = zgemm(1.0, _tm, _DIM)
+            #print(f"Transfer matrix after multiplying with D_inv (layer {i}):\n{_tm}")
 
         # Last layer computation
         _DM, _DIM = _compute_dm(_refractive_index[-1], _CTHETA[-1], self.polarization)
+        #print(f"\nLast layer D matrix (_DM):\n{_DM}")
         _tm = zgemm(1.0, _tm, _DM)
+        #print(f"Final transfer matrix (_tm) after last layer multiplication:\n{_tm}")
 
-        return _tm, _THETA, _CTHETA 
+        return _tm, _THETA, _CTHETA
     
     def _compute_rgb(self, colorblindness="False"):
         # get color response functions

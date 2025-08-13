@@ -3,6 +3,7 @@ from .spectrum_driver import SpectrumDriver
 # child classes
 from .mie import MieDriver
 from .em import TmmDriver
+from .vec_tmm import VecTmmDriver
 from .therml import Therml
 from .optdriver import OptDriver
 from .exciton import ExcitonDriver
@@ -15,6 +16,8 @@ class SpectrumFactory:
             return MieDriver(args)
         elif spectrum_toolkit == "Tmm":
             return TmmDriver(args)
+        elif spectrum_toolkit == "VecTmm":
+            return VecTmmDriver(args)
         elif spectrum_toolkit == "Opt":
             return OptDriver(args)
         elif spectrum_toolkit == "Frenkel":
