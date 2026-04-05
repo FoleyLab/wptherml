@@ -347,6 +347,88 @@ class VecTmmDriver(SpectrumDriver, Materials):
         # Compute kz (complex) with broadcasting
         self._kz_array = np.sqrt((n * k0) ** 2 - kx ** 2)  # (N_wavelengths, N_angles, N_layers)
 
+    def _compute_disordered_tm(self):
+        """
+        Compute the transfer matrix for all wavelengths, angles, polarizations,
+        and optionally multiple stacks with different thicknesses.
+
+        Parameters
+        ----------
+        thickness_array : np.ndarray, optional
+            Shape (N_stacks, N_layers) for multiple stacks.
+            If None, uses self.thickness_array with shape (N_layers,).
+
+        Returns
+        -------
+        M : np.ndarray
+            Shape (N_lambda, N_theta, N_stacks, N_pol, 2, 2)
+        """
+        N_lambda = self.number_of_wavelengths
+        N_theta = self.number_of_angles
+        N_pol = len(self.polarization)
+        N_layers = self.number_of_layers
+
+        N_stacks = 5  # Number of stacks to compute
+
+        mean_thickness = np.mean(self.thickness_array[1:-1])  # mean of all layers except first and last
+        sigma = 0.1 * mean_thickness  # 10% standard deviation of the mean thickness
+        _disordered_thickness = np.random.normal(
+            loc=mean_thickness, scale=sigma, size=(N_stacks, len(mean_thickness))
+        )
+        thickness_array = np.hstack([np.zeros((N_stacks,1)), thickness_array, np.zeros((N_stacks,1))])
+
+        # Broadcast refractive index to (N_lambda, N_theta, N_stacks, N_layers)
+        n = self._refractive_index_array[:, np.newaxis, np.newaxis, :]  # (N_lambda,1,1,N_layers)
+        n = np.broadcast_to(n, (N_lambda, N_theta, N_stacks, N_layers))
+
+        # Broadcast incident angles and k0
+        angles = self.incident_angle[np.newaxis, :, np.newaxis]  # (1, N_theta, 1)
+        k0 = self._k0_array[:, np.newaxis, np.newaxis]           # (N_lambda, 1, 1)
+
+        # Compute kx and kz arrays
+        n0 = self._refractive_index_array[:, 0].real[:, np.newaxis, np.newaxis]  # (N_lambda,1,1)
+        kx = n0 * np.sin(angles) * k0  # (N_lambda, N_theta, N_stacks)
+        kz = np.sqrt((n * k0[:, :, :, np.newaxis]) ** 2 - kx[:, :, :, np.newaxis] ** 2)  # (N_lambda,N_theta,N_stacks,N_layers)
+
+        # Compute cos(theta)
+        cos_theta = np.empty_like(kz, dtype=np.complex128)
+        cos_theta[:, :, :, 0] = np.cos(angles)  # incident layer
+        cos_theta[:, :, :, 1:] = kz[:, :, :, 1:] / (n[:, :, :, 1:] * k0[:, :, :, np.newaxis])
+
+        # Compute phase thickness for P matrices
+        phil = kz * thickness_array[np.newaxis, np.newaxis, :, :]  # (N_lambda,N_theta,N_stacks,N_layers)
+        P_tensor = compute_pm_vectorized(phil[:, :, :, :])         # (N_lambda,N_theta,N_stacks,N_layers,2,2)
+
+        # Initialize output M tensor
+        M = np.empty((N_lambda, N_theta, N_stacks, N_pol, 2, 2), dtype=np.complex128)
+        identity = np.eye(2, dtype=np.complex128)
+
+        # Loop over polarization
+        for p_idx, pol in enumerate(self.polarization):
+            D, D_inv = compute_dm_vectorized(n, cos_theta, pol)  # shape (N_lambda,N_theta,N_stacks,N_layers,2,2)
+
+            # Initialize M_pol
+            M_pol = np.broadcast_to(identity, (N_lambda, N_theta, N_stacks, 2, 2)).copy()
+
+            # Multiply by D_inv of first layer
+            M_pol = batch_matmul(M_pol, D_inv[:, :, :, 0, :, :])
+
+            # Loop through intermediate layers
+            for layer in range(1, N_layers - 1):
+                P_layer = P_tensor[:, :, :, layer, :, :]  # slice layer
+                M_pol = batch_matmul(M_pol, D[:, :, :, layer, :, :])
+                M_pol = batch_matmul(M_pol, P_layer)
+                M_pol = batch_matmul(M_pol, D_inv[:, :, :, layer, :, :])
+
+            # Multiply by last layer D
+            M_pol = batch_matmul(M_pol, D[:, :, :, -1, :, :])
+
+            # Store result
+            M[:, :, :, p_idx, :, :] = M_pol
+
+        return M
+
+
     def _compute_tm(self):
         N_lambda = self.number_of_wavelengths
         N_theta = self.number_of_angles
@@ -472,5 +554,76 @@ class VecTmmDriver(SpectrumDriver, Materials):
         self.transmissivity_array = self.transmissivity_array_full[:, 0, 0]
         self.emissivity_array = self.emissivity_array_full[:, 0, 0]
 
+
+    def compute_disordered_spectrum(self):
+        """
+        Compute reflectivity, transmissivity, and emissivity spectra over all
+        wavelengths, incident angles, and polarizations.
+
+        Results are stored as attributes:
+            reflectivity_array : shape (N_lambda, N_theta, N_pol)
+            transmissivity_array : shape (N_lambda, N_theta, N_pol)
+            emissivity_array : shape (N_lambda, N_theta, N_pol)
+        """
+
+        # Ensure k-vectors are up to date for all angles & wavelengths
+        self._compute_k0()  # (N_lambda,)
+        self._compute_kx()  # Should handle vector incident_angle now (N_lambda, N_theta)
+        self._compute_kz()  # Should compute (N_lambda, N_theta, N_layers)
+
+        # Initialize M_pol
+        #M_pol = np.broadcast_to(identity, (N_lambda, N_theta, N_stacks, 2, 2)).copy()
+        # Compute transfer matrices M for all lambda, theta, pol
+        M = self._compute_disordered_tm()  # shape (N_lambda, N_theta, N_stacks, 2, 2)
+        #print(F"GOING TO PRINT M for all wavelengths with angle=0 and pol = 'p'")
+        #print(M[:, 0, 0, :, :])
+
+        N_lambda, N_theta, N_pol = M.shape[:3]
+        N_layers = self.number_of_layers
+
+        # Prepare arrays to hold R, T, E
+        self.reflectivity_array_full = np.empty((N_lambda, N_theta, N_pol))
+        self.transmissivity_array_full = np.empty((N_lambda, N_theta, N_pol))
+        self.emissivity_array_full = np.empty((N_lambda, N_theta, N_pol))
+
+        # Extract relevant refractive indices and cosines for incident and final layers
+        n_incident = self._refractive_index_array[:, 0].real[:, np.newaxis]    # (N_lambda, 1)
+        n_final = self._refractive_index_array[:, -1].real[:, np.newaxis]      # (N_lambda, 1)
+
+        # Cos(theta) in incident layer and final layer (shape: N_lambda x N_theta)
+        cos_theta_incident = np.cos(self.incident_angle)[np.newaxis, :]       # (1, N_theta)
+        # For final layer cos(theta) = kz / (n * k0) -- shape (N_lambda, N_theta)
+        kz_final = self._kz_array[:, :, -1]
+        n_final_expanded = self._refractive_index_array[:, np.newaxis, -1]
+        k0_expanded = self._k0_array[:, np.newaxis]
+        cos_theta_final = kz_final / (n_final_expanded * k0_expanded)  # (N_lambda, N_theta)
+
+        # Loop over polarizations to fill arrays
+        for p_idx in range(N_pol):
+            # r and t for all wavelengths and angles
+            r = M[:, :, p_idx, 1, 0] / M[:, :, p_idx, 0, 0]   # (N_lambda, N_theta)
+            t = 1.0 / M[:, :, p_idx, 0, 0]
+
+            # Reflectivity R = |r|^2
+            R = np.abs(r) ** 2
+
+            # Transmission factor with refractive indices and cosines
+            factor = (n_final * cos_theta_final) / (n_incident * cos_theta_incident)  # shape (N_lambda, N_theta)
+
+            # Transmissivity T = |t|^2 * factor
+            T = np.abs(t) ** 2 * factor
+
+            # Emissivity E = 1 - R - T
+            E = 1.0 - R - T
+
+            # Store results
+            self.reflectivity_array_full[:, :, p_idx] = np.real(R)
+            self.transmissivity_array_full[:, :, p_idx] = np.real(T)
+            self.emissivity_array_full[:, :, p_idx] = np.real(E)
+
+        # store the normal incidence values in the first angle
+        self.reflectivity_array = self.reflectivity_array_full[:, 0, 0]
+        self.transmissivity_array = self.transmissivity_array_full[:, 0, 0]
+        self.emissivity_array = self.emissivity_array_full[:, 0, 0]
 
     
