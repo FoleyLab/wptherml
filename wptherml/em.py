@@ -52,6 +52,15 @@ def _compute_pm(phil):
     #print(_pm)
     return _pm
 
+
+def _compute_pm_batch(phil):
+    """Compute batched P matrices for each wavelength in an intermediate layer."""
+    _pm = np.zeros((phil.shape[0], 2, 2), dtype=np.complex128)
+    _ci = 1j
+    _pm[:, 0, 0] = np.exp(-_ci * phil)
+    _pm[:, 1, 1] = np.exp(_ci * phil)
+    return _pm
+
 #@jit(nopython=True)
 def _compute_pm_analytical_gradient(kzl, phil):
     """compute the derivative of the P matrix with respect to layer thickness
@@ -637,49 +646,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self._compute_kx()
         self._compute_kz()
 
-        # compute the reflectivity in a loop for now!
-        self.reflectivity_array = np.zeros_like(self.wavelength_array)
-        self.transmissivity_array = np.zeros_like(self.wavelength_array)
-        self.emissivity_array = np.zeros_like(self.wavelength_array)
+        _tm, _, _cos_theta_array = self._compute_tm_batch(
+            self._refractive_index_array, self._k0_array, self._kz_array, self.thickness_array
+        )
 
-        for i in range(0, self.number_of_wavelengths):
-            _k0 = self._k0_array[i]
-            _ri = self._refractive_index_array[i, :]
-            _kz = self._kz_array[i, :]
+        # reflection amplitude
+        _r = _tm[:, 1, 0] / _tm[:, 0, 0]
 
-            # get transfer matrix, theta_array, and co_theta_array for current k0 value
-            _tm, _theta_array, _cos_theta_array = self._compute_tm(
-                _ri, _k0, _kz, self.thickness_array
-            )
-            #print(F"GOING TO PRINT TM FOR WAVELENGTH {self.wavelength_array[i]*1e9} nm")
-            #print(_tm)
+        # transmission amplitude
+        _t = 1 / _tm[:, 0, 0]
 
-            # if self.gradient==True:
-            #    _tmg = self._compute_tm_grad(_ri, _k0, _kz, self.thickness_array)
+        # refraction angle and RI prefactor for computing transmission
+        _factor = (
+            self._refractive_index_array[:, self.number_of_layers - 1]
+            * _cos_theta_array[:, self.number_of_layers - 1]
+            / (self._refractive_index_array[:, 0] * _cos_theta_array[:, 0])
+        )
 
-            # reflection amplitude
-            _r = _tm[1, 0] / _tm[0, 0]
-
-            # transmission amplitude
-            _t = 1 / _tm[0, 0]
-
-            # refraction angle and RI prefractor for computing transmission
-            _factor = (
-                _ri[self.number_of_layers - 1]
-                * _cos_theta_array[self.number_of_layers - 1]
-                / (_ri[0] * _cos_theta_array[0])
-            )
-
-            # reflectivity
-            self.reflectivity_array[i] = np.real(_r * np.conj(_r))
-
-            # transmissivity
-            self.transmissivity_array[i] = np.real(_t * np.conj(_t) * _factor)
-
-            # emissivity
-            self.emissivity_array[i] = (
-                1 - self.reflectivity_array[i] - self.transmissivity_array[i]
-            )
+        # reflectivity, transmissivity, and emissivity
+        self.reflectivity_array = np.real(_r * np.conj(_r))
+        self.transmissivity_array = np.real(_t * np.conj(_t) * _factor)
+        self.emissivity_array = 1 - self.reflectivity_array - self.transmissivity_array
         # self.render_color("ambient color")
 
     def compute_explicit_angle_spectrum(self):
@@ -745,66 +732,44 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self._compute_kx()
             self._compute_kz()
 
-            for j in range(0, self.number_of_wavelengths):
-                _k0 = self._k0_array[j]
-                _ri = self._refractive_index_array[j, :]
-                _kz = self._kz_array[j, :]
+            _tm_s, _, _cos_theta_array_s = self._compute_tm_batch(
+                self._refractive_index_array, self._k0_array, self._kz_array, self.thickness_array, "s"
+            )
+            _tm_p, _, _cos_theta_array_p = self._compute_tm_batch(
+                self._refractive_index_array, self._k0_array, self._kz_array, self.thickness_array, "p"
+            )
 
-                # get transfer matrix, theta_array, and co_theta_array for current k0 value and 's' polarization
-                self.polarization = "s"
-                _tm_s, _theta_array_s, _cos_theta_array_s = self._compute_tm(
-                    _ri, _k0, _kz, self.thickness_array
-                )
+            # reflection amplitude
+            _r_s = _tm_s[:, 1, 0] / _tm_s[:, 0, 0]
+            _r_p = _tm_p[:, 1, 0] / _tm_p[:, 0, 0]
 
-                # get transfer matrix, theta_array, and cos_theta_array for current k0 value and 'p' polarization
-                self.polarization = "p"
-                _tm_p, _theta_array_p, _cos_theta_array_p = self._compute_tm(
-                    _ri, _k0, _kz, self.thickness_array
-                )
+            # transmission amplitude
+            _t_s = 1 / _tm_s[:, 0, 0]
+            _t_p = 1 / _tm_p[:, 0, 0]
 
-                # reflection amplitude
-                _r_s = _tm_s[1, 0] / _tm_s[0, 0]
-                _r_p = _tm_p[1, 0] / _tm_p[0, 0]
+            # refraction angle and RI prefactor for computing transmission
+            _factor_s = (
+                self._refractive_index_array[:, self.number_of_layers - 1]
+                * _cos_theta_array_s[:, self.number_of_layers - 1]
+                / (self._refractive_index_array[:, 0] * _cos_theta_array_s[:, 0])
+            )
+            _factor_p = (
+                self._refractive_index_array[:, self.number_of_layers - 1]
+                * _cos_theta_array_p[:, self.number_of_layers - 1]
+                / (self._refractive_index_array[:, 0] * _cos_theta_array_p[:, 0])
+            )
 
-                # transmission amplitude
-                _t_s = 1 / _tm_s[0, 0]
-                _t_p = 1 / _tm_p[0, 0]
+            # reflectivity
+            self.reflectivity_array_s[i, :] = np.real(_r_s * np.conj(_r_s))
+            self.reflectivity_array_p[i, :] = np.real(_r_p * np.conj(_r_p))
 
-                # refraction angle and RI prefractor for computing transmission
-                _factor_s = (
-                    _ri[self.number_of_layers - 1]
-                    * _cos_theta_array_s[self.number_of_layers - 1]
-                    / (_ri[0] * _cos_theta_array_s[0])
-                )
-                _factor_p = (
-                    _ri[self.number_of_layers - 1]
-                    * _cos_theta_array_p[self.number_of_layers - 1]
-                    / (_ri[0] * _cos_theta_array_p[0])
-                )
+            # transmissivity
+            self.transmissivity_array_s[i, :] = np.real(_t_s * np.conj(_t_s) * _factor_s)
+            self.transmissivity_array_p[i, :] = np.real(_t_p * np.conj(_t_p) * _factor_p)
 
-                # reflectivity
-                self.reflectivity_array_s[i, j] = np.real(_r_s * np.conj(_r_s))
-                self.reflectivity_array_p[i, j] = np.real(_r_p * np.conj(_r_p))
-
-                # transmissivity
-                self.transmissivity_array_s[i, j] = np.real(
-                    _t_s * np.conj(_t_s) * _factor_s
-                )
-                self.transmissivity_array_p[i, j] = np.real(
-                    _t_p * np.conj(_t_p) * _factor_p
-                )
-
-                # emissivity
-                self.emissivity_array_s[i, j] = (
-                    1
-                    - self.reflectivity_array_s[i, j]
-                    - self.transmissivity_array_s[i, j]
-                )
-                self.emissivity_array_p[i, j] = (
-                    1
-                    - self.reflectivity_array_p[i, j]
-                    - self.transmissivity_array_p[i, j]
-                )
+            # emissivity
+            self.emissivity_array_s[i, :] = 1 - self.reflectivity_array_s[i, :] - self.transmissivity_array_s[i, :]
+            self.emissivity_array_p[i, :] = 1 - self.reflectivity_array_p[i, :] - self.transmissivity_array_p[i, :]
 
     def compute_spectrum_gradient(self):
         """computes the following attributes:
@@ -1644,6 +1609,74 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _tm = zgemm(1.0, _tm, _DM)
         #print(f"Final transfer matrix (_tm) after last layer multiplication:\n{_tm}")
 
+        return _tm, _THETA, _CTHETA
+
+    def _compute_tm_batch(self, _refractive_index, _k0, _kz, _d, polarization=None):
+        """Compute transfer matrices for all wavelengths using batched matrix multiplications."""
+        _nwl = _refractive_index.shape[0]
+        _nl = self.number_of_layers
+
+        _PHIL = _kz * _d[np.newaxis, :]
+        _THETA = np.zeros((_nwl, _nl), dtype=np.complex128)
+        _CTHETA = np.zeros((_nwl, _nl), dtype=np.complex128)
+
+        _THETA[:, 0] = self.incident_angle
+        _CTHETA[:, 0] = np.cos(self.incident_angle)
+        _CTHETA[:, 1:] = _kz[:, 1:] / (_refractive_index[:, 1:] * _k0[:, np.newaxis])
+        _THETA[:, 1:] = np.arccos(_CTHETA[:, 1:])
+
+        pol = self.polarization if polarization is None else polarization
+        _tm = np.zeros((_nwl, 2, 2), dtype=np.complex128)
+        _dm0, _ = _compute_dm(1.0, 1.0, pol)
+        _tm[:] = _dm0
+        if pol == "s":
+            _tm[:, 1, 0] = _refractive_index[:, 0] * _CTHETA[:, 0]
+            _tm[:, 1, 1] = -_refractive_index[:, 0] * _CTHETA[:, 0]
+        else:
+            _tm[:, 0, 0] = _CTHETA[:, 0]
+            _tm[:, 0, 1] = _CTHETA[:, 0]
+            _tm[:, 1, 0] = _refractive_index[:, 0]
+            _tm[:, 1, 1] = -_refractive_index[:, 0]
+
+        for i in range(1, _nl - 1):
+            _dm = np.zeros((_nwl, 2, 2), dtype=np.complex128)
+            _dim = np.zeros((_nwl, 2, 2), dtype=np.complex128)
+
+            if pol == "s":
+                _dm[:, 0, 0] = 1.0
+                _dm[:, 0, 1] = 1.0
+                _dm[:, 1, 0] = _refractive_index[:, i] * _CTHETA[:, i]
+                _dm[:, 1, 1] = -_refractive_index[:, i] * _CTHETA[:, i]
+            else:
+                _dm[:, 0, 0] = _CTHETA[:, i]
+                _dm[:, 0, 1] = _CTHETA[:, i]
+                _dm[:, 1, 0] = _refractive_index[:, i]
+                _dm[:, 1, 1] = -_refractive_index[:, i]
+
+            _det = 1.0 / (_dm[:, 0, 0] * _dm[:, 1, 1] - _dm[:, 0, 1] * _dm[:, 1, 0])
+            _dim[:, 0, 0] = _det * _dm[:, 1, 1]
+            _dim[:, 0, 1] = -_det * _dm[:, 0, 1]
+            _dim[:, 1, 0] = -_det * _dm[:, 1, 0]
+            _dim[:, 1, 1] = _det * _dm[:, 0, 0]
+
+            _pm = _compute_pm_batch(_PHIL[:, i])
+            _tm = np.matmul(_tm, _dm)
+            _tm = np.matmul(_tm, _pm)
+            _tm = np.matmul(_tm, _dim)
+
+        _dm = np.zeros((_nwl, 2, 2), dtype=np.complex128)
+        if pol == "s":
+            _dm[:, 0, 0] = 1.0
+            _dm[:, 0, 1] = 1.0
+            _dm[:, 1, 0] = _refractive_index[:, -1] * _CTHETA[:, -1]
+            _dm[:, 1, 1] = -_refractive_index[:, -1] * _CTHETA[:, -1]
+        else:
+            _dm[:, 0, 0] = _CTHETA[:, -1]
+            _dm[:, 0, 1] = _CTHETA[:, -1]
+            _dm[:, 1, 0] = _refractive_index[:, -1]
+            _dm[:, 1, 1] = -_refractive_index[:, -1]
+
+        _tm = np.matmul(_tm, _dm)
         return _tm, _THETA, _CTHETA
     
     def _compute_rgb(self, colorblindness="False"):

@@ -1,0 +1,31 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wptherml2"
+version = "0.1.0"
+description = "A clean transfer-matrix core for multilayer optics."
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [
+    { name = "Foley Lab" }
+]
+license = { text = "LGPLv3" }
+dependencies = [
+    "numpy>=1.23"
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0"
+]
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
