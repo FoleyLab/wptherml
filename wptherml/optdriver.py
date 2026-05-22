@@ -3,6 +3,7 @@ from scipy.optimize import minimize
 from scipy.optimize import basinhopping
 import time
 from .em import TmmDriver
+from .solvers import TMMSolver
 import copy
 
 
@@ -33,6 +34,7 @@ class OptDriver(TmmDriver):
         self.parse_input(args)
         self.parse_optimization_input(args)
         self.set_refractive_index_array()
+        self.solver = TMMSolver(backend="serial")
         # compute reflectivity spectrum
         self.compute_spectrum()
         # print("We started optimizing")

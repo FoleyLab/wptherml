@@ -15,6 +15,10 @@ from .tmm_core import (
     compute_transfer_matrix,
     compute_transfer_matrix_gradients,
 )
+from .objectives import SelectiveMirrorObjective
+from .solvers import TMMSolver
+from .spectra import OpticalSpectrum
+from .structures import MultilayerStructure
 
 
 class TmmDriver(SpectrumDriver, Materials, Therml):
@@ -64,6 +68,30 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
     None
     """
 
+    @property
+    def reflectivity_array(self):
+        return self.spectrum.reflectivity
+
+    @reflectivity_array.setter
+    def reflectivity_array(self, value):
+        self._set_spectrum_component("reflectivity", value)
+
+    @property
+    def transmissivity_array(self):
+        return self.spectrum.transmissivity
+
+    @transmissivity_array.setter
+    def transmissivity_array(self, value):
+        self._set_spectrum_component("transmissivity", value)
+
+    @property
+    def emissivity_array(self):
+        return self.spectrum.emissivity
+
+    @emissivity_array.setter
+    def emissivity_array(self, value):
+        self._set_spectrum_component("emissivity", value)
+
     def __init__(self, args):
         """constructor for the TmmDriver class
         Assign values for attributes thickness_array, material_array then call
@@ -76,6 +104,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.parse_input(args)
         # set refractive index array
         self.set_refractive_index_array()
+        self.solver = TMMSolver(backend="serial")
         # compute reflectivity spectrum
         self.compute_spectrum()
 
@@ -147,6 +176,68 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             )
 
             # call _compute_solar_radiated_power() function
+
+    def _set_spectrum_component(self, component, value):
+        value = np.asarray(value, dtype=float)
+        current_spectrum = getattr(self, "spectrum", None)
+
+        if current_spectrum is None:
+            wavelengths = getattr(
+                self, "wavelength_array", np.arange(value.shape[0], dtype=float)
+            )
+            reflectivity = np.zeros_like(value, dtype=float)
+            transmissivity = np.zeros_like(value, dtype=float)
+            emissivity = np.zeros_like(value, dtype=float)
+            angles = None
+            polarizations = None
+        else:
+            wavelengths = current_spectrum.wavelengths
+            reflectivity = current_spectrum.reflectivity
+            transmissivity = current_spectrum.transmissivity
+            emissivity = current_spectrum.emissivity
+            angles = current_spectrum.angles
+            polarizations = current_spectrum.polarizations
+
+        if component == "reflectivity":
+            reflectivity = value
+        elif component == "transmissivity":
+            transmissivity = value
+        elif component == "emissivity":
+            emissivity = value
+        else:
+            raise ValueError(f"Unknown spectrum component {component!r}")
+
+        self.spectrum = OpticalSpectrum(
+            wavelengths=wavelengths,
+            reflectivity=reflectivity,
+            transmissivity=transmissivity,
+            emissivity=emissivity,
+            angles=angles,
+            polarizations=polarizations,
+        )
+
+    def _current_multilayer_structure(self):
+        return MultilayerStructure(
+            materials=list(self.material_array),
+            thicknesses=self.thickness_array,
+            wavelengths=self.wavelength_array,
+            angles=np.atleast_1d(self.incident_angle),
+            refractive_indices=self._refractive_index_array,
+        )
+
+    def _current_polarizations(self):
+        if isinstance(self.polarization, str):
+            return [self.polarization]
+        return list(self.polarization)
+
+    def _selective_mirror_objective(self):
+        return SelectiveMirrorObjective(
+            self.transmissive_envelope,
+            self.reflective_envelope,
+            self.transmission_efficiency_weight,
+            self.reflection_efficiency_weight,
+            self.reflection_selectivity_weight,
+        )
 
     def parse_input(self, args):
         """method to parse the user inputs and define structures / simulation
@@ -458,6 +549,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # use np.flip to reverse the arrays
         self._refractive_index_array = np.flip(_ri, axis=1)
         self.thickness_array = np.flip(_ta)
+        self.material_array = list(np.flip(self.material_array))
 
     def remove_layer(self, layer_number):
         """remove layer number layer_number from your stack.
@@ -482,6 +574,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         self._refractive_index_array = np.copy(_new_ri_array)
         self.thickness_array = np.copy(_new_thickness_array)
+        self.material_array = (
+            list(self.material_array[:layer_number])
+            + list(self.material_array[layer_number + 1 :])
+        )
 
     def insert_layer(self, layer_number, layer_thickness):
         """insert an air layer between layer_number-1 and layer_number
@@ -513,6 +609,11 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         self._refractive_index_array = np.copy(_new_ri_array)
         self.thickness_array = np.copy(_new_thickness_array)
+        self.material_array = (
+            list(self.material_array[:layer_number])
+            + ["Air"]
+            + list(self.material_array[layer_number:])
+        )
         print(
             " A ",
             layer_thickness,
@@ -566,41 +667,15 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         -------
         None
         """
-
-        # with all of these formed, you can now call _compute_tm()
+        solver = getattr(self, "solver", TMMSolver(backend="serial"))
+        self.spectrum = solver.solve(
+            self._current_multilayer_structure(),
+            polarizations=self._current_polarizations(),
+        )
+        # Keep wavevector attributes current for legacy helper methods and tests.
         self._compute_k0()
         self._compute_kx()
         self._compute_kz()
-
-        # compute the reflectivity in a loop for now!
-        self.reflectivity_array = np.zeros_like(self.wavelength_array)
-        self.transmissivity_array = np.zeros_like(self.wavelength_array)
-        self.emissivity_array = np.zeros_like(self.wavelength_array)
-
-        for i in range(0, self.number_of_wavelengths):
-            _k0 = self._k0_array[i]
-            _ri = self._refractive_index_array[i, :]
-            _kz = self._kz_array[i, :]
-
-            # get transfer matrix, theta_array, and co_theta_array for current k0 value
-            _tm, _theta_array, _cos_theta_array = self._compute_tm(
-                _ri, _k0, _kz, self.thickness_array
-            )
-            #print(F"GOING TO PRINT TM FOR WAVELENGTH {self.wavelength_array[i]*1e9} nm")
-            #print(_tm)
-
-            # if self.gradient==True:
-            #    _tmg = self._compute_tm_grad(_ri, _k0, _kz, self.thickness_array)
-
-            (
-                self.reflectivity_array[i],
-                self.transmissivity_array[i],
-                self.emissivity_array[i],
-            ) = compute_spectrum_from_transfer_matrix(
-                _tm,
-                _ri,
-                _cos_theta_array,
-            )
         # self.render_color("ambient color")
 
     def compute_explicit_angle_spectrum(self):
@@ -741,36 +816,20 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         -------
         None
         """
+        solver = getattr(self, "solver", TMMSolver(backend="serial"))
+        self.spectrum_gradient = solver.solve_gradients(
+            self._current_multilayer_structure(),
+            self.gradient_list,
+            polarizations=self._current_polarizations(),
+        )
+        self.reflectivity_gradient_array = self.spectrum_gradient.dR_dd
+        self.transmissivity_gradient_array = self.spectrum_gradient.dT_dd
+        self.emissivity_gradient_array = self.spectrum_gradient.dE_dd
 
+        # Keep wavevector attributes current for legacy helper methods and tests.
         self._compute_k0()
         self._compute_kx()
         self._compute_kz()
-
-        (
-            transfer_matrix,
-            transfer_matrix_gradient,
-            _theta_array,
-            _cos_theta_array,
-        ) = compute_transfer_matrix_gradients(
-            self._refractive_index_array,
-            self._k0_array,
-            self._kz_array,
-            self.thickness_array,
-            self.incident_angle,
-            self.polarization,
-            self.gradient_list,
-        )
-
-        (
-            self.reflectivity_gradient_array,
-            self.transmissivity_gradient_array,
-            self.emissivity_gradient_array,
-        ) = compute_spectrum_gradients_from_transfer_matrix(
-            transfer_matrix,
-            transfer_matrix_gradient,
-            self._refractive_index_array,
-            _cos_theta_array,
-        )
 
     def compute_explicit_angle_spectrum_gradient(self):
         """computes the following attributes:
@@ -1532,57 +1591,13 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         None
 
         """
-        # numerators come from the actual spectra times the envelope
-        _ut_array = self.transmissive_envelope * self.transmissivity_array
-        _ur_array = self.reflective_envelope * self.reflectivity_array
+        objective = self._selective_mirror_objective()
+        components = objective.evaluate_components(self.spectrum)
 
-        # integrate to get numerators
-        _ut = np.trapezoid(_ut_array, self.wavelength_array)
-        _ur = np.trapezoid(_ur_array, self.wavelength_array)
-
-        # denominators are slightly different between R and T.
-
-        # T_denom -> integrate transmissive envelope
-        _t_denom = np.trapezoid(
-            self.transmissive_envelope, self.wavelength_array
-        )
-
-        # R_denom -> integrate reflection spectrum
-        _r_denom = np.trapezoid(
-            self.reflectivity_array, self.wavelength_array
-        )
-
-        # R_selective_denom -> integrate the reflection envelope
-        _r_select_denom = np.trapezoid(
-           self.reflective_envelope, self.wavelength_array 
-        )
-
-        # if transmissivity_envelope is zero everywhere, this will give nan.. handle
-        # by just giving value of zero the transmission_efficiency
-
-        if _t_denom == 0.0:
-            self.transmission_efficiency = 0.0
-        else:
-            self.transmission_efficiency = (_ut / _t_denom)
-
-        # if reflectivity is zero everywhere, this will give nan - handle
-        # by just giving value of zero to reflection_efficiency
-        
-        if _r_denom == 0.0:
-            self.reflection_efficiency = 0.0
-        else: 
-            self.reflection_efficiency = (_ur / _r_denom)
-
-        if _r_select_denom == 0.0:
-            self.reflection_selectivity = 0.0
-        else:
-            self.reflection_selectivity = (_ur / _r_select_denom) 
-
-        self.selective_mirror_fom = (
-            self.transmission_efficiency_weight * self.transmission_efficiency
-            + self.reflection_efficiency_weight * self.reflection_efficiency
-            + self.reflection_selectivity_weight * self.reflection_selectivity
-        )
+        self.transmission_efficiency = components["transmission_efficiency"]
+        self.reflection_efficiency = components["reflection_efficiency"]
+        self.reflection_selectivity = components["reflection_selectivity"]
+        self.selective_mirror_fom = components["selective_mirror_fom"]
 
     def compute_selective_mirror_fom_gradient(self):
         """compute the figure of merit for selective tranmission and reflection according
@@ -1639,62 +1654,19 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
               f'(lambda) = int reflectivity_envelope R'(lambda) d lambda
 
         """
-        # eta_T' = Pi(lambda) * T'(lambda) / Pi(lambda)
         self.compute_spectrum_gradient()
+        objective = self._selective_mirror_objective()
+        components = objective.gradient_components(self.spectrum, self.spectrum_gradient)
 
-        _ngr = len(self.transmissivity_gradient_array[0, :])
-        # integrate the thermal emission spectrum over wavelength using np.trapezoid
-        self.transmission_efficiency_gradient = np.zeros(_ngr)
-        self.reflection_efficiency_gradient = np.zeros(_ngr)
-        self.reflection_selectivity_gradient = np.zeros(_ngr)
-
-        # this term is in the denominator of each of the eta_T' elements
-        _eta_T_denom = np.trapezoid(self.transmissive_envelope, self.wavelength_array)
-
-        # this term is in the denominator of each of the sel_R' elements
-        _sel_R_denom = np.trapezoid(self.reflective_envelope, self.wavelength_array)
-
-        # these terms are in each of the eta_R' elements
-        _f_l = np.trapezoid(
-            self.reflective_envelope * self.reflectivity_array, self.wavelength_array
-        )
-        _g_l = np.trapezoid(self.reflectivity_array, self.wavelength_array)
-
-        for i in range(_ngr):
-            # can compute eta_T' in one shot
-            self.transmission_efficiency_gradient[i] = (
-                np.trapezoid(
-                    self.transmissive_envelope
-                    * self.transmissivity_gradient_array[:, i],
-                    self.wavelength_array,
-                )
-                / _eta_T_denom
-            )
-            # can compute sel_R'
-            self.reflection_selectivity_gradient[i] = (
-                np.trapezoid(
-                    self.reflective_envelope 
-                    * self.reflectivity_gradient_array[:,i],
-                    self.wavelength_array
-                )
-                / _sel_R_denom
-            )
-
-            # need to get parts of g'(lambda) and f'(lambda) terms
-            _gp_l = np.trapezoid(
-                self.reflectivity_gradient_array[:, i], self.wavelength_array
-            )
-            _fp_l = np.trapezoid(
-                self.reflective_envelope * self.reflectivity_gradient_array[:, i],
-                self.wavelength_array,
-            )
-
-            self.reflection_efficiency_gradient[i] = (
-                _g_l * _fp_l - _f_l * _gp_l
-            ) / _g_l**2
-
-        self.selective_mirror_fom_gradient = (
-            self.transmission_efficiency_weight * self.transmission_efficiency_gradient
-            + self.reflection_efficiency_weight * self.reflection_efficiency_gradient
-            + self.reflection_selectivity_weight * self.reflection_selectivity_gradient
-        )
+        self.transmission_efficiency_gradient = components[
+            "transmission_efficiency_gradient"
+        ]
+        self.reflection_efficiency_gradient = components[
+            "reflection_efficiency_gradient"
+        ]
+        self.reflection_selectivity_gradient = components[
+            "reflection_selectivity_gradient"
+        ]
+        self.selective_mirror_fom_gradient = components[
+            "selective_mirror_fom_gradient"
+        ]

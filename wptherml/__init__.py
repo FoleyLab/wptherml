@@ -12,6 +12,10 @@ from .therml import Therml
 from .factory import SpectrumFactory
 from .materials import Materials
 from .optdriver import OptDriver
+from .objectives import Objective, SelectiveMirrorObjective
+from .solvers import GradientSolver, Solver, TMMSolver
+from .spectra import OpticalSpectrum, OpticalSpectrumGradient
+from .structures import MultilayerStructure
 
 __all__ = [
     "SpectrumDriver",
@@ -22,6 +26,14 @@ __all__ = [
     "SpectrumFactory",
     "Materials",
     "OptDriver",
+    "MultilayerStructure",
+    "Solver",
+    "GradientSolver",
+    "TMMSolver",
+    "OpticalSpectrum",
+    "OpticalSpectrumGradient",
+    "Objective",
+    "SelectiveMirrorObjective",
 ]
 
 # Handle versioneer

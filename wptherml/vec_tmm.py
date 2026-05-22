@@ -4,6 +4,9 @@ from matplotlib import pyplot as plt
 logger = logging.getLogger(__name__)
 from .spectrum_driver import SpectrumDriver
 from .materials import Materials
+from .spectra import OpticalSpectrum
+from .solvers import TMMSolver
+from .structures import MultilayerStructure
 from .tmm_core import (
     batch_matmul,
     compute_dm as compute_dm_vectorized,
@@ -12,6 +15,30 @@ from .tmm_core import (
 )
 
 class VecTmmDriver(SpectrumDriver, Materials):
+
+    @property
+    def reflectivity_array(self):
+        return self.spectrum.reflectivity
+
+    @reflectivity_array.setter
+    def reflectivity_array(self, value):
+        self._set_spectrum_component("reflectivity", value)
+
+    @property
+    def transmissivity_array(self):
+        return self.spectrum.transmissivity
+
+    @transmissivity_array.setter
+    def transmissivity_array(self, value):
+        self._set_spectrum_component("transmissivity", value)
+
+    @property
+    def emissivity_array(self):
+        return self.spectrum.emissivity
+
+    @emissivity_array.setter
+    def emissivity_array(self, value):
+        self._set_spectrum_component("emissivity", value)
 
     def __init__(self, args):
         """constructor for the TmmDriver class
@@ -25,11 +52,60 @@ class VecTmmDriver(SpectrumDriver, Materials):
         self.parse_input(args)
         # set refractive index array
         self.set_refractive_index_array()
+        self.solver = TMMSolver(backend="vectorized")
         # compute reflectivity spectrum
         self.compute_spectrum()
 
         # print output message
        
+
+    def _set_spectrum_component(self, component, value):
+        value = np.asarray(value, dtype=float)
+        current_spectrum = getattr(self, "spectrum", None)
+
+        if current_spectrum is None:
+            wavelengths = getattr(
+                self, "wavelength_array", np.arange(value.shape[0], dtype=float)
+            )
+            reflectivity = np.zeros_like(value, dtype=float)
+            transmissivity = np.zeros_like(value, dtype=float)
+            emissivity = np.zeros_like(value, dtype=float)
+            angles = None
+            polarizations = None
+        else:
+            wavelengths = current_spectrum.wavelengths
+            reflectivity = current_spectrum.reflectivity
+            transmissivity = current_spectrum.transmissivity
+            emissivity = current_spectrum.emissivity
+            angles = current_spectrum.angles
+            polarizations = current_spectrum.polarizations
+
+        if component == "reflectivity":
+            reflectivity = value
+        elif component == "transmissivity":
+            transmissivity = value
+        elif component == "emissivity":
+            emissivity = value
+        else:
+            raise ValueError(f"Unknown spectrum component {component!r}")
+
+        self.spectrum = OpticalSpectrum(
+            wavelengths=wavelengths,
+            reflectivity=reflectivity,
+            transmissivity=transmissivity,
+            emissivity=emissivity,
+            angles=angles,
+            polarizations=polarizations,
+        )
+
+    def _current_multilayer_structure(self):
+        return MultilayerStructure(
+            materials=list(self.material_array),
+            thicknesses=self.thickness_array,
+            wavelengths=self.wavelength_array,
+            angles=np.atleast_1d(self.incident_angle),
+            refractive_indices=self._refractive_index_array,
+        )
 
     def parse_input(self, args: dict) -> None:
         """
@@ -406,64 +482,38 @@ class VecTmmDriver(SpectrumDriver, Materials):
             transmissivity_array : shape (N_lambda, N_theta, N_pol)
             emissivity_array : shape (N_lambda, N_theta, N_pol)
         """
+        solver = getattr(self, "solver", TMMSolver(backend="vectorized"))
+        self.spectrum_full = solver.solve(
+            self._current_multilayer_structure(),
+            polarizations=self.polarization,
+        )
 
-        # Ensure k-vectors are up to date for all angles & wavelengths
-        self._compute_k0()  # (N_lambda,)
-        self._compute_kx()  # Should handle vector incident_angle now (N_lambda, N_theta)
-        self._compute_kz()  # Should compute (N_lambda, N_theta, N_layers)
+        reflectivity = self.spectrum_full.reflectivity
+        transmissivity = self.spectrum_full.transmissivity
+        emissivity = self.spectrum_full.emissivity
 
-        # Compute transfer matrices M for all lambda, theta, pol
-        M = self._compute_tm()  # shape (N_lambda, N_theta, N_pol, 2, 2)
-        #print(F"GOING TO PRINT M for all wavelengths with angle=0 and pol = 'p'")
-        #print(M[:, 0, 0, :, :])
+        if reflectivity.ndim == 1:
+            self.reflectivity_array_full = reflectivity[:, np.newaxis, np.newaxis]
+            self.transmissivity_array_full = transmissivity[:, np.newaxis, np.newaxis]
+            self.emissivity_array_full = emissivity[:, np.newaxis, np.newaxis]
+            self.spectrum = self.spectrum_full
+        else:
+            self.reflectivity_array_full = reflectivity
+            self.transmissivity_array_full = transmissivity
+            self.emissivity_array_full = emissivity
+            self.spectrum = OpticalSpectrum(
+                wavelengths=self.wavelength_array,
+                reflectivity=reflectivity[:, 0, 0],
+                transmissivity=transmissivity[:, 0, 0],
+                emissivity=emissivity[:, 0, 0],
+                angles=np.array([self.incident_angle[0]]),
+                polarizations=[self.polarization[0]],
+            )
 
-        N_lambda, N_theta, N_pol = M.shape[:3]
-        N_layers = self.number_of_layers
-
-        # Prepare arrays to hold R, T, E
-        self.reflectivity_array_full = np.empty((N_lambda, N_theta, N_pol))
-        self.transmissivity_array_full = np.empty((N_lambda, N_theta, N_pol))
-        self.emissivity_array_full = np.empty((N_lambda, N_theta, N_pol))
-
-        # Extract relevant refractive indices and cosines for incident and final layers
-        n_incident = self._refractive_index_array[:, 0].real[:, np.newaxis]    # (N_lambda, 1)
-        n_final = self._refractive_index_array[:, -1].real[:, np.newaxis]      # (N_lambda, 1)
-
-        # Cos(theta) in incident layer and final layer (shape: N_lambda x N_theta)
-        cos_theta_incident = np.cos(self.incident_angle)[np.newaxis, :]       # (1, N_theta)
-        # For final layer cos(theta) = kz / (n * k0) -- shape (N_lambda, N_theta)
-        kz_final = self._kz_array[:, :, -1]
-        n_final_expanded = self._refractive_index_array[:, np.newaxis, -1]
-        k0_expanded = self._k0_array[:, np.newaxis]
-        cos_theta_final = kz_final / (n_final_expanded * k0_expanded)  # (N_lambda, N_theta)
-
-        # Loop over polarizations to fill arrays
-        for p_idx in range(N_pol):
-            # r and t for all wavelengths and angles
-            r = M[:, :, p_idx, 1, 0] / M[:, :, p_idx, 0, 0]   # (N_lambda, N_theta)
-            t = 1.0 / M[:, :, p_idx, 0, 0]
-
-            # Reflectivity R = |r|^2
-            R = np.abs(r) ** 2
-
-            # Transmission factor with refractive indices and cosines
-            factor = (n_final * cos_theta_final) / (n_incident * cos_theta_incident)  # shape (N_lambda, N_theta)
-
-            # Transmissivity T = |t|^2 * factor
-            T = np.abs(t) ** 2 * factor
-
-            # Emissivity E = 1 - R - T
-            E = 1.0 - R - T
-
-            # Store results
-            self.reflectivity_array_full[:, :, p_idx] = np.real(R)
-            self.transmissivity_array_full[:, :, p_idx] = np.real(T)
-            self.emissivity_array_full[:, :, p_idx] = np.real(E)
-
-        # store the normal incidence values in the first angle
-        self.reflectivity_array = self.reflectivity_array_full[:, 0, 0]
-        self.transmissivity_array = self.transmissivity_array_full[:, 0, 0]
-        self.emissivity_array = self.emissivity_array_full[:, 0, 0]
+        # Keep wavevector attributes current for legacy helper methods and tests.
+        self._compute_k0()
+        self._compute_kx()
+        self._compute_kz()
 
 
     def compute_disordered_spectrum(self):

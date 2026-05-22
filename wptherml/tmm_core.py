@@ -209,6 +209,8 @@ def compute_spectrum_from_transfer_matrix(transfer_matrix, refractive_index, cos
         * cos_theta[..., -1]
         / (refractive_index[..., 0] * cos_theta[..., 0])
     )
+    while factor.ndim < r.ndim:
+        factor = factor[..., np.newaxis]
     reflectivity = np.real(r * np.conj(r))
     transmissivity = np.real(t * np.conj(t) * factor)
     emissivity = 1 - reflectivity - transmissivity

@@ -1,0 +1,30 @@
+.
+├── __pycache__
+│   └── versioneer.cpython-311.pyc
+├── build
+│   ├── bdist.macosx-11.0-arm64
+│   └── lib
+│       └── wptherml
+│           ├── __init__.py
+│           ├── _version.py
+│           ├── data
+│           │   ├── 2D_HOIP.txt # refractive index data
+│           │   ├── Ag_JC.txt # refractive index data
+│           │   ├── Ag_ri.txt
+│           ├── em.py # contains TMMDriver class
+│           ├── factory.py # 
+│           ├── materials.py # nk data access / interpolation
+│           ├── mie.py # mie theory implementation
+│           ├── optdriver.py # coordinates optimization
+│           ├── spectrum_driver.py 
+│           ├── tests # test suites
+│           │   ├── __init__.py
+│           │   ├── test_em.py
+│           │   ├── test_materials.py
+│           │   ├── test_mie.py
+│           │   ├── test_therml.py
+│           │   └── test_wptherml.py
+│           ├── therml.py # thremal emission + thermal FOM
+│           └── vec_tmm.py # batched/vectorized TMM
+
+
