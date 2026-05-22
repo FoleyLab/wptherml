@@ -408,6 +408,52 @@ def test_compute_spectrum_gradient():
     assert np.allclose(ts2.emissivity_gradient_array[0, :], expected_EPS_prime_2)
 
 
+def test_compute_spectrum_gradient_respects_gradient_list():
+    test_args = {
+        "wavelength_list": [600e-9, 602e-9, 3],
+        "material_list": [
+            "Air",
+            "SiO2",
+            "Au",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 10e-9, 0],
+        "gradient_list": [2],
+    }
+
+    ts = sf.spectrum_factory("Tmm", test_args)
+    ts._refractive_index_array[0, :] = np.array(
+        [1 + 0j, 1.47779002 + 0.0j, 0.24463382 + 3.085112j, 1 + 0j]
+    )
+    ts.compute_spectrum()
+    ts.compute_spectrum_gradient()
+
+    assert ts.reflectivity_gradient_array.shape == (3, 1)
+    assert np.allclose(ts.reflectivity_gradient_array[0, :], [32391843.05104597])
+    assert np.allclose(ts.transmissivity_gradient_array[0, :], [-37935758.73941045])
+
+
+def test_vec_tmm_matches_tmm_driver():
+    test_args = {
+        "wavelength_list": [500e-9, 504e-9, 5],
+        "material_list": [
+            "Air",
+            "TiO2",
+            "SiO2",
+            "Ag",
+            "Air",
+        ],
+        "thickness_list": [0, 200e-9, 100e-9, 5e-9, 0],
+    }
+
+    scalar_tmm = sf.spectrum_factory("Tmm", test_args)
+    vector_tmm = sf.spectrum_factory("VecTmm", test_args)
+
+    assert np.allclose(vector_tmm.reflectivity_array, scalar_tmm.reflectivity_array)
+    assert np.allclose(vector_tmm.transmissivity_array, scalar_tmm.transmissivity_array)
+    assert np.allclose(vector_tmm.emissivity_array, scalar_tmm.emissivity_array)
+
+
 def test_tm_grad():
     """
     structure = {

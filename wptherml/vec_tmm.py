@@ -1,65 +1,15 @@
 import numpy as np
-from scipy.linalg.blas import zgemm  # BLAS-optimized complex matrix multiplication
 import logging
 from matplotlib import pyplot as plt
 logger = logging.getLogger(__name__)
 from .spectrum_driver import SpectrumDriver
 from .materials import Materials
-
-# --- Helper function to compute D and D_inv matrices vectorized ---
-def compute_dm_vectorized(n_layer, cos_t, pol):
-    shape = n_layer.shape + (2, 2)
-    D = np.zeros(shape, dtype=np.complex128)
-    D_inv = np.zeros_like(D)
-
-    if pol == "s":
-        D[..., 0, 0] = 1
-        D[..., 0, 1] = 1
-        D[..., 1, 0] = n_layer * cos_t
-        D[..., 1, 1] = -n_layer * cos_t
-    else:  # p-polarization
-        D[..., 0, 0] = cos_t
-        D[..., 0, 1] = cos_t
-        D[..., 1, 0] = n_layer
-        D[..., 1, 1] = -n_layer
-
-    det = D[..., 0, 0] * D[..., 1, 1] - D[..., 0, 1] * D[..., 1, 0]
-    inv_det = 1 / det
-
-    D_inv[..., 0, 0] = inv_det * D[..., 1, 1]
-    D_inv[..., 0, 1] = -inv_det * D[..., 0, 1]
-    D_inv[..., 1, 0] = -inv_det * D[..., 1, 0]
-    D_inv[..., 1, 1] = inv_det * D[..., 0, 0]
-
-    #print("GOING TO PRINT D")
-    #print(D)
-    #print("GOING TO PRINT D_INV")
-    #print(D_inv)
-
-    return D, D_inv
-
-# --- Helper function to compute P matrices vectorized ---
-def compute_pm_vectorized(phil_layer):
-    # phil_layer shape: (N_lambda, N_theta)
-    shape = phil_layer.shape + (2, 2)
-    P = np.zeros(shape, dtype=np.complex128)
-    exp_minus = np.exp(-1j * phil_layer)
-    exp_plus = np.exp(1j * phil_layer)
-
-    P[..., 0, 0] = exp_minus
-    P[..., 1, 1] = exp_plus
-    #print("GOING TO PRINT P")
-    #print(P)
-    return P
-
-
-def batch_matmul(A, B):
-    """
-    Batch multiply two arrays of matrices A and B.
-    A, B shape: (..., 2, 2)
-    Returns: (..., 2, 2)
-    """
-    return np.einsum('...ij,...jk->...ik', A, B)
+from .tmm_core import (
+    batch_matmul,
+    compute_dm as compute_dm_vectorized,
+    compute_pm as compute_pm_vectorized,
+    compute_transfer_matrices,
+)
 
 class VecTmmDriver(SpectrumDriver, Materials):
 
@@ -430,59 +380,20 @@ class VecTmmDriver(SpectrumDriver, Materials):
 
 
     def _compute_tm(self):
-        N_lambda = self.number_of_wavelengths
-        N_theta = self.number_of_angles
-        N_pol = len(self.polarization)
-        N_layers = self.number_of_layers
-
-        # broadcast refractive index array to match angles and layers
-        n = self._refractive_index_array[:, np.newaxis, :]  # (N_lambda, 1, N_layers)
-        n = np.broadcast_to(n, (N_lambda, N_theta, N_layers))
-
-        angles = self.incident_angle[np.newaxis, :]  # (1, N_theta)
-        k0 = self._k0_array[:, np.newaxis]  # (N_lambda, 1)
-
-        n0 = self._refractive_index_array[:, 0].real[:, np.newaxis]  # (N_lambda, 1)
-        kx = n0 * np.sin(angles) * k0  # (N_lambda, N_theta)
-
-
-
-        kz = np.sqrt((n * k0[:, :, np.newaxis]) ** 2 - kx[:, :, np.newaxis] ** 2) # (N_lambda, N_theta, 1)
-
-        cos_theta = np.empty_like(kz, dtype=np.complex128) # (N_lambda, N_theta, 1)
-        cos_theta[:, :, 0] = np.cos(angles)
-        cos_theta[:, :, 1:] = kz[:, :, 1:] / (n[:, :, 1:] * k0[:, :, np.newaxis])
-
-
-        phil = kz * self.thickness_array[np.newaxis, np.newaxis, :]
-        P_tensor = compute_pm_vectorized(phil[:, :, :])
-
-
-        M = np.empty((N_lambda, N_theta, N_pol, 2, 2), dtype=np.complex128)
-        identity = np.eye(2, dtype=np.complex128)
-
-
-        for p_idx, pol in enumerate(self.polarization):
-            D, D_inv = compute_dm_vectorized(n, cos_theta, pol)
-
-            M_pol = np.broadcast_to(identity, (N_lambda, N_theta, 2, 2)).copy()
-
-            M_pol = batch_matmul(M_pol, D_inv[:, :, 0, :, :])
-
-            # Loop layers 1..N_layers-2
-            for layer in range(1, N_layers - 1):
-                P_layer = P_tensor[:, :, layer] #compute_pm_vectorized(phil[:, :, layer])
-
-                M_pol = batch_matmul(M_pol, D[:, :, layer, :, :])
-                M_pol = batch_matmul(M_pol, P_layer)
-                M_pol = batch_matmul(M_pol, D_inv[:, :, layer, :, :])
-
-
-
-            M_pol = batch_matmul(M_pol, D[:, :, -1, :, :])
-
-            M[:, :, p_idx, :, :] = M_pol
-
+        n = self._refractive_index_array[:, np.newaxis, :]
+        n = np.broadcast_to(
+            n, (self.number_of_wavelengths, self.number_of_angles, self.number_of_layers)
+        )
+        M, theta, cos_theta = compute_transfer_matrices(
+            n,
+            self._k0_array[:, np.newaxis],
+            self._kz_array,
+            self.thickness_array,
+            self.incident_angle,
+            self.polarization,
+        )
+        self._theta_array = theta
+        self._cos_theta_array = cos_theta
         return M
 
     def compute_spectrum(self):
