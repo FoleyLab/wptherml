@@ -1,14 +1,11 @@
 name: wptherml
 
 dependencies:
-    - python=3.11
+    - python>=3.10
     - pip>=19.0
-    - numpy
+    - numpy>=2.0
     - scipy
     - matplotlib
     - jupyter
     - pytest
-    - pytorch
-    - scikit-learn
-    - pandas
-    - tqdm
+    - pytest-cov

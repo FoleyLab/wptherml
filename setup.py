@@ -2,20 +2,15 @@
 wptherml
 A python package for modeling light-matter interactions!
 """
-import sys
+from pathlib import Path
 from setuptools import setup, find_packages
 import versioneer
 
 short_description = __doc__.split("\n")
 
-# from https://github.com/pytest-dev/pytest-runner#conditional-requirement
-needs_pytest = {'pytest', 'test', 'ptr'}.intersection(sys.argv)
-pytest_runner = ['pytest-runner'] if needs_pytest else []
-
 try:
-    with open("README.md", "r") as handle:
-        long_description = handle.read()
-except:
+    long_description = Path("readme.md").read_text(encoding="utf-8")
+except OSError:
     long_description = "\n".join(short_description[2:])
 
 
@@ -35,25 +30,26 @@ setup(
     # Handled automatically by setuptools. Use 'exclude' to prevent some specific
     # subpackage(s) from being added, if needed
     packages=find_packages(),
+    python_requires=">=3.10",
+    install_requires=[
+        "matplotlib",
+        "numpy>=2.0",
+        "scipy",
+    ],
 
     # Optional include package data to ship with your package
     # Customize MANIFEST.in if the general case does not suit your needs
     # Comment out this line to prevent the files from being packaged with your software
     include_package_data=True,
 
-    # Allows `setup.py test` to work correctly with pytest
-    setup_requires=[] + pytest_runner,
-
     # Additional entries you may want simply uncomment the lines you want and fill in the data
     # url='http://www.my_package.com',  # Website
-    # install_requires=[],              # Required packages, pulls from pip if needed; do not use for Conda deployment
     # platforms=['Linux',
     #            'Mac OS-X',
     #            'Unix',
     #            'Windows'],            # Valid platforms your code works on, adjust to your flavor
-    # python_requires=">=3.5",          # Python version restrictions
 
     # Manual control if final package is compressible or not, set False to prevent the .egg from being made
-    # zip_safe=False,
+    zip_safe=False,
 
 )

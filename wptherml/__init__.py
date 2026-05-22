@@ -9,11 +9,20 @@ from .em import TmmDriver
 from .vec_tmm import VecTmmDriver
 from .mie import MieDriver
 from .therml import Therml
-from .exciton import ExcitonDriver
 from .factory import SpectrumFactory
 from .materials import Materials
 from .optdriver import OptDriver
-from .spin_boson import SpinBosonDriver
+
+__all__ = [
+    "SpectrumDriver",
+    "TmmDriver",
+    "VecTmmDriver",
+    "MieDriver",
+    "Therml",
+    "SpectrumFactory",
+    "Materials",
+    "OptDriver",
+]
 
 # Handle versioneer
 from ._version import get_versions

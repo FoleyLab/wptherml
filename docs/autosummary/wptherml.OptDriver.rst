@@ -5,14 +5,14 @@
 
 .. autoclass:: OptDriver
 
-   
+
    .. automethod:: __init__
 
-   
+
    .. rubric:: Methods
 
    .. autosummary::
-   
+
       ~OptDriver.__init__
       ~OptDriver.compute_cooling
       ~OptDriver.compute_cooling_gradient
@@ -66,7 +66,6 @@
       ~OptDriver.material_static_refractive_index
       ~OptDriver.optimize_basin_hopping
       ~OptDriver.optimize_bfgs
-      ~OptDriver.optimize_qubo
       ~OptDriver.parse_input
       ~OptDriver.parse_optimization_input
       ~OptDriver.randomize_materials_array
@@ -75,9 +74,9 @@
       ~OptDriver.render_color
       ~OptDriver.reverse_stack
       ~OptDriver.set_refractive_index_array
-   
-   
 
-   
-   
-   
+
+
+
+
+

@@ -197,8 +197,8 @@ class Therml:
         _min_idx = np.abs(wavelength_array - _lambda_min).argmin()
         _max_idx = np.abs(wavelength_array - _lambda_max).argmin()
 
-        # integrate the thermal emission spectrum over wavelength range using np.trapz
-        self.pv_stpv_exciton_splitting_power = np.pi * np.trapz(
+        # integrate the thermal emission spectrum over wavelength range using np.trapezoid
+        self.pv_stpv_exciton_splitting_power = np.pi * np.trapezoid(
             self.thermal_emission_array[_min_idx:_max_idx],
             wavelength_array[_min_idx:_max_idx],
         )
@@ -220,13 +220,13 @@ class Therml:
 
         """
 
-        # integrate blackbody spectrum over wavelength using np.trapz
-        self.blackbody_power_density = np.trapz(
+        # integrate blackbody spectrum over wavelength using np.trapezoid
+        self.blackbody_power_density = np.trapezoid(
             self.blackbody_spectrum, wavelength_array
         )
 
-        # integrate the thermal emission spectrum over wavelength using np.trapz
-        self.power_density = np.trapz(self.thermal_emission_array, wavelength_array)
+        # integrate the thermal emission spectrum over wavelength using np.trapezoid
+        self.power_density = np.trapezoid(self.thermal_emission_array, wavelength_array)
 
         # account for angular integrals over hemisphere (assuming no angle dependence of emissivity)
         self.blackbody_power_density *= np.pi
@@ -257,11 +257,11 @@ class Therml:
 
         """
         _ngr = len(self.thermal_emission_gradient_array[0, :])
-        # integrate the thermal emission spectrum over wavelength using np.trapz
+        # integrate the thermal emission spectrum over wavelength using np.trapezoid
         self.power_density_gradient = np.zeros(_ngr)
 
         for i in range(0, _ngr):
-            self.power_density_gradient[i] = np.pi * np.trapz(
+            self.power_density_gradient[i] = np.pi * np.trapezoid(
                 self.thermal_emission_gradient_array[:, i], wavelength_array
             )
 
@@ -320,13 +320,13 @@ class Therml:
         ) / self.lambda_bandgap
 
         # determine the index corresponding to lambda_bandgap in the wavelength_array
-        # which will be used to determine the appropriate slice to feed to np.trapz
+        # which will be used to determine the appropriate slice to feed to np.trapezoid
         bg_idx = np.abs(wavelength_array - self.lambda_bandgap).argmin()
 
         # integrate the power density between 0 to lambda_bandgap
         # by feeding the slice of the power_density_array and wavelength_array
-        # from 0:bg_idx to the trapz function
-        self.stpv_power_density = np.pi * np.trapz(
+        # from 0:bg_idx to the trapezoid function
+        self.stpv_power_density = np.pi * np.trapezoid(
             power_density_array[:bg_idx], wavelength_array[:bg_idx]
         )
 
@@ -348,7 +348,7 @@ class Therml:
 
         """
         _ngr = len(self.thermal_emission_gradient_array[0, :])
-        # integrate the thermal emission spectrum over wavelength using np.trapz
+        # integrate the thermal emission spectrum over wavelength using np.trapezoid
         self.stpv_power_density_gradient = np.zeros(_ngr)
         # compute the useful power density spectrum
 
@@ -358,7 +358,7 @@ class Therml:
                 * wavelength_array
                 / self.lambda_bandgap
             )
-            self.stpv_power_density_gradient[i] = np.pi * np.trapz(
+            self.stpv_power_density_gradient[i] = np.pi * np.trapezoid(
                 stpv_power_density_array_prime, wavelength_array
             )
 
@@ -432,7 +432,7 @@ class Therml:
         _rho = self.stpv_power_density
 
         # determine the index corresponding to lambda_bandgap in the wavelength_array
-        # which will be used to determine the appropriate slice to feed to np.trapz
+        # which will be used to determine the appropriate slice to feed to np.trapezoid
         _bg_idx = np.abs(wavelength_array - self.lambda_bandgap).argmin()
 
         for i in range(0, _ngr):
@@ -441,10 +441,10 @@ class Therml:
                 * wavelength_array[:_bg_idx]
                 / self.lambda_bandgap
             )
-            _rho_prime = np.pi * np.trapz(
+            _rho_prime = np.pi * np.trapezoid(
                 _rho_prime_integrand, wavelength_array[:_bg_idx]
             )
-            _P_prime = np.pi * np.trapz(
+            _P_prime = np.pi * np.trapezoid(
                 self.thermal_emission_gradient_array[:, i], wavelength_array
             )
             self.stpv_spectral_efficiency_gradient[i] = (
@@ -480,7 +480,7 @@ class Therml:
         None
 
         """
-        self.pv_short_circuit_current = np.trapz(
+        self.pv_short_circuit_current = np.trapezoid(
             absorptivity_array * spectral_response * solar_spectrum, wavelength_array
         )
 
@@ -514,8 +514,8 @@ class Therml:
         vl = self._photopic_luminosity_array
         TE = self.thermal_emission_array
 
-        Numerator = np.trapz(vl * TE, wavelength_array)
-        Denominator = np.trapz(TE, wavelength_array)
+        Numerator = np.trapezoid(vl * TE, wavelength_array)
+        Denominator = np.trapezoid(TE, wavelength_array)
 
         self.luminous_efficiency = Numerator / Denominator
 
@@ -554,7 +554,7 @@ class Therml:
                 * 0.5
                 * (emissivity_array_p[i, :] + emissivity_array_s[i, :])
             )
-            _TE_INT = np.trapz(_TE, wavelength_array)
+            _TE_INT = np.trapezoid(_TE, wavelength_array)
             P_rad += _TE_INT * np.sin(theta_vals[i]) * theta_weights[i]
 
         P_rad *= np.pi * 2
@@ -607,7 +607,7 @@ class Therml:
                         + emissivity_gradient_array_s[j, :, i]
                     )
                 )
-                _TE_INT = np.trapz(_TE, wavelength_array)
+                _TE_INT = np.trapezoid(_TE, wavelength_array)
 
                 _P_rad_prime += (
                     2 * np.pi * _TE_INT * np.sin(theta_vals[j]) * theta_weights[j]
@@ -664,7 +664,7 @@ class Therml:
             _absorbed_TE_spectrum = (
                 _TE_atm * 0.5 * (emissivity_array_p[i, :] + emissivity_array_s[i, :])
             )
-            _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
+            _absorbed_TE = np.trapezoid(_absorbed_TE_spectrum, wavelength_array)
             P_atm += _absorbed_TE * np.sin(theta_vals[i]) * theta_weights[i]
         P_atm *= 2 * np.pi
 
@@ -727,7 +727,7 @@ class Therml:
                         + emissivity_gradient_array_s[j, :, i]
                     )
                 )
-                _absorbed_TE = np.trapz(_absorbed_TE_spectrum, wavelength_array)
+                _absorbed_TE = np.trapezoid(_absorbed_TE_spectrum, wavelength_array)
                 P_atm_prime += (
                     2 * np.pi * _absorbed_TE * np.sin(theta_vals[j]) * theta_weights[j]
                 )
@@ -757,7 +757,7 @@ class Therml:
             solar_spectrum * 0.5 * (emissivity_array_p + emissivity_array_s)
         )
         # integrate it!
-        P_sun = np.trapz(_absorbed_solar_spectrum, wavelength_array)
+        P_sun = np.trapezoid(_absorbed_solar_spectrum, wavelength_array)
         return P_sun
 
     def _compute_solar_radiated_power_gradient(
@@ -794,7 +794,7 @@ class Therml:
                 )
             )
             # integrate it!
-            _absorbed_solar_spectrum_gradient[i] = np.trapz(
+            _absorbed_solar_spectrum_gradient[i] = np.trapezoid(
                 _absorbed_solar_spectrum_prime, wavelength_array
             )
         return _absorbed_solar_spectrum_gradient

@@ -10,12 +10,12 @@ Data for distances
 
     wptherml.TmmDriver
 
+    wptherml.VecTmmDriver
+
     wptherml.MieDriver
 
     wptherml.Therml
 
     wptherml.Materials
 
-    wptherml.SpinBosonDriver
-  
     wptherml.OptDriver

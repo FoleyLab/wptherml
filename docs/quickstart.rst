@@ -8,8 +8,8 @@ or `this short video for Linux users <https://youtu.be/Avx_FYdFBcc>`_.  You can 
 
 Dependencies
 **************
-You need to install `numpy`, `scipy`, and `pip`, `pytest` for basic 
-operations, and for optimization features you need `pytorch`, `scikit-learn`, `pandas`, `pyqubo`, and `tqdm`.  We also recommend `matplotlib` and `jupyter`.
+You need `numpy`, `scipy`, and `matplotlib` for the package, plus `pytest` for the test suite.
+We also recommend `jupyter` for running the example notebooks.
 
 You may use the `wptherml_env.yml <https://github.com/FoleyLab/wptherml/blob/optdriver/wptherml_env.yml>`_ 
 to create a conda environment with most these dependencies; pip is required .  This yaml file is located in the top-level wptherml directory,
@@ -23,7 +23,7 @@ Activate this environment by typing
 
 Development Install
 *******************
-After you have created and activated your wptherml environment, you can perform a ddevelopment install from the top-level wptherml directory
+After you have created and activated your wptherml environment, you can perform a development install from the top-level wptherml directory
 by typing:
 
 `pip install -e .`

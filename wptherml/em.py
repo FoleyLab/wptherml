@@ -1113,7 +1113,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             self._solar_spectrum * absorptivity_full_stack * env
         )
 
-        self.pv_stpv_short_circuit_current = np.trapz(
+        self.pv_stpv_short_circuit_current = np.trapezoid(
             power_density_array, self.wavelength_array
         )
 
@@ -1169,7 +1169,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         absorptivity_2_T = self.emissivity_array
 
         # get the absorbed power
-        P_abs = np.trapz(absorptivity_2_T * self._solar_spectrum, self.wavelength_array)
+        P_abs = np.trapezoid(absorptivity_2_T * self._solar_spectrum, self.wavelength_array)
 
         # loop over temperature to try to find the temperature of the stack that balances emitted
         # power with absorbed power
@@ -1177,7 +1177,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         while _kill:
             _T = 300
             _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
-            P_emit = np.trapz(
+            P_emit = np.trapezoid(
                 np.pi / 2 * _bbs * (emissivity_1_B + emissivity_1_T),
                 self.wavelength_array,
             )
@@ -1200,7 +1200,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         # Iterate over material thicknesses
         for i in range(0, e_gradient_index):
-            self.pv_stpv_short_circuit_current_gradient[i] = np.trapz(
+            self.pv_stpv_short_circuit_current_gradient[i] = np.trapezoid(
                 self.emissivity_gradient_array[:,i]
                 * _spectral_response
                 * self._solar_spectrum,
@@ -1315,7 +1315,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         sliced_splitting_spectrum = self.pv_stpv_splitting_power_spectrum[wavelength_array_lower:wavelength_array_upper]
 
         # Integrate over these slices and store
-        self.pv_stpv_splitting_power = np.pi * np.trapz(sliced_splitting_spectrum, sliced_wavelength_array)
+        self.pv_stpv_splitting_power = np.pi * np.trapezoid(sliced_splitting_spectrum, sliced_wavelength_array)
 
 
     def compute_self_consistent_temperature(self):
@@ -1332,7 +1332,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
 
         #while(_kill):
         #    _bbs = self._compute_blackbody_spectrum(self.wavelength_array, _T)
-        #    P_emit = np.trapz( np.pi/2 * _bbs * (emissivity_A_B + absorptivity_AB_T), self.wavelength_array)
+        #    P_emit = np.trapezoid( np.pi/2 * _bbs * (emissivity_A_B + absorptivity_AB_T), self.wavelength_array)
         #    _T += 1
         #    if P_emit > absorptivity_B_T :
         #        _kill = 0
@@ -1656,9 +1656,9 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         # plt.show()
 
         # get X, Y, and Z from reflectivity spectrum and Cr, Cg, Cb response functions
-        X = np.trapz(self._cie_cr * self.reflectivity_array, self.wavelength_array)
-        Y = np.trapz(self._cie_cg * self.reflectivity_array, self.wavelength_array)
-        Z = np.trapz(self._cie_cb * self.reflectivity_array, self.wavelength_array)
+        X = np.trapezoid(self._cie_cr * self.reflectivity_array, self.wavelength_array)
+        Y = np.trapezoid(self._cie_cg * self.reflectivity_array, self.wavelength_array)
+        Z = np.trapezoid(self._cie_cb * self.reflectivity_array, self.wavelength_array)
 
         # zero out appropriate response if colorblindness is indicated
         # from here: https://www.color-blindness.com/types-of-color-blindness/
@@ -1825,23 +1825,23 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         _ur_array = self.reflective_envelope * self.reflectivity_array
 
         # integrate to get numerators
-        _ut = np.trapz(_ut_array, self.wavelength_array)
-        _ur = np.trapz(_ur_array, self.wavelength_array)
+        _ut = np.trapezoid(_ut_array, self.wavelength_array)
+        _ur = np.trapezoid(_ur_array, self.wavelength_array)
 
         # denominators are slightly different between R and T.
 
         # T_denom -> integrate transmissive envelope
-        _t_denom = np.trapz(
+        _t_denom = np.trapezoid(
             self.transmissive_envelope, self.wavelength_array
         )
 
         # R_denom -> integrate reflection spectrum
-        _r_denom = np.trapz(
+        _r_denom = np.trapezoid(
             self.reflectivity_array, self.wavelength_array
         )
 
         # R_selective_denom -> integrate the reflection envelope
-        _r_select_denom = np.trapz(
+        _r_select_denom = np.trapezoid(
            self.reflective_envelope, self.wavelength_array 
         )
 
@@ -1931,27 +1931,27 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.compute_spectrum_gradient()
 
         _ngr = len(self.transmissivity_gradient_array[0, :])
-        # integrate the thermal emission spectrum over wavelength using np.trapz
+        # integrate the thermal emission spectrum over wavelength using np.trapezoid
         self.transmission_efficiency_gradient = np.zeros(_ngr)
         self.reflection_efficiency_gradient = np.zeros(_ngr)
         self.reflection_selectivity_gradient = np.zeros(_ngr)
 
         # this term is in the denominator of each of the eta_T' elements
-        _eta_T_denom = np.trapz(self.transmissive_envelope, self.wavelength_array)
+        _eta_T_denom = np.trapezoid(self.transmissive_envelope, self.wavelength_array)
 
         # this term is in the denominator of each of the sel_R' elements
-        _sel_R_denom = np.trapz(self.reflective_envelope, self.wavelength_array)
+        _sel_R_denom = np.trapezoid(self.reflective_envelope, self.wavelength_array)
 
         # these terms are in each of the eta_R' elements
-        _f_l = np.trapz(
+        _f_l = np.trapezoid(
             self.reflective_envelope * self.reflectivity_array, self.wavelength_array
         )
-        _g_l = np.trapz(self.reflectivity_array, self.wavelength_array)
+        _g_l = np.trapezoid(self.reflectivity_array, self.wavelength_array)
 
         for i in range(_ngr):
             # can compute eta_T' in one shot
             self.transmission_efficiency_gradient[i] = (
-                np.trapz(
+                np.trapezoid(
                     self.transmissive_envelope
                     * self.transmissivity_gradient_array[:, i],
                     self.wavelength_array,
@@ -1960,7 +1960,7 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             )
             # can compute sel_R'
             self.reflection_selectivity_gradient[i] = (
-                np.trapz(
+                np.trapezoid(
                     self.reflective_envelope 
                     * self.reflectivity_gradient_array[:,i],
                     self.wavelength_array
@@ -1969,10 +1969,10 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
             )
 
             # need to get parts of g'(lambda) and f'(lambda) terms
-            _gp_l = np.trapz(
+            _gp_l = np.trapezoid(
                 self.reflectivity_gradient_array[:, i], self.wavelength_array
             )
-            _fp_l = np.trapz(
+            _fp_l = np.trapezoid(
                 self.reflective_envelope * self.reflectivity_gradient_array[:, i],
                 self.wavelength_array,
             )

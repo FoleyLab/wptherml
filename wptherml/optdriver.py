@@ -3,21 +3,11 @@ from scipy.optimize import minimize
 from scipy.optimize import basinhopping
 import time
 from .em import TmmDriver
-#import torch
-#import torch.nn as nn
-#import torch.optim as optim
-#import tqdm
-#from sklearn.model_selection import train_test_split
-#from sklearn.preprocessing import StandardScaler
-#from sklearn.preprocessing import MinMaxScaler
 import copy
-#from pyqubo import Binary
-#import neal
-#import pandas as pd
 
 
 class OptDriver(TmmDriver):
-    """Compute the absorption, scattering, and extinction spectra of a sphere using Mie theory
+    """Optimize multilayer optical and thermal figures of merit using TMM gradients.
 
     Attributes
     ----------
@@ -81,14 +71,16 @@ class OptDriver(TmmDriver):
         else:
             self.upper_bound = 1000
 
-        if "combinatorial_optimization" in args:
-            self.combinatorial_optimization = True
-            self.qubo_thickness_optimization = False
-            self.optimization_dictionary = args["optimization_dictionary"]
-        if "qubo_thickness_optimization" in args:
-            self.qubo_thickness_optimization = True
-            self.combinatorial_optimization = False
-            self.optimization_dictionary = args["optimization_dictionary"]
+        unsupported_qubo_keys = {
+            "combinatorial_optimization",
+            "qubo_thickness_optimization",
+        } & args.keys()
+        if unsupported_qubo_keys:
+            keys = ", ".join(sorted(unsupported_qubo_keys))
+            raise ValueError(
+                f"Unsupported optimization option(s): {keys}. "
+                "QUBO optimization support has been removed from wptherml."
+            )
 
         if "random_perturbation_scale" in args:
             self.random_perturbation_scale = args["random_perturbation_scale"]
@@ -97,30 +89,6 @@ class OptDriver(TmmDriver):
             # default will be 10%, so we can randomly perturb a given layer by +/- 10% 
             # between basin hopping cycles
             self.random_perturbation_scale = 0.1
-
-    def optimize_qubo(self, fom_function):
-        if self.combinatorial_optimization == True:
-            self.optimizer = self._qubo_combinatorial_structure_optimization(
-                self, self.optimization_dictionary, fom_function
-            )
-            self.optimizer.learning_loop(num_to_train=25, num_iterations=10000)
-
-        if self.qubo_thickness_optimization == True:
-            self.optimizer = self._qubo_thickness_and_alloy_optimization(
-                self,
-                optimization_dict=self.optimization_dictionary,
-                fom_func=fom_function,
-            )
-            self.optimizer.learning_loop(
-                num_to_train=100,
-                n_epochs=250,
-                l2_lambda=0.001,
-                num_iterations=400,
-                reduction_factor=2,
-                l1_lambda=0.000001,
-                K=25,
-                LR=0.01,
-            )
 
     def optimize_bfgs(self):
         """ "

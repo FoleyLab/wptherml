@@ -1,31 +1,26 @@
-from .spectrum_driver import SpectrumDriver
-
-# child classes
 from .mie import MieDriver
 from .em import TmmDriver
 from .vec_tmm import VecTmmDriver
-from .therml import Therml
 from .optdriver import OptDriver
-from .exciton import ExcitonDriver
-from .spin_boson import SpinBosonDriver 
 
 
 class SpectrumFactory:
+    _toolkits = {
+        "Mie": MieDriver,
+        "Tmm": TmmDriver,
+        "VecTmm": VecTmmDriver,
+        "Opt": OptDriver,
+    }
+
     def spectrum_factory(self, spectrum_toolkit, args):
-        if spectrum_toolkit == "Mie":
-            return MieDriver(args)
-        elif spectrum_toolkit == "Tmm":
-            return TmmDriver(args)
-        elif spectrum_toolkit == "VecTmm":
-            return VecTmmDriver(args)
-        elif spectrum_toolkit == "Opt":
-            return OptDriver(args)
-        elif spectrum_toolkit == "Frenkel":
-            return ExcitonDriver(args)
-        elif spectrum_toolkit == "Spin-Boson":
-            return SpinBosonDriver(args)
-        else:
-            raise TypeError("Toolkit not found")
+        try:
+            driver_class = self._toolkits[spectrum_toolkit]
+        except KeyError:
+            supported = ", ".join(sorted(self._toolkits))
+            raise TypeError(
+                f"Toolkit '{spectrum_toolkit}' not found. Supported toolkits: {supported}"
+            ) from None
+        return driver_class(args)
 
 
 """class SpectrumFactory:

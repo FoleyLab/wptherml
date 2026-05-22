@@ -1,8 +1,7 @@
-# Sample Package Data
+# Material Data
 
-This directory contains sample additional data you may want to include with your package.
-This is a place where non-code related additional information (such as data files, molecular structures,  etc.) can 
-go that you want to ship alongside your code.
+This directory contains optical constants, solar spectrum data, atmospheric transmissivity data, and color-matching
+functions used by WPTherml's electrodynamics and thermal-radiation workflows.
 
 Please note that it is not recommended to place large files in your git directory. If your project requires files larger
 than a few megabytes in size it is recommended to host these files elsewhere. This is especially true for binary files
@@ -20,4 +19,4 @@ correct files.
 
 ## Manifest
 
-* `look_and_say.dat`: first entries of the "Look and Say" integer series, sequence [A005150](https://oeis.org/A005150)
+See `material_references.md` for optical-constant provenance.
