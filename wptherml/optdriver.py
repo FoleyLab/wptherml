@@ -34,7 +34,10 @@ class OptDriver(TmmDriver):
         self.parse_input(args)
         self.parse_optimization_input(args)
         self.set_refractive_index_array()
-        self.solver = TMMSolver(backend="serial")
+        # The optimizer evaluates spectra and gradients repeatedly, so it
+        # defaults to the vectorized backend (fast forward + adjoint gradients).
+        # Pass {"optimization_backend": "serial"} to fall back to the loop kernel.
+        self.solver = TMMSolver(backend=self.optimization_backend)
         # compute reflectivity spectrum
         self.compute_spectrum()
         # print("We started optimizing")
@@ -48,6 +51,13 @@ class OptDriver(TmmDriver):
         - lower- and upper-bounds on the layer thicknesses
 
         """
+        # which solver backend should the optimizer use for spectra/gradients
+        if "optimization_backend" in args:
+            self.optimization_backend = args["optimization_backend"]
+        # default to the fast vectorized backend
+        else:
+            self.optimization_backend = "vectorized"
+
         # which objective function do we want to optimize
         if "objective_function" in args:
             self.objective_function = args["objective_function"]

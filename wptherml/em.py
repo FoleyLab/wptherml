@@ -464,6 +464,14 @@ class TmmDriver(SpectrumDriver, Materials, Therml):
         self.material_Air(0)
         self.material_Air(self.number_of_layers - 1)
         for i in range(1, self.number_of_layers - 1):
+            # Material-name dispatch now lives in Materials.assign_material_to_layer
+            # so that TmmDriver, MieDriver and the standalone
+            # build_refractive_index_array helper all share one implementation.
+            self.assign_material_to_layer(i, self.material_array[i])
+
+    def _legacy_set_refractive_index_array(self):
+        """Deprecated inline dispatch, retained only for reference."""
+        for i in range(1, self.number_of_layers - 1):
             # get lower clase version of the material string
             # to avoid any conflicts with variation in cases
             # given by the user

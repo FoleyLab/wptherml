@@ -10,12 +10,13 @@ from .vec_tmm import VecTmmDriver
 from .mie import MieDriver
 from .therml import Therml
 from .factory import SpectrumFactory
-from .materials import Materials
+from .materials import Materials, build_refractive_index_array
 from .optdriver import OptDriver
 from .objectives import Objective, SelectiveMirrorObjective
 from .solvers import GradientSolver, Solver, TMMSolver
 from .spectra import OpticalSpectrum, OpticalSpectrumGradient
 from .structures import MultilayerStructure
+from .ensemble import EnsembleResult, ThicknessEnsemble
 
 __all__ = [
     "SpectrumDriver",
@@ -25,6 +26,7 @@ __all__ = [
     "Therml",
     "SpectrumFactory",
     "Materials",
+    "build_refractive_index_array",
     "OptDriver",
     "MultilayerStructure",
     "Solver",
@@ -34,6 +36,8 @@ __all__ = [
     "OpticalSpectrumGradient",
     "Objective",
     "SelectiveMirrorObjective",
+    "ThicknessEnsemble",
+    "EnsembleResult",
 ]
 
 # Handle versioneer

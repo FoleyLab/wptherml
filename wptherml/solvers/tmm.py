@@ -12,6 +12,8 @@ from ..tmm_core import (
     compute_transfer_matrix_gradients,
     compute_transfer_matrices,
 )
+from ..tmm_fast import solve_rt as _fast_solve_rt
+from ..tmm_fast import solve_rt_gradients as _fast_solve_rt_gradients
 
 
 class TMMSolver(Solver, GradientSolver):
@@ -79,6 +81,21 @@ class TMMSolver(Solver, GradientSolver):
         self._validate_structure_for_solving(structure)
         polarization_list = self._normalize_polarizations(polarizations)
         angles = self._angles(structure)
+
+        if self.backend == "vectorized":
+            (_spectra, (dR_dd, dT_dd, dE_dd)) = _fast_solve_rt_gradients(
+                structure.refractive_indices,
+                structure.wavelengths,
+                angles,
+                structure.thicknesses,
+                gradient_layers,
+                polarization_list,
+            )
+            dR_dd = self._squeeze_gradient_axes(dR_dd, structure, polarization_list)
+            dT_dd = self._squeeze_gradient_axes(dT_dd, structure, polarization_list)
+            dE_dd = self._squeeze_gradient_axes(dE_dd, structure, polarization_list)
+            return OpticalSpectrumGradient(dR_dd=dR_dd, dT_dd=dT_dd, dE_dd=dE_dd)
+
         n, k0, kz = self._wavevector_arrays(structure, angles)
 
         gradient_results = []
@@ -119,17 +136,14 @@ class TMMSolver(Solver, GradientSolver):
     def _solve_vectorized(
         self, structure: MultilayerStructure, polarizations: list[str]
     ) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-        angles = self._angles(structure)
-        n, k0, kz = self._wavevector_arrays(structure, angles)
-        transfer_matrix, _theta, cos_theta = compute_transfer_matrices(
-            n,
-            k0,
-            kz,
+        # Optimized component-array / interface-matrix kernel.
+        return _fast_solve_rt(
+            structure.refractive_indices,
+            structure.wavelengths,
+            self._angles(structure),
             structure.thicknesses,
-            angles,
             polarizations,
         )
-        return compute_spectrum_from_transfer_matrix(transfer_matrix, n, cos_theta)
 
     def _solve_serial(
         self, structure: MultilayerStructure, polarizations: list[str]

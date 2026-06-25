@@ -51,6 +51,52 @@ class MultilayerStructure:
                 "(number_of_wavelengths, number_of_layers)"
             )
 
+    @classmethod
+    def from_spec(
+        cls,
+        materials,
+        thicknesses,
+        wavelengths,
+        angles=None,
+    ) -> "MultilayerStructure":
+        """Build a structure and resolve refractive indices from material names.
+
+        This is the driver-free convenience constructor for the refactored
+        architecture: it mirrors the legacy ``material_list`` / ``thickness_list``
+        inputs but produces a ready-to-solve ``MultilayerStructure`` without
+        bootstrapping through ``SpectrumFactory``.
+
+        Arguments
+        ---------
+        materials : sequence of str
+            material name (or refractive-index file name) per layer, in order.
+        thicknesses : array_like of float
+            layer thicknesses in meters (terminal layers use 0).
+        wavelengths : array_like of float
+            wavelengths in meters at which to evaluate the spectra.
+        angles : array_like of float, optional
+            incident angles in radians. Defaults to normal incidence.
+
+        Returns
+        -------
+        MultilayerStructure
+        """
+        # Imported lazily to keep the structures package free of a hard
+        # dependency on the materials database at import time.
+        from ..materials import build_refractive_index_array
+
+        wavelengths = np.asarray(wavelengths, dtype=float)
+        refractive_indices = build_refractive_index_array(materials, wavelengths)
+        if angles is None:
+            angles = np.array([0.0], dtype=float)
+        return cls(
+            materials=list(materials),
+            thicknesses=thicknesses,
+            wavelengths=wavelengths,
+            angles=angles,
+            refractive_indices=refractive_indices,
+        )
+
     @property
     def number_of_layers(self) -> int:
         return len(self.materials)

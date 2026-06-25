@@ -61,6 +61,66 @@ class Materials:
 
         return unique_index_array
 
+    # Mapping from a lower-cased material name to the method that assigns it.
+    # Names that are not present here are treated as refractive-index file names
+    # and resolved through ``material_from_file``.
+    _MATERIAL_DISPATCH = {
+        "air": "material_Air",
+        "h2o": "material_H2O",
+        "ag": "material_Ag",
+        "al": "material_Al",
+        "al2o3": "material_Al2O3",
+        "al2o3_udm": "material_Al2O3_UDM",
+        "aln": "material_AlN",
+        "au": "material_Au",
+        "hfo2": "material_HfO2",
+        "hfo2_udm": "material_HfO2_UDM",
+        "hfo2_udm_no_loss": "material_HfO2_UDM_v2",
+        "mgf2": "material_MgF2_UDM",
+        "pb": "material_Pb",
+        "polystyrene": "material_polystyrene",
+        "pt": "material_Pt",
+        "re": "material_Re",
+        "rh": "material_Rh",
+        "ru": "material_Ru",
+        "si": "material_Si",
+        "sio2": "material_SiO2",
+        "sio2_udm": "material_SiO2_UDM",
+        "sio2_udm_v2": "material_SiO2_UDM_v2",
+        "ta2o5": "material_Ta2O5",
+        "tin": "material_TiN",
+        "tio2": "material_TiO2",
+        "w": "material_W",
+        "zro2": "material_ZrO2",
+        "si3n4": "material_Si3N4",
+    }
+
+    def assign_material_to_layer(self, layer_number, material_name):
+        """Resolve ``material_name`` and write its refractive index into a layer.
+
+        This is the single dispatch point shared by the legacy ``TmmDriver``,
+        ``MieDriver`` and the standalone :func:`build_refractive_index_array`
+        helper, so material-name handling lives in exactly one place.
+
+        Arguments
+        ---------
+        layer_number : int
+            index of the layer whose refractive index will be set.
+        material_name : str
+            a known material key (case-insensitive, see ``_MATERIAL_DISPATCH``)
+            or, failing that, the name of a refractive-index data file.
+
+        Returns
+        -------
+        None
+        """
+        method_name = self._MATERIAL_DISPATCH.get(str(material_name).lower())
+        if method_name is None:
+            # Fall back to interpreting the original string as a file name.
+            self.material_from_file(layer_number, material_name)
+        else:
+            getattr(self, method_name)(layer_number)
+
     def material_H2O(self, layer_number):
         """defines the refractive index layer of layer_number to be water
         assuming static refractive index of n = 1.33 + 0j
@@ -1912,5 +1972,56 @@ class Materials:
         
         self.perovskite_eqe = _eqe_spline(self.wavelength_array)
         self.perovskite_spectral_response = _sr_spline(self.wavelength_array)
-    
+
+
+class _MaterialResolver(Materials):
+    """Minimal carrier of the attributes the ``material_*`` methods read/write.
+
+    The ``Materials`` mixin methods only depend on ``wavelength_array``,
+    ``number_of_wavelengths``, ``number_of_layers`` and ``_refractive_index_array``.
+    This lightweight subclass supplies exactly those so material resolution can
+    happen without constructing a full legacy driver.
+    """
+
+    def __init__(self, wavelengths):
+        self.wavelength_array = np.asarray(wavelengths, dtype=float)
+        self.number_of_wavelengths = self.wavelength_array.shape[0]
+
+
+def build_refractive_index_array(materials, wavelengths):
+    """Resolve a list of material names into a refractive-index array.
+
+    This is the standalone, driver-free path used by the refactored
+    architecture (e.g. :meth:`MultilayerStructure.from_spec`). It reuses the
+    exact same material database and dispatch logic as the legacy drivers, so
+    results are identical.
+
+    Arguments
+    ---------
+    materials : sequence of str
+        material name (or refractive-index file name) for each layer, in order.
+        The two terminal layers are treated as semi-infinite media.
+    wavelengths : array_like of float
+        wavelengths in meters at which to evaluate the refractive indices.
+
+    Returns
+    -------
+    numpy.ndarray
+        complex array of shape ``(number_of_wavelengths, number_of_layers)``.
+    """
+    materials = list(materials)
+    wavelengths = np.asarray(wavelengths, dtype=float)
+    number_of_layers = len(materials)
+
+    resolver = _MaterialResolver(wavelengths)
+    resolver.number_of_layers = number_of_layers
+    resolver._refractive_index_array = np.ones(
+        (resolver.number_of_wavelengths, number_of_layers), dtype=complex
+    )
+
+    for layer_number, material_name in enumerate(materials):
+        resolver.assign_material_to_layer(layer_number, material_name)
+
+    return resolver._refractive_index_array
+
 
